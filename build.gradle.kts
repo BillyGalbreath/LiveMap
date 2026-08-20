@@ -3,7 +3,7 @@ plugins {
   `maven-publish`
 }
 
-var buildNum = System.getenv("GITHUB_RUN_NUMBER") ?: "SNAPSHOT"
+var buildNum = System.getenv("BUILD_NUMBER") ?: "SNAPSHOT"
 val authors = providers.gradleProperty("authors").get()
 val website = providers.gradleProperty("website").get()
 
