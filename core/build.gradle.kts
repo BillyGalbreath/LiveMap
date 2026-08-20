@@ -68,7 +68,7 @@ tasks {
     stdopts.isDocFilesSubDirs = true
     stdopts.windowTitle = "$name $version API Documentation"
     stdopts.docTitle = "<h1>$name $version API</h1>"
-    stdopts.header = """<img src="https://raw.githubusercontent.com/billygalbreath/livemap/v4/webmap/public/images/livemap.png" style="height:100%">"""
+    stdopts.header = """<img src="https://raw.githubusercontent.com/billygalbreath/livemap/v4/webmap/public/images/livemap-white.png" style="height:32px">"""
     stdopts.bottom = "Copyright © 2020-2026 William Blake Galbreath"
     stdopts.linkSource(true)
     stdopts.addBooleanOption("html5", true)
