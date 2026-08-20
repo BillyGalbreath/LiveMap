@@ -1,0 +1,8 @@
+name: "${name}"
+main: "${group}.PaperLiveMap"
+version: "${version}"
+api-version: "${minecraft}"
+description: "${description}"
+authors: ${authors}
+website: "${website}"
+load: "POSTWORLD"

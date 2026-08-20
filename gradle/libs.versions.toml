@@ -1,0 +1,60 @@
+[versions]
+livemap = "4.0.0-dev"
+
+minecraft = "26.2"
+paper = "26.2.build.+"
+
+bluenbt="3.5.1"               # https://github.com/BlueMap-Minecraft/BlueNBT
+bstats = "3.2.1"              # https://github.com/Bastian/bstats-metrics/
+caffeine = "3.2.4"            # https://github.com/ben-manes/caffeine
+fix-javadoc = "1.19"          # https://github.com/mfnalex/gradle-fix-javadoc-plugin
+lz4 = "1.11.2"                # https://github.com/yawkat/lz4-java
+node = "7.1.0"                # https://github.com/node-gradle/gradle-node-plugin
+paperweight = "2.0.0-beta.22" # https://github.com/PaperMC/Paperweight
+shadowJar = "9.6.1"           # https://github.com/GradleUp/shadow
+simpleYaml = "1.8.5"          # https://github.com/Carleslc/Simple-YAML
+undertow = "2.4.1.Final"      # https://github.com/undertow-io/undertow
+
+# make these match versions Paper API uses
+# https://github.com/PaperMC/Paper/blob/main/paper-api/build.gradle.kts
+adventure="5.2.0"
+annotations = "26.0.2"
+apache = "3.20.0"
+asm = "9.9.1"
+brigadier = "1.3.10"
+fastutil = "8.5.18"
+gson = "2.14.0"
+guava = "33.6.0-jre"
+junit = "6.0.3"
+slf4j = "2.0.17"
+
+[plugins]
+fix-javadoc = { id = "com.jeff-media.fix-javadoc-plugin", version.ref = "fix-javadoc" }
+node = { id = "com.github.node-gradle.node", version.ref = "node" }
+paperweight = { id = "io.papermc.paperweight.userdev", version.ref = "paperweight" }
+shadow = { id = "com.gradleup.shadow", version.ref = "shadowJar" }
+
+[libraries]
+adventureApi = { group = "net.kyori", name = "adventure-api", version.ref = "adventure" }
+adventureTextLogger = { group = "net.kyori", name = "adventure-text-logger-slf4j", version.ref = "adventure" }
+adventureTextMinimessage = { group = "net.kyori", name = "adventure-text-minimessage", version.ref = "adventure" }
+adventureTextSerializerPlain = { group = "net.kyori", name = "adventure-text-serializer-plain", version.ref = "adventure" }
+annotations = { group = "org.jetbrains", name = "annotations", version.ref = "annotations" }
+apache = { group = "org.apache.commons", name = "commons-lang3", version.ref = "apache" }
+asm = { group = "org.ow2.asm", name = "asm-tree", version.ref = "asm" }
+bluenbt = { module = "de.bluecolored:bluenbt", version.ref = "bluenbt" }
+brigadier = { group = "com.mojang", name = "brigadier", version.ref = "brigadier" }
+bstats = { group = "org.bstats", name = "bstats-bukkit", version.ref = "bstats" }
+caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version.ref = "caffeine" }
+fastutil = { group = "it.unimi.dsi", name = "fastutil", version.ref = "fastutil" }
+gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
+junit = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junit" }
+junitPlatform = { group = "org.junit.platform", name = "junit-platform-launcher" }
+lz4 = { group = "at.yawk.lz4", name = "lz4-java", version.ref = "lz4" }
+simpleYaml = { group = "com.github.Carleslc.Simple-YAML", name = "Simple-Yaml", version.ref = "simpleYaml" }
+slf4j = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
+undertow = { group = "io.undertow", name = "undertow-core", version.ref = "undertow" }
+
+[bundles]
+adventure = ["adventureApi", "adventureTextLogger", "adventureTextMinimessage", "adventureTextSerializerPlain"]

@@ -1,0 +1,70 @@
+package net.pl3x.livemap.configuration;
+
+import net.pl3x.livemap.LiveMap;
+
+/**
+ * LiveMap's main config.
+ */
+public final class Config extends AbstractConfig {
+    @Key("settings.debug-mode")
+    @Comment("""
+        Extra logger output.
+        (can be spammy)""")
+    public static boolean DEBUG_MODE = false;
+
+    @Key("settings.language-file")
+    @Comment("""
+        The language file to use from the locale folder.""")
+    public static String LANGUAGE_FILE = "en-us.yml";
+
+    @Key("settings.web-directory.path")
+    @Comment("""
+        The directory that houses the website and world tiles.
+        Relative paths are from LiveMap's plugin directory,
+        but absolute paths are supported, too.""")
+    public static String WEB_DIR = "web";
+
+    @Key("settings.web-directory.read-only")
+    @Comment("""
+        Set to true if you don't want LiveMap to overwrite
+        the website files on startup. (Good for servers that
+        customize these files)""")
+    public static boolean WEB_DIR_READONLY = false;
+
+    @Key("settings.internal-webserver.enabled")
+    @Comment("""
+        Enable the built-in web server for regular http.""")
+    public static boolean HTTPD_ENABLED = true;
+
+    @Key("settings.internal-webserver.bind")
+    @Comment("""
+        The interface the built-in web server should bind to for http requests.
+        Warning: If you don't understand what this is leave it set to 0.0.0.0""")
+    public static String HTTPD_BIND = "0.0.0.0";
+
+    @Key("settings.internal-webserver.port")
+    @Comment("""
+        The port the built-in web server listens to for http requests.
+        Make sure the port is allocated if using a panel like Pterodactyl.""")
+    public static int HTTPD_PORT = 8080;
+
+    @Key("settings.performance.render-threads")
+    @Comment("""
+        The number of process-threads to use for loading and scanning chunks.
+        Value of -1 will use half of the available logical cpu-cores. (recommended)
+        Warning: Using all available cpu-threads may cause thread starvation and impact system performance.""")
+    public int RENDER_THREADS = -1;
+
+    private static final Config CONFIG = new Config();
+
+    private Config() {
+        super(LiveMap.api().getDataPath().resolve("config.yml"));
+    }
+
+    /**
+     * Reloads configuration from YAML file.
+     */
+    public static void reload() {
+        CONFIG.reload0();
+    }
+}

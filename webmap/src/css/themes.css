@@ -1,0 +1,105 @@
+:root {
+  --sidebar-pinned-background: #00800080;
+  --sidebar-pinned-border: 1px solid #008000BF;
+  --sidebar-pinned-filter-shadow: drop-shadow(1px 1px 1px #00FF0080);
+  --sidebar-unpinned-background: #80000080;
+  --sidebar-unpinned-border: 1px solid #800000BF;
+  --sidebar-unpinned-filter-shadow: drop-shadow(1px 1px 1px #FF000080);
+  --notification-info-color: #EEEEEE;
+  --notification-info-background: #A0AFAF80;
+  --notification-info-border: 1px outset #A0AFAFBF;
+  --notification-success-color: #EEEEEE;
+  --notification-success-background: #40FF0080;
+  --notification-success-border: 1px outset #40FF00BF;
+  --notification-warning-color: #EEEEEE;
+  --notification-warning-background: #FFE00080;
+  --notification-warning-border: 1px outset #FFE000BF;
+  --notification-danger-color: #EEEEEE;
+  --notification-danger-background: #FF404080;
+  --notification-danger-border: 1px outset #FF4040BF;
+}
+
+html[theme="white-glass"] {
+  --body-background: linear-gradient(135deg, #FFFFFF, #EFEFDF);
+  --text-color: #000000E5;
+  --text-color-hover: #212121;
+  --text-color-attribution: #101010A0;
+  --background: linear-gradient(135deg, #FFFFFF80, #FFFFFF40);
+  --background-color-hover: #FFFFFF40;
+  --border: 1px outset #FFFFFF60;
+  --border-hover: 1px outset #FFFFFFA0;
+  --border-scale: 2px solid #FFFFFF;
+  --text-shadow: 1px 1px 2px #FFFFFFE5;
+  --drop-shadow: 1px 1px 1px #FFFFFFE5;
+  --box-shadow: 2px 2px 2px #00000080;
+  --filter-shadow: drop-shadow(1px 1px 1px #FFFFFFE5);
+  --blur: blur(6px);
+}
+
+html[theme="black-glass"] {
+  --body-background: linear-gradient(135deg, #181818, #080808);
+  --text-color: #DFDFDFE5;
+  --text-color-hover: #CECECE;
+  --text-color-attribution: #FFFFFF80;
+  --background: linear-gradient(135deg, #101010C0, #10101080);
+  --background-color-hover: #10101060;
+  --border: 1px outset #00000060;
+  --border-hover: 1px outset #000000A0;
+  --border-scale: 2px solid #000000C0;
+  --text-shadow: 1px 1px 2px #000000E5;
+  --drop-shadow: 1px 1px 1px #000000E5;
+  --box-shadow: 2px 2px 2px #00000080;
+  --filter-shadow: drop-shadow(1px 1px 1px #000000E5);
+  --blur: blur(6px);
+}
+
+html[theme="clear-glass"] {
+  --body-background: linear-gradient(135deg, #FFFFFF, #EFEFDF);
+  --text-color: #FFFFFFE5;
+  --text-color-hover: #EEEEEE;
+  --text-color-attribution: #FFFFFF80;
+  --background: linear-gradient(135deg, #FFFFFF19, #FFFFFF00);
+  --background-color-hover: #FFFFFF10;
+  --border: 1px outset #FFFFFF33;
+  --border-hover: 1px outset #FFFFFF43;
+  --border-scale: 2px solid #FFFFFFC0;
+  --text-shadow: 1px 1px 2px #000000E5;
+  --drop-shadow: 1px 1px 1px #000000E5;
+  --box-shadow: 2px 2px 2px #00000080;
+  --filter-shadow: drop-shadow(1px 1px 1px #000000E5);
+  --blur: blur(2px);
+}
+
+html[theme="light"] {
+  --body-background: #EFEFDF;
+  --text-color: #404040;
+  --text-color-hover: #808080;
+  --text-color-attribution: #666666;
+  --background: #EFEFDF;
+  --background-color-hover: #EFEFDF;
+  --border: 1px outset #BFBFBF;
+  --border-hover: 1px outset #BFBFBF;
+  --border-scale: 2px solid #BFBFBF;
+  --text-shadow: 1px 1px 2px #00000040;
+  --drop-shadow: 1px 1px 1px #00000080;
+  --box-shadow: 2px 2px 2px #00000080;
+  --filter-shadow: drop-shadow(1px 1px 1px #00000080);
+  --blur: none;
+}
+
+html[theme="dark"] {
+  --body-background: #222222;
+  --text-color: #FFFFFFC8;
+  --text-color-hover: #EEEEEE;
+  --text-color-attribution: #888888;
+  --background: #222222;
+  --background-color-hover: #333333;
+  --border: 1px solid #333333;
+  --border-hover: 1px solid #333333;
+  --border-scale: 2px solid #333333;
+  --text-shadow: 1px 1px 2px #000000;
+  --drop-shadow: 1px 1px 1px #000000;
+  --box-shadow: 2px 2px 2px #00000080;
+  --filter-shadow: drop-shadow(1px 1px 1px #000000);
+  --blur: none;
+}

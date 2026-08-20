@@ -1,0 +1,58 @@
+@import "themes.css";
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: content-box;
+  user-select: none;
+}
+
+body {
+  overflow: hidden;
+  background: var(--body-background);
+}
+
+ul, li {
+  list-style-type: none;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.logo {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 100%;
+  color: #ccc;
+
+  > svg {
+    display: block;
+    margin: 0 auto;
+
+    &:first-child {
+      width: 90%;
+      height: auto;
+      max-width: 1024px;
+    }
+
+    &:not(:first-child) {
+      width: 64px;
+      height: 64px;
+    }
+  }
+}
+
+#map {
+  width: 100vw;
+  height: 100vh;
+  background: var(--body-background) repeat;
+  transition: opacity .5s ease-in-out;
+
+  &.loading {
+    opacity: 0;
+
+    * {
+      pointer-events: none;
+    }
+  }
+}
