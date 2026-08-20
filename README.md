@@ -23,7 +23,7 @@ for Minecraft servers using the vanilla Minecraft rendering style.</b></big>
 
 <!-- Links -->
 [CodeFactor Url]: https://www.codefactor.io/repository/github/BillyGalbreath/LiveMap
-[License Url]: https://github.com/BillyGalbreath/LiveMap/blob/master/LICENSE
+[License Url]: https://github.com/BillyGalbreath/LiveMap/blob/v4/LICENSE
 [Modrinth Url]: https://modrinth.com/project/LiveMap/
 [Discord Url]: https://discord.gg/JXra7N4
 
