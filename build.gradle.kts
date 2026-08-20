@@ -36,8 +36,8 @@ subprojects {
     mavenLocal()
     maven("https://jitpack.io")
     maven("https://libraries.minecraft.net")
-    maven ( "https://repo.bluecolored.de/releases" ) {
-      content { includeGroupByRegex ("de\\.bluecolored.*") }
+    maven("https://repo.bluecolored.de/releases") {
+      content { includeGroupByRegex("de\\.bluecolored.*") }
     }
   }
 
@@ -115,11 +115,17 @@ fun cp(name: String): Provider<FileCollection> {
   return project(":core").tasks.named("${name}Jar").map { it.outputs.files }
 }
 
+afterEvaluate {
+  tasks.named("generateMetadataFileForMavenPublication").configure {
+    dependsOn("copyJavadocAndSources")
+  }
+}
+
 publishing {
   repositories {
     maven {
       name = "Pl3xRepo"
-      url = uri("https://repo.pl3x.net")
+      url = uri("https://repo.pl3x.net/releases/")
       credentials(PasswordCredentials::class)
       authentication {
         create<BasicAuthentication>("basic")
@@ -128,8 +134,8 @@ publishing {
   }
   publications {
     create<MavenPublication>("maven") {
-      groupId = "${rootProject.group}"
-      artifactId = "library"
+      groupId = "net.pl3x"
+      artifactId = "livemap"
       version = "${rootProject.version}"
       from(components["java"])
     }
