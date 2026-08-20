@@ -66,8 +66,8 @@ tasks {
     stdopts.overview = "src/main/javadoc/overview.html"
     stdopts.use()
     stdopts.isDocFilesSubDirs = true
-    stdopts.windowTitle = "$name $version API Documentation"
-    stdopts.docTitle = "<h1>$name $version API</h1>"
+    stdopts.windowTitle = "$name ${rootProject.version} API Documentation"
+    stdopts.docTitle = "<h1>$name ${rootProject.version} API</h1>"
     stdopts.header = """<img src="https://raw.githubusercontent.com/billygalbreath/livemap/v4/webmap/public/images/livemap-white.png" style="height:32px">"""
     stdopts.bottom = "Copyright © 2020-2026 William Blake Galbreath"
     stdopts.linkSource(true)
