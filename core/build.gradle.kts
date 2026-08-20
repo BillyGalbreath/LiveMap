@@ -79,7 +79,7 @@ tasks {
       //"https://javadoc.io/doc/com.mojang/brigadier/${libs.versions.brigadier.get()}/", // brigadier doesn't have any public Javadoc
       "https://javadoc.io/doc/org.bstats/bstats-bukkit/${libs.versions.bstats.get()}/",
       //"https://javadoc.io/doc/com.github.ben-manes.caffeine/caffeine/${libs.versions.caffeine.get()}/", // causes warning: The code being documented uses packages in the unnamed module, but the packages defined in %s are in named modules
-      "https://javadoc.io/doc/it.unimi.dsi/fastutil/${libs.versions.fastutil.get()}/",
+      //"https://javadoc.io/doc/it.unimi.dsi/fastutil/${libs.versions.fastutil.get()}/", // cannot find package-list at url
       //"https://javadoc.io/doc/com.google.code.gson/gson/${libs.versions.gson.get()}/", // causes warning: The code being documented uses packages in the unnamed module, but the packages defined in %s are in named modules
       "https://javadoc.io/doc/com.google.guava/guava/${libs.versions.guava.get()}/",
       //"https://javadoc.io/doc/at.yawk.lz4/lz4-java/${libs.versions.lz4.get()}/", // causes warning: The code being documented uses packages in the unnamed module, but the packages defined in %s are in named modules
