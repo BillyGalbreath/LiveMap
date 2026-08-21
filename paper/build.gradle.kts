@@ -25,6 +25,6 @@ tasks {
 
     arrayOf(
       "org.bstats"
-    ).forEach { relocate(it, "net.pl3x.$it") }
+    ).forEach { relocate(it, "${rootProject.group}.libs.$it") }
   }
 }

@@ -47,6 +47,7 @@ tasks {
     arrayOf(
       "com.github.benmanes.caffeine",
       "com.google.errorprone.annotations",
+      "de.bluecolored.bluenbt",
       "io.smallrye",
       "io.undertow",
       "net.kyori.adventure",
