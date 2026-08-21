@@ -1,3 +1,14 @@
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import net.pl3x.livemap.PaperLiveMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -9,14 +20,6 @@ import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.ParameterNode;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.*;
-
 import static org.junit.jupiter.api.Assertions.fail;
 
 // Test borrowed from Bukkit API
@@ -113,8 +116,8 @@ public class AnnotationTest {
     }
 
     private static boolean isClassIncluded(@NotNull ClassNode clazz, @NotNull Map<String, ClassNode> allClasses) {
-        // Exclude private, synthetic or deprecated classes and annotations, since their members can't be null
-        if ((clazz.access & (Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_DEPRECATED | Opcodes.ACC_ANNOTATION)) != 0) {
+        // Exclude synthetic or deprecated classes and annotations, since their members can't be null
+        if ((clazz.access & (Opcodes.ACC_SYNTHETIC | Opcodes.ACC_DEPRECATED | Opcodes.ACC_ANNOTATION)) != 0) {
             return false;
         }
 
@@ -134,8 +137,8 @@ public class AnnotationTest {
     }
 
     private static boolean isMethodIncluded(@NotNull ClassNode clazz, @NotNull MethodNode method, @NotNull Map<String, ClassNode> allClasses) {
-        // Exclude private, synthetic and deprecated methods
-        if ((method.access & (Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_DEPRECATED)) != 0) {
+        // Exclude synthetic and deprecated methods
+        if ((method.access & (Opcodes.ACC_SYNTHETIC | Opcodes.ACC_DEPRECATED)) != 0) {
             return false;
         }
 

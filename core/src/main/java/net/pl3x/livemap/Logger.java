@@ -13,10 +13,12 @@ public final class Logger {
     private Logger() {
     }
 
+    @NotNull
     private static ComponentLogger logger() {
         return LiveMap.api().getComponentLogger();
     }
 
+    @NotNull
     private static Component parse(@NotNull String message) {
         return MiniMessage.miniMessage().deserialize(message);
     }
