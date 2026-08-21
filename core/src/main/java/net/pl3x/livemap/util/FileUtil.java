@@ -1,16 +1,20 @@
 package net.pl3x.livemap.util;
 
-import net.pl3x.livemap.LiveMap;
-import net.pl3x.livemap.Logger;
-import org.jetbrains.annotations.NotNull;
-
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import net.pl3x.livemap.LiveMap;
+import net.pl3x.livemap.Logger;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Utility class to handle file operations.
