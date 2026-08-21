@@ -1,14 +1,13 @@
 package net.pl3x.livemap.world;
 
+import java.util.Locale;
+import java.util.UUID;
+import java.util.function.Function;
 import net.minecraft.server.level.ServerLevel;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Locale;
-import java.util.UUID;
-import java.util.function.Function;
 
 public class PaperWorldRegistry extends WorldRegistry {
     @Nullable
@@ -66,10 +65,9 @@ public class PaperWorldRegistry extends WorldRegistry {
         return super.get(obj2key(obj));
     }
 
-
     @NotNull
     public World get(@NotNull org.bukkit.World world) {
-        return computeIfAbsent(world, k -> new PaperWorld(world));
+        return computeIfAbsent(world, _ -> new PaperWorld(world));
     }
 
     @NotNull

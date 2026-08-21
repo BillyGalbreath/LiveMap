@@ -1,6 +1,10 @@
 package net.pl3x.livemap;
 
+import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import java.nio.file.Path;
+import java.util.List;
+import net.pl3x.livemap.command.LiveMapCommand;
+import net.pl3x.livemap.command.PaperSource;
 import net.pl3x.livemap.configuration.Config;
 import net.pl3x.livemap.configuration.Lang;
 import net.pl3x.livemap.httpd.HttpdServer;
@@ -49,7 +53,14 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
         this.httpdServer = new HttpdServer();
         getHttpdServer().start();
 
-        // commands
+        // register commands
+        getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event ->
+            event.registrar().register(
+                new LiveMapCommand<>(PaperSource.getConverter()).build(),
+                "LiveMap command. '/map help'",
+                List.of("map")
+            )
+        );
 
         // scheduler
 
