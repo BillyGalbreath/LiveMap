@@ -72,6 +72,7 @@ public final class FileUtil {
                         Files.createDirectories(file);
                     } catch (IOException ignore) {
                     }
+                    continue;
                 }
                 try (
                     InputStream in = new BufferedInputStream(jarFile.getInputStream(entry));
