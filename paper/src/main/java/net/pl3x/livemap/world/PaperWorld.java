@@ -1,5 +1,6 @@
 package net.pl3x.livemap.world;
 
+import io.papermc.paper.command.brigadier.argument.CustomArgumentType;
 import net.minecraft.server.level.ServerLevel;
 import net.pl3x.livemap.util.Unsafe;
 import org.bukkit.craftbukkit.CraftWorld;
@@ -14,7 +15,7 @@ public class PaperWorld extends World {
 
     public PaperWorld(@NotNull ServerLevel level) {
         super(
-            level.serverLevelData.getLevelName(),
+            level.bukkitName,
             level.getServer().storageSource.getDimensionPath(level.dimension()).resolve("region")
         );
         this.level = level;
@@ -24,5 +25,8 @@ public class PaperWorld extends World {
     @NotNull
     public <T> T getLevel() {
         return Unsafe.cast(this.level);
+    }
+
+    public static class Argument extends World.Argument implements CustomArgumentType<World, String> {
     }
 }

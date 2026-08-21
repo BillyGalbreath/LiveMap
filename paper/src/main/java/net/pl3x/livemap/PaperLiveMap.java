@@ -1,5 +1,7 @@
 package net.pl3x.livemap;
 
+import com.mojang.brigadier.builder.ArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import java.nio.file.Path;
 import java.util.List;
@@ -9,7 +11,9 @@ import net.pl3x.livemap.configuration.Config;
 import net.pl3x.livemap.configuration.Lang;
 import net.pl3x.livemap.httpd.HttpdServer;
 import net.pl3x.livemap.util.FileUtil;
+import net.pl3x.livemap.world.PaperWorld;
 import net.pl3x.livemap.world.PaperWorldRegistry;
+import net.pl3x.livemap.world.World;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -20,6 +24,8 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
     private Path tilesDir;
 
     private final PaperWorldRegistry worldRegistry = new PaperWorldRegistry();
+
+    private final PaperArgs args = new PaperArgs();
 
     private HttpdServer httpdServer;
     private Metrics metrics;
@@ -48,6 +54,7 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
         // render registry
 
         // world registry
+        getWorldRegistry().rebuild();
 
         // internal webserver
         this.httpdServer = new HttpdServer();
@@ -81,6 +88,15 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
             getHttpdServer().stop();
             this.httpdServer = null;
         }
+
+        // block registry
+
+        // biome registry
+
+        // render registry
+
+        // world registry
+        getWorldRegistry().clear();
     }
 
     @Override
@@ -110,5 +126,22 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
     @Override
     public @NotNull PaperWorldRegistry getWorldRegistry() {
         return this.worldRegistry;
+    }
+
+    @Override
+    @NotNull
+    public PaperArgs args() {
+        return this.args;
+    }
+
+    // Paper will not let us use custom arguments without implementing
+    // their CustomArgumentType interface so we have to grab Paper
+    // specific versions from this stupid thing in order to use them.
+    public static class PaperArgs implements Args {
+        @Override
+        @NotNull
+        public <S> ArgumentBuilder<S, RequiredArgumentBuilder<S, World>> world(@NotNull String name) {
+            return RequiredArgumentBuilder.argument(name, new PaperWorld.Argument());
+        }
     }
 }

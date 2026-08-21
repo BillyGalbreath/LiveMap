@@ -1,5 +1,6 @@
 package net.pl3x.livemap.command;
 
+import com.mojang.brigadier.Command;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -30,7 +31,7 @@ public abstract class BaseCommand<S> extends LiteralArgumentBuilder<S> {
 
         executes(ctx -> {
             execute(ctx);
-            return 1;
+            return Command.SINGLE_SUCCESS;
         });
     }
 

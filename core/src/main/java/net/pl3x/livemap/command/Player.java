@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents a player in a world.
  */
-public interface Player {
+public interface Player extends Sender {
     /**
      * Get this player's name.
      *

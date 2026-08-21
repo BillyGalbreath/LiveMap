@@ -1,7 +1,10 @@
 package net.pl3x.livemap;
 
+import com.mojang.brigadier.builder.ArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import java.nio.file.Path;
 import net.pl3x.livemap.httpd.HttpdServer;
+import net.pl3x.livemap.world.World;
 import net.pl3x.livemap.world.WorldRegistry;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,4 +71,38 @@ public interface LiveMap {
      */
     @NotNull
     WorldRegistry getWorldRegistry();
+
+    /**
+     * Convenience methods to make using custom command arguments a little less painful
+     *
+     * @return Instance of Args class
+     */
+    @NotNull
+    Args args();
+
+    /**
+     * Convenience methods to make using custom command arguments a little less painful
+     */
+    interface Args {
+        /**
+         * Create a new world argument with the name "world"
+         *
+         * @param <S> Command source type
+         * @return World argument
+         */
+        @NotNull
+        default <S> ArgumentBuilder<S, RequiredArgumentBuilder<S, World>> world() {
+            return world("world");
+        }
+
+        /**
+         * Create a new world argument with the specified name.
+         *
+         * @param name Name of the argument
+         * @param <S>  Command source type
+         * @return World argument
+         */
+        @NotNull
+        <S> ArgumentBuilder<S, RequiredArgumentBuilder<S, World>> world(@NotNull String name);
+    }
 }
