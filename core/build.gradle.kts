@@ -23,8 +23,8 @@ dependencies {
   compileOnly(libs.fastutil)
   compileOnly(libs.gson)
   compileOnly(libs.guava)
+  compileOnly(libs.log4j)
   compileOnly(libs.lz4)
-  compileOnly(libs.slf4j)
 }
 
 tasks {
@@ -83,8 +83,8 @@ tasks {
       //"https://javadoc.io/doc/it.unimi.dsi/fastutil/${libs.versions.fastutil.get()}/", // cannot find package-list at url
       //"https://javadoc.io/doc/com.google.code.gson/gson/${libs.versions.gson.get()}/", // causes warning: The code being documented uses packages in the unnamed module, but the packages defined in %s are in named modules
       "https://javadoc.io/doc/com.google.guava/guava/${libs.versions.guava.get()}/",
+      //"https://javadoc.io/doc/org.apache.logging.log4j/log4j-api/${libs.versions.log4j.get()}/", // missing Javadoc
       //"https://javadoc.io/doc/at.yawk.lz4/lz4-java/${libs.versions.lz4.get()}/", // causes warning: The code being documented uses packages in the unnamed module, but the packages defined in %s are in named modules
-      "https://javadoc.io/doc/org.slf4j/slf4j-api/${libs.versions.slf4j.get()}/",
       "https://javadoc.io/doc/io.undertow/undertow-core/${libs.versions.undertow.get()}/",
       "https://carleslc.me/Simple-YAML/doc/"
     )

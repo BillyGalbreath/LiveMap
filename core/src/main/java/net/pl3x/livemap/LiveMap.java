@@ -1,7 +1,6 @@
 package net.pl3x.livemap;
 
 import java.nio.file.Path;
-import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.pl3x.livemap.httpd.HttpdServer;
 import net.pl3x.livemap.world.WorldRegistry;
 import org.jetbrains.annotations.NotNull;
@@ -29,14 +28,6 @@ public interface LiveMap {
     static LiveMap api() {
         return Provider.api;
     }
-
-    /**
-     * Get the logger.
-     *
-     * @return LiveMap's logger
-     */
-    @NotNull
-    ComponentLogger getComponentLogger();
 
     /**
      * Get the path that LiveMap data files are located in.

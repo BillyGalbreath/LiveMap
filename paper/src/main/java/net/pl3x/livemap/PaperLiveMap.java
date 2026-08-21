@@ -1,7 +1,6 @@
 package net.pl3x.livemap;
 
 import java.nio.file.Path;
-import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.pl3x.livemap.configuration.Config;
 import net.pl3x.livemap.configuration.Lang;
 import net.pl3x.livemap.httpd.HttpdServer;
@@ -24,6 +23,7 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
     public PaperLiveMap() {
         super();
         Provider.api = this;
+        Logger.logger = getLogger();
     }
 
     @Override
@@ -70,12 +70,6 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
             getHttpdServer().stop();
             this.httpdServer = null;
         }
-    }
-
-    @Override
-    @NotNull
-    public ComponentLogger getComponentLogger() {
-        return super.getComponentLogger();
     }
 
     @Override

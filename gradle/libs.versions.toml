@@ -26,7 +26,7 @@ fastutil = "8.5.18"
 gson = "2.14.0"
 guava = "33.6.0-jre"
 junit = "6.0.3"
-slf4j = "2.0.17"
+log4j = "2.26.0"
 
 [plugins]
 fix-javadoc = { id = "com.jeff-media.fix-javadoc-plugin", version.ref = "fix-javadoc" }
@@ -51,9 +51,9 @@ gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
 junit = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junit" }
 junitPlatform = { group = "org.junit.platform", name = "junit-platform-launcher" }
+log4j = { group = "org.apache.logging.log4j", name = "log4j-core", version.ref = "log4j" }
 lz4 = { group = "at.yawk.lz4", name = "lz4-java", version.ref = "lz4" }
 simpleYaml = { group = "com.github.Carleslc.Simple-YAML", name = "Simple-Yaml", version.ref = "simpleYaml" }
-slf4j = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
 undertow = { group = "io.undertow", name = "undertow-core", version.ref = "undertow" }
 
 [bundles]

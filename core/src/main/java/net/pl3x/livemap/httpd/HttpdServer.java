@@ -35,6 +35,8 @@ public class HttpdServer {
         }
 
         try (ResourceManager resourceManager = new FriendlyUrlPathResourceManager()) {
+            Logger.LogFilter.HIDE_UNDERTOW_LOGS = true;
+
             this.server = Undertow.builder()
                 .addHttpListener(Config.HTTPD_PORT, Config.HTTPD_BIND)
                 .setServerOption(UndertowOptions.ENABLE_HTTP2, true)
@@ -42,6 +44,8 @@ public class HttpdServer {
                 .build();
 
             this.server.start();
+
+            Logger.LogFilter.HIDE_UNDERTOW_LOGS = false;
 
             Logger.info(Lang.HTTPD_STARTED
                 .replace("<bind>", Config.HTTPD_BIND)
@@ -61,8 +65,12 @@ public class HttpdServer {
             return;
         }
 
+        Logger.LogFilter.HIDE_UNDERTOW_LOGS = true;
+
         this.server.stop();
         this.server = null;
+
+        Logger.LogFilter.HIDE_UNDERTOW_LOGS = false;
 
         Logger.info(Lang.HTTPD_STOPPED);
     }
