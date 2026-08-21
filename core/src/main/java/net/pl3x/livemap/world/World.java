@@ -89,7 +89,7 @@ public abstract class World {
         public static final SimpleCommandExceptionType ERROR_MISSING_WORLD = new SimpleCommandExceptionType(() -> Lang.ERROR_MISSING_WORLD);
 
         /**
-         * Create a new world argument.
+         * Constructs a new instance of a world Argument.
          */
         public Argument() {
             // Explicit constructor to satisfy Javadoc and linter tools

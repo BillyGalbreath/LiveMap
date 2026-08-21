@@ -26,6 +26,10 @@ public class ReloadCommand<S> extends BaseCommand<S> {
         Sender sender = getSource(context).getSender();
 
         sender.sendMessage("// todo (reload)");
-        // todo
+        // todo - reload plugin
+
+        // caution - v3 has issues reloading while render queue is running. need to
+        // pay special attention to ensure all tasks are stopped before reloading.
+        // whether or not to automatically restart them, I don't know, yet.
     }
 }

@@ -26,6 +26,6 @@ public class RadiusRenderCommand<S> extends BaseCommand<S> {
         Sender sender = getSource(context).getSender();
 
         sender.sendMessage("// todo (radiusrender)");
-        // todo
+        // todo - add regions within radius to render queue
     }
 }
