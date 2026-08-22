@@ -10,16 +10,23 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.configuration.Lang;
+import net.pl3x.livemap.marker.Point;
+import net.pl3x.livemap.world.biome.BiomeRegistry;
 import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Represents a renderable world.
  */
 public abstract class World {
     private final String name;
+    private final long seed;
+    private final Point spawn;
+    private final Type type;
 
     private final Path regionDir;
     private final Path tilesDir;
@@ -28,10 +35,16 @@ public abstract class World {
      * Constructs a new instance of World.
      *
      * @param name       Name of world
+     * @param seed       Seed used for chunk generation
+     * @param spawn      Spawn point
+     * @param type       Type of world
      * @param regionsDir Regions directory
      */
-    public World(@NotNull String name, @NotNull Path regionsDir) {
+    public World(@NotNull String name, long seed, @NotNull Point spawn, @NotNull Type type, @NotNull Path regionsDir) {
         this.name = name;
+        this.seed = seed;
+        this.spawn = spawn;
+        this.type = type;
         this.regionDir = regionsDir;
         this.tilesDir = LiveMap.api().getTilesDir().resolve(name.replace(":", "-"));
     }
@@ -56,6 +69,35 @@ public abstract class World {
     }
 
     /**
+     * Get this world's seed.
+     *
+     * @return World seed
+     */
+    public long getSeed() {
+        return this.seed;
+    }
+
+    /**
+     * Get this world's spawn point.
+     *
+     * @return Spawn point
+     */
+    @NotNull
+    public Point getSpawn() {
+        return this.spawn;
+    }
+
+    /**
+     * Get this world's type.
+     *
+     * @return Type of world
+     */
+    @NotNull
+    public Type getType() {
+        return this.type;
+    }
+
+    /**
      * Get path to regions directory.
      *
      * @return Regions directory
@@ -73,6 +115,83 @@ public abstract class World {
     @NotNull
     public Path getTilesDir() {
         return this.tilesDir;
+    }
+
+    /**
+     * Get whether world has a ceiling or not (a layer of blocks at the top, like the nether).
+     *
+     * @return True if world has a ceiling
+     */
+    public abstract boolean hasCeiling();
+
+    /**
+     * Get the lowest buildable Y position.
+     * <p>
+     * i.e. <code>-64</code> for vanilla overworld
+     *
+     * @return Lowest Y position
+     */
+    public abstract int getMinY();
+
+    /**
+     * Get the highest buildable Y position.
+     * <p>
+     * i.e. <code>319</code> for vanilla overworld
+     *
+     * @return Highest Y position
+     */
+    public abstract int getMaxY();
+
+    /**
+     * Get the total world height.
+     * <p>
+     * Note: This is <em>not</em> the same as max Y. This includes the full
+     * distance from minY to maxY (<code>maxY - minY + 1</code>)
+     * <p>
+     * i.e. <code>384</code> for vanilla overworld<br>
+     * &emsp;<sub>(<code>319 - -64 + 1 = 384</code>)</sub>
+     *
+     * @return Full height of the world
+     */
+    public abstract int getHeight();
+
+    /**
+     * Get the biome registry.
+     *
+     * @return The biome registry
+     */
+    @NotNull
+    public abstract BiomeRegistry getBiomeRegistry();
+
+    @Override
+    public boolean equals(@Nullable Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            return false;
+        }
+        if (getClass() != o.getClass()) {
+            return false;
+        }
+        World other = (World) o;
+        return getLevel() == other.getLevel();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getName());
+    }
+
+    @Override
+    @NotNull
+    public String toString() {
+        return "World["
+            + "name=" + getName()
+            + ",seed=" + getSeed()
+            + ",spawn=" + getSpawn()
+            + ",type=" + getType()
+            + "]";
     }
 
     /**
@@ -129,6 +248,56 @@ public abstract class World {
         @NotNull
         public ArgumentType<String> getNativeType() {
             return StringArgumentType.greedyString();
+        }
+    }
+
+    /**
+     * Represents a world's type.
+     */
+    public enum Type {
+        /**
+         * The overworld (normal) world type.
+         */
+        OVERWORLD,
+        /**
+         * The nether world type.
+         */
+        NETHER,
+        /**
+         * The end world type.
+         */
+        THE_END,
+        /**
+         * Custom world type (non-vanilla).
+         */
+        CUSTOM;
+
+        private final String name;
+
+        Type() {
+            this.name = name().toLowerCase(Locale.ROOT);
+        }
+
+        /**
+         * Get the world type from a server level.
+         *
+         * @param dimension dimension name
+         * @return world type
+         */
+        @NotNull
+        public static Type get(@NotNull String dimension) {
+            return switch (dimension) {
+                case "minecraft:overworld" -> OVERWORLD;
+                case "minecraft:the_nether" -> NETHER;
+                case "minecraft:the_end" -> THE_END;
+                default -> CUSTOM;
+            };
+        }
+
+        @Override
+        @NotNull
+        public String toString() {
+            return this.name;
         }
     }
 }

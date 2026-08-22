@@ -124,7 +124,8 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
     }
 
     @Override
-    public @NotNull PaperWorldRegistry getWorldRegistry() {
+    @NotNull
+    public PaperWorldRegistry getWorldRegistry() {
         return this.worldRegistry;
     }
 

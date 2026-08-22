@@ -1,6 +1,276 @@
 package net.pl3x.livemap.world.chunk;
 
-final class Chunk_1_18 extends Chunk {
-    Chunk_1_18() {
+import de.bluecolored.bluenbt.NBTName;
+import net.pl3x.livemap.util.MCAMath;
+import net.pl3x.livemap.util.PackedIntArrayAccess;
+import net.pl3x.livemap.world.Region;
+import net.pl3x.livemap.world.World;
+import net.pl3x.livemap.world.biome.Biome;
+import net.pl3x.livemap.world.block.BlockState;
+import net.pl3x.livemap.world.block.Blocks;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * Represents a chunk in the 1.18+ format.
+ */
+public final class Chunk_1_18 extends Chunk {
+    private static final Section[] EMPTY_SECTION_ARRAY = new Section[0];
+    private static final SectionNBT[] EMPTY_SECTION_NBT_ARRAY = new SectionNBT[0];
+    private static final HeightmapsNBT EMPTY_HEIGHTMAPS_NBT = new HeightmapsNBT();
+    private static final BlockStatesNBT EMPTY_BLOCKSTATES_NBT = new BlockStatesNBT();
+    private static final BiomesNBT EMPTY_BIOMES_NBT = new BiomesNBT();
+
+    private final boolean isFull;
+
+    private long inhabitedTime;
+
+    private PackedIntArrayAccess heightmap;
+
+    private Section[] sections = EMPTY_SECTION_ARRAY;
+
+    /**
+     * Constructs a new instance of Chunk_1_18.
+     */
+    public Chunk_1_18(@NotNull Region region, @NotNull ChunkNBT chunkNBT) {
+        super(region, chunkNBT);
+
+        this.isFull = chunkNBT.status.endsWith("full");
+        if (!this.isFull) {
+            // chunk not fully generated. don't load anything.
+            return;
+        }
+
+        this.inhabitedTime = chunkNBT.inhabitedTime;
+
+        int bitsPerHeightmapElement = MCAMath.ceilLog2(getWorld().getHeight() + 1);
+        this.heightmap = new PackedIntArrayAccess(bitsPerHeightmapElement, chunkNBT.heightmaps.worldSurface);
+        if (!this.heightmap.isExpectedSize(VALUES_PER_HEIGHTMAP)) {
+            this.heightmap = null;
+        }
+
+        SectionNBT[] sectionsNBT = chunkNBT.sections;
+        if (sectionsNBT != null && sectionsNBT.length > 0) {
+            this.sections = new Section[sectionsNBT.length];
+            for (SectionNBT sectionNBT : sectionsNBT) {
+                Section section = new Section(getWorld(), sectionNBT);
+                this.sections[section.getY() - this.getY()] = section;
+            }
+        }
+    }
+
+    @Override
+    public boolean isFull() {
+        return this.isFull;
+    }
+
+    @Override
+    public long getInhabitedTime() {
+        return inhabitedTime;
+    }
+
+    @Override
+    public int getHeight(int blockX, int blockZ) {
+        if (heightmap == null) {
+            return getWorld().getMinY();
+        }
+        return this.heightmap.get(((getZ() & 0xF) << 4) | (getX() & 0xF)) + getWorld().getMinY();
+    }
+
+    @Override
+    @NotNull
+    public BlockState getBlockState(int x, int y, int z) {
+        int sectionY = y >> 4;
+        Section section = getSection(sectionY);
+        return section == null ? Blocks.AIR.getDefaultState() : section.getBlockState(x, y, z);
+    }
+
+    @Override
+    @NotNull
+    public Biome getBiome(int x, int y, int z) {
+        int sectionY = y >> 4;
+        Section section = getSection(sectionY);
+        return section == null ? Biome.DEFAULT : section.getBiome(x, y, z);
+    }
+
+    @Override
+    public int getLight(int x, int y, int z) {
+        int sectionY = y >> 4;
+        Section section = getSection(sectionY);
+        return section == null ? 15 : section.getLight(x, y, z);
+    }
+
+    @Nullable
+    public Section getSection(int y) {
+        y -= this.sections[0].getY();
+        if (y < 0 || y >= this.sections.length) return null;
+        return this.sections[y];
+    }
+
+    /**
+     * Represents a chunk section (16x16x16 blocks).
+     */
+    public static class Section {
+        private final SectionNBT nbt;
+
+        private final Biome[] biomePalette;
+        private final PackedIntArrayAccess blocks;
+        private final PackedIntArrayAccess biomes;
+        private final byte[] light;
+
+        /**
+         * Constructs a new instance of Section.
+         *
+         * @param world The world this chunk section belongs to
+         * @param nbt   The section's raw nbt data
+         */
+        public Section(@NotNull World world, @NotNull SectionNBT nbt) {
+            this.nbt = nbt;
+
+            this.biomePalette = new Biome[nbt.biomes.palette.length];
+            for (int i = 0; i < this.biomePalette.length; i++) {
+                this.biomePalette[i] = world.getBiomeRegistry().getOrDefault(nbt.biomes.palette[i], Biome.DEFAULT);
+            }
+
+            this.blocks = new PackedIntArrayAccess(nbt.blockStates.data, BLOCKS_PER_SECTION);
+            this.biomes = new PackedIntArrayAccess(Math.max(MCAMath.ceilLog2(this.biomePalette.length), 1), nbt.biomes.data);
+
+            this.light = nbt.light;
+        }
+
+        public int getY() {
+            return this.nbt.y;
+        }
+
+        @NotNull
+        public BlockState[] getBlockPalette() {
+            return this.nbt.blockStates.palette;
+        }
+
+        @NotNull
+        public BlockState getBlockState(int x, int y, int z) {
+            return switch (getBlockPalette().length) {
+                case 0 -> Blocks.AIR.getDefaultState();
+                case 1 -> getBlockPalette()[0];
+                default -> {
+                    int id = this.blocks.get(((y & 0xF) << 8) | ((z & 0xF) << 4) | (x & 0xF));
+                    yield id < getBlockPalette().length ? getBlockPalette()[id] : Blocks.AIR.getDefaultState();
+                }
+            };
+        }
+
+        @NotNull
+        public Biome getBiome(int x, int y, int z) {
+            return switch (this.biomePalette.length) {
+                case 0 -> Biome.DEFAULT;
+                case 1 -> this.biomePalette[0];
+                default -> {
+                    int id = this.biomes.get(((y & 0xC) << 2) | (z & 0xC) | ((x & 0xC) >> 2));
+                    yield id < this.biomePalette.length ? this.biomePalette[id] : Biome.DEFAULT;
+                }
+            };
+        }
+
+        public int getLight(int x, int y, int z) {
+            if (this.light.length == 0) {
+                return 0;
+            }
+
+            int i = ((y & 0xF) << 8) | ((z & 0xF) << 4) | x & 0xF;
+            return MCAMath.getByteHalf(this.light[i >> 1], (i & 0x1) != 0);
+        }
+    }
+
+    /**
+     * Represents raw NBT data for chunks.
+     */
+    public static class ChunkNBT extends Chunk.ChunkNBT {
+        @NBTName("Status")
+        String status = "minecraft:empty";
+
+        @NBTName("InhabitedTime")
+        long inhabitedTime = 0;
+
+        @NBTName("Heightmaps")
+        HeightmapsNBT heightmaps = EMPTY_HEIGHTMAPS_NBT;
+
+        @NBTName("sections")
+        SectionNBT[] sections = EMPTY_SECTION_NBT_ARRAY;
+
+        /**
+         * Constructs a new instance of ChunkNBT.
+         */
+        public ChunkNBT() {
+            // Explicit constructor to satisfy Javadoc and linter tools
+        }
+    }
+
+    /**
+     * Represents raw NBT data for chunk heightmaps.
+     */
+    public static class HeightmapsNBT {
+        @NBTName("WORLD_SURFACE")
+        long[] worldSurface = EMPTY_LONG_ARRAY;
+
+        /**
+         * Constructs a new instance of HeightmapsNBT.
+         */
+        public HeightmapsNBT() {
+            // Explicit constructor to satisfy Javadoc and linter tools
+        }
+    }
+
+    /**
+     * Represents raw NBT data for chunk sections.
+     */
+    public static class SectionNBT extends Chunk.SectionNBT {
+        @NBTName("block_states")
+        BlockStatesNBT blockStates = EMPTY_BLOCKSTATES_NBT;
+
+        @NBTName("biomes")
+        BiomesNBT biomes = EMPTY_BIOMES_NBT;
+
+        /**
+         * Constructs a new instance of SectionNBT.
+         */
+        public SectionNBT() {
+            // Explicit constructor to satisfy Javadoc and linter tools
+        }
+    }
+
+    /**
+     * Represents raw NBT data for block states.
+     */
+    public static class BlockStatesNBT {
+        @NBTName("palette")
+        BlockState[] palette = EMPTY_BLOCKSTATE_ARRAY;
+
+        @NBTName("data")
+        long[] data = EMPTY_LONG_ARRAY;
+
+        /**
+         * Constructs a new instance of BlockStatesNBT.
+         */
+        public BlockStatesNBT() {
+            // Explicit constructor to satisfy Javadoc and linter tools
+        }
+    }
+
+    /**
+     * Represents raw NBT data for biomes.
+     */
+    public static class BiomesNBT {
+        @NBTName("palette")
+        String[] palette = EMPTY_STRING_ARRAY;
+
+        @NBTName("data")
+        long[] data = EMPTY_LONG_ARRAY;
+
+        /**
+         * Constructs a new instance of BiomesNBT.
+         */
+        public BiomesNBT() {
+            // Explicit constructor to satisfy Javadoc and linter tools
+        }
     }
 }

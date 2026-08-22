@@ -152,8 +152,33 @@ public class AnnotationTest {
             return false;
         }
 
+        // Exclude synthetic enum constructors
+        if (isEnumConstructor(clazz, method)) {
+            return false;
+        }
+
         // Anonymous classes have generated constructors, which can't be annotated nor invoked
         return !"<init>".equals(method.name) || !isAnonymous(clazz);
+    }
+
+    private static boolean isEnumConstructor(@NotNull ClassNode clazz, @NotNull MethodNode method) {
+        // Must be a class that is an enum
+        if ((clazz.access & Opcodes.ACC_ENUM) == 0) {
+            return false;
+        }
+
+        // Must be a constructor name `<init>`
+        if (!"<init>".equals(method.name)) {
+            return false;
+        }
+
+        // Parse argument types from the method descriptor
+        Type[] argTypes = Type.getArgumentTypes(method.desc);
+
+        // Enum constructors always start with (String, int) for name and ordinal
+        return argTypes.length >= 2 &&
+            argTypes[0].equals(Type.getObjectType("java/lang/String")) &&
+            argTypes[1].equals(Type.INT_TYPE);
     }
 
     private static boolean isWellAnnotated(@Nullable List<AnnotationNode> annotations) {
