@@ -41,73 +41,12 @@ public class AnnotationTest {
         URL loc = PaperLiveMap.class.getProtectionDomain().getCodeSource().getLocation();
         File file = new File(loc.toURI());
 
-        final HashMap<String, ClassNode> foundClasses = new HashMap<>();
+        final Map<String, ClassNode> foundClasses = new HashMap<>();
         collectClasses(file, foundClasses);
 
-        final ArrayList<String> errors = new ArrayList<>();
+        final List<String> errors = new ArrayList<>();
 
-        for (ClassNode clazz : foundClasses.values()) {
-            if (!isClassIncluded(clazz, foundClasses)) {
-                continue;
-            }
-
-            for (MethodNode method : clazz.methods) {
-                if (!isMethodIncluded(clazz, method, foundClasses)) {
-                    continue;
-                }
-
-                if (mustBeAnnotated(Type.getReturnType(method.desc)) && !isWellAnnotated(method.invisibleAnnotations)) {
-                    // Paper start - Allow use of TYPE_USE annotations
-                    boolean warn = true;
-                    if (isWellAnnotated(method.visibleTypeAnnotations)) {
-                        warn = false;
-                    } else if (method.invisibleTypeAnnotations != null) {
-                        for (final org.objectweb.asm.tree.TypeAnnotationNode invisibleTypeAnnotation : method.invisibleTypeAnnotations) {
-                            final org.objectweb.asm.TypeReference ref = new org.objectweb.asm.TypeReference(invisibleTypeAnnotation.typeRef);
-                            if (ref.getSort() == org.objectweb.asm.TypeReference.METHOD_RETURN && java.util.Arrays.asList(ACCEPTED_ANNOTATIONS).contains(invisibleTypeAnnotation.desc)) {
-                                warn = false;
-                                break;
-                            }
-                        }
-                    }
-                    if (warn)
-                        // Paper end
-                        warn(errors, clazz, method, "return value");
-                }
-
-                Type[] paramTypes = Type.getArgumentTypes(method.desc);
-                List<ParameterNode> parameters = method.parameters;
-
-                dancing:
-                // Paper
-                for (int i = 0; i < paramTypes.length; i++) {
-                    if (mustBeAnnotated(paramTypes[i]) ^ isWellAnnotated(method.invisibleParameterAnnotations == null ? null : method.invisibleParameterAnnotations[i])) {
-                        // Paper start
-                        if (method.invisibleTypeAnnotations != null) {
-                            for (final org.objectweb.asm.tree.TypeAnnotationNode invisibleTypeAnnotation : method.invisibleTypeAnnotations) {
-                                final org.objectweb.asm.TypeReference ref = new org.objectweb.asm.TypeReference(invisibleTypeAnnotation.typeRef);
-                                if (ref.getSort() == org.objectweb.asm.TypeReference.METHOD_FORMAL_PARAMETER && ref.getTypeParameterIndex() == i && java.util.Arrays.asList(ACCEPTED_ANNOTATIONS).contains(invisibleTypeAnnotation.desc)) {
-                                    continue dancing;
-                                }
-                            }
-                        }
-                        if (method.visibleTypeAnnotations != null) {
-                            for (final org.objectweb.asm.tree.TypeAnnotationNode invisibleTypeAnnotation : method.visibleTypeAnnotations) {
-                                final org.objectweb.asm.TypeReference ref = new org.objectweb.asm.TypeReference(invisibleTypeAnnotation.typeRef);
-                                if (ref.getSort() == org.objectweb.asm.TypeReference.METHOD_FORMAL_PARAMETER && ref.getTypeParameterIndex() == i && java.util.Arrays.asList(ACCEPTED_ANNOTATIONS).contains(invisibleTypeAnnotation.desc)) {
-                                    continue dancing;
-                                }
-                            }
-                        }
-                        // Paper end - Allow use of TYPE_USE annotations
-                        ParameterNode paramNode = parameters == null ? null : parameters.get(i);
-                        String paramName = paramNode == null ? null : paramNode.name;
-
-                        warn(errors, clazz, method, "parameter " + i + (paramName == null ? "" : ": " + paramName));
-                    }
-                }
-            }
-        }
+        loopClasses(foundClasses, errors);
 
         if (errors.isEmpty()) {
             // Success
@@ -129,6 +68,79 @@ public class AnnotationTest {
 
         System.err.print(builder);
         fail(builder.insert(0, "\n").toString());
+    }
+
+    private static void loopClasses(@NotNull Map<String, ClassNode> foundClasses, @NotNull List<String> errors) {
+        for (ClassNode clazz : foundClasses.values()) {
+            if (!isClassIncluded(clazz, foundClasses)) {
+                continue;
+            }
+
+            for (MethodNode method : clazz.methods) {
+                loopMethods(foundClasses, clazz, method, errors);
+            }
+        }
+    }
+
+    private static void loopMethods(@NotNull Map<String, ClassNode> foundClasses, @NotNull ClassNode clazz, @NotNull MethodNode method, @NotNull List<String> errors) {
+        if (!isMethodIncluded(clazz, method, foundClasses)) {
+            return;
+        }
+
+        if (mustBeAnnotated(Type.getReturnType(method.desc)) && !isWellAnnotated(method.invisibleAnnotations)) {
+            // Paper start - Allow use of TYPE_USE annotations
+            boolean warn = true;
+            if (isWellAnnotated(method.visibleTypeAnnotations)) {
+                warn = false;
+            } else if (method.invisibleTypeAnnotations != null) {
+                for (final org.objectweb.asm.tree.TypeAnnotationNode invisibleTypeAnnotation : method.invisibleTypeAnnotations) {
+                    final org.objectweb.asm.TypeReference ref = new org.objectweb.asm.TypeReference(invisibleTypeAnnotation.typeRef);
+                    if (ref.getSort() == org.objectweb.asm.TypeReference.METHOD_RETURN && java.util.Arrays.asList(ACCEPTED_ANNOTATIONS).contains(invisibleTypeAnnotation.desc)) {
+                        warn = false;
+                        break;
+                    }
+                }
+            }
+            if (warn)
+                // Paper end
+                warn(errors, clazz, method, "return value");
+        }
+
+        Type[] paramTypes = Type.getArgumentTypes(method.desc);
+        List<ParameterNode> parameters = method.parameters;
+
+        dancing(clazz, method, paramTypes, parameters, errors);
+    }
+
+    private static void dancing(@NotNull ClassNode clazz, @NotNull MethodNode method, @NotNull Type[] paramTypes, @NotNull List<ParameterNode> parameters, @NotNull List<String> errors) {
+        dancing:
+        // Paper
+        for (int i = 0; i < paramTypes.length; i++) {
+            if (mustBeAnnotated(paramTypes[i]) ^ isWellAnnotated(method.invisibleParameterAnnotations == null ? null : method.invisibleParameterAnnotations[i])) {
+                // Paper start - Allow use of TYPE_USE annotations
+                if (method.invisibleTypeAnnotations != null) {
+                    for (final org.objectweb.asm.tree.TypeAnnotationNode invisibleTypeAnnotation : method.invisibleTypeAnnotations) {
+                        final org.objectweb.asm.TypeReference ref = new org.objectweb.asm.TypeReference(invisibleTypeAnnotation.typeRef);
+                        if (ref.getSort() == org.objectweb.asm.TypeReference.METHOD_FORMAL_PARAMETER && ref.getTypeParameterIndex() == i && java.util.Arrays.asList(ACCEPTED_ANNOTATIONS).contains(invisibleTypeAnnotation.desc)) {
+                            continue dancing;
+                        }
+                    }
+                }
+                if (method.visibleTypeAnnotations != null) {
+                    for (final org.objectweb.asm.tree.TypeAnnotationNode invisibleTypeAnnotation : method.visibleTypeAnnotations) {
+                        final org.objectweb.asm.TypeReference ref = new org.objectweb.asm.TypeReference(invisibleTypeAnnotation.typeRef);
+                        if (ref.getSort() == org.objectweb.asm.TypeReference.METHOD_FORMAL_PARAMETER && ref.getTypeParameterIndex() == i && java.util.Arrays.asList(ACCEPTED_ANNOTATIONS).contains(invisibleTypeAnnotation.desc)) {
+                            continue dancing;
+                        }
+                    }
+                }
+                // Paper end - Allow use of TYPE_USE annotations
+                ParameterNode paramNode = parameters == null ? null : parameters.get(i);
+                String paramName = paramNode == null ? null : paramNode.name;
+
+                warn(errors, clazz, method, "parameter " + i + (paramName == null ? "" : ": " + paramName));
+            }
+        }
     }
 
     private static void collectClasses(@NotNull File from, @NotNull Map<String, ClassNode> to) throws IOException {
