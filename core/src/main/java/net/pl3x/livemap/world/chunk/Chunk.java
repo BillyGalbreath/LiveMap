@@ -7,6 +7,7 @@ import net.pl3x.livemap.world.World;
 import net.pl3x.livemap.world.biome.Biome;
 import net.pl3x.livemap.world.block.BlockState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a chunk in a region.
@@ -21,18 +22,18 @@ public abstract class Chunk {
     static final String[] EMPTY_STRING_ARRAY = new String[0];
     static final BlockState[] EMPTY_BLOCKSTATE_ARRAY = new BlockState[0];
 
-    private final ChunkNBT nbt;
+    private final NBT nbt;
     private final Region region;
 
     /**
      * Constructs a new instance of Chunk.
      *
-     * @param region   Region chunk belongs to
-     * @param chunkNBT The chunk's raw nbt data
+     * @param region Region chunk belongs to
+     * @param nbt    The chunk's raw nbt data
      */
-    public Chunk(@NotNull Region region, @NotNull ChunkNBT chunkNBT) {
+    public Chunk(@NotNull Region region, @NotNull Chunk.NBT nbt) {
         this.region = region;
-        this.nbt = chunkNBT;
+        this.nbt = nbt;
     }
 
     /**
@@ -147,7 +148,7 @@ public abstract class Chunk {
     public abstract int getLight(int blockX, int blockY, int blockZ);
 
     @Override
-    public boolean equals(@org.jspecify.annotations.Nullable Object o) {
+    public boolean equals(@Nullable Object o) {
         if (this == o) {
             return true;
         }
@@ -181,7 +182,7 @@ public abstract class Chunk {
     /**
      * Represents raw NBT data for chunks.
      */
-    public static class ChunkNBT {
+    public static class NBT {
         @NBTName("DataVersion")
         int version = 0;
 
@@ -195,28 +196,40 @@ public abstract class Chunk {
         int zPos;
 
         /**
-         * Constructs a new instance of ChunkNBT.
+         * Constructs a new instance of Chunk.NBT.
          */
-        public ChunkNBT() {
+        public NBT() {
             // Explicit constructor to satisfy Javadoc and linter tools
         }
     }
 
     /**
-     * Represents raw NBT data for chunk sections.
+     * Represents a chunk section (16x16x16 blocks).
      */
-    public static class SectionNBT {
-        @NBTName("Y")
-        int y = 0;
-
-        @NBTName("BlockLight")
-        byte[] light = EMPTY_BYTE_ARRAY;
+    public static class Section {
+        /**
+         * Constructs a new instance of Section.
+         */
+        public Section() {
+            // Explicit constructor to satisfy Javadoc and linter tools
+        }
 
         /**
-         * Constructs a new instance of SectionNBT.
+         * Represents raw NBT data for chunk sections.
          */
-        public SectionNBT() {
-            // Explicit constructor to satisfy Javadoc and linter tools
+        public static class NBT {
+            @NBTName("Y")
+            int y = 0;
+
+            @NBTName("BlockLight")
+            byte[] light = EMPTY_BYTE_ARRAY;
+
+            /**
+             * Constructs a new instance of Chunk.Section.NBT.
+             */
+            public NBT() {
+                // Explicit constructor to satisfy Javadoc and linter tools
+            }
         }
     }
 }

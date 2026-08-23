@@ -17,7 +17,7 @@ import net.pl3x.livemap.configuration.Lang;
 import net.pl3x.livemap.marker.Point;
 import net.pl3x.livemap.world.biome.BiomeRegistry;
 import org.jetbrains.annotations.NotNull;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a renderable world.

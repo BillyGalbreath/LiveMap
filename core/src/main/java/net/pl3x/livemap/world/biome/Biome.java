@@ -2,7 +2,7 @@ package net.pl3x.livemap.world.biome;
 
 import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a Minecraft biome and its color and relevant properties.

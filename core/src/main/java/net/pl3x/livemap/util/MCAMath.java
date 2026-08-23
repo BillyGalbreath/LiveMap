@@ -1,5 +1,7 @@
 package net.pl3x.livemap.util;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Math helpers for calculating MCA related data.
  */
@@ -17,7 +19,7 @@ public final class MCAMath {
      * @param bitsPerValue Number of bits per value
      * @return The requested value at specified index
      */
-    public static long getValueFromLongArray(long[] data, int valueIndex, int bitsPerValue) {
+    public static long getValueFromLongArray(long @NotNull [] data, int valueIndex, int bitsPerValue) {
         int valuesPerLong = 64 / bitsPerValue;
         int longIndex = valueIndex / valuesPerLong;
         int bitIndex = (valueIndex % valuesPerLong) * bitsPerValue;
@@ -37,7 +39,7 @@ public final class MCAMath {
      * @param bitsPerValue Number of bits per value
      * @return The requested value at specified index
      */
-    public static long getValueFromLongStream(long[] data, int valueIndex, int bitsPerValue) {
+    public static long getValueFromLongStream(long @NotNull [] data, int valueIndex, int bitsPerValue) {
         int bitIndex = valueIndex * bitsPerValue;
         int firstLong = bitIndex >> 6; // index / 64
         int bitoffset = bitIndex & 0x3F; // Math.floorMod(index, 64)

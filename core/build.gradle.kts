@@ -53,7 +53,6 @@ tasks {
       "net.kyori.adventure",
       "org.checkerframework",
       "org.jboss",
-      "org.jspecify.annotations",
       "org.simpleyaml",
       "org.wildfly",
       "org.xnio",
@@ -89,6 +88,7 @@ tasks {
       "https://carleslc.me/Simple-YAML/doc/"
     )
     exclude(
+      "net/pl3x/livemap/configuration/ColorsConfig.java",
       "net/pl3x/livemap/configuration/Config.java",
       "net/pl3x/livemap/configuration/Lang.java",
       "net/pl3x/livemap/world/block/Blocks.java"

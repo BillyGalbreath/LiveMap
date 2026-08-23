@@ -2,8 +2,8 @@ package net.pl3x.livemap.world.chunk;
 
 import net.pl3x.livemap.world.Region;
 import net.pl3x.livemap.world.biome.Biome;
+import net.pl3x.livemap.world.block.Block;
 import net.pl3x.livemap.world.block.BlockState;
-import net.pl3x.livemap.world.block.Blocks;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -16,7 +16,7 @@ public class EmptyChunk extends Chunk {
      * @param region Region chunk belongs to
      */
     public EmptyChunk(@NotNull Region region) {
-        super(region, new ChunkNBT());
+        super(region, new NBT());
     }
 
     @Override
@@ -37,7 +37,7 @@ public class EmptyChunk extends Chunk {
     @Override
     @NotNull
     public BlockState getBlockState(int blockX, int blockY, int blockZ) {
-        return Blocks.AIR.getDefaultState();
+        return Block.AIR.getDefaultState();
     }
 
     @Override

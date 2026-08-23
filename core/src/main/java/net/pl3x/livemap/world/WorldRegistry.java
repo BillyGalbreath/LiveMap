@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a registry of renderable worlds.
+ * A registry of renderable worlds.
  */
 public abstract class WorldRegistry extends Registry<World> {
     /**

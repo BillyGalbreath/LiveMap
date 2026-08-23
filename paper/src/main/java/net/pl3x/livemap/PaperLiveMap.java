@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.util.List;
 import net.pl3x.livemap.command.LiveMapCommand;
 import net.pl3x.livemap.command.PaperSource;
+import net.pl3x.livemap.configuration.ColorsConfig;
 import net.pl3x.livemap.configuration.Config;
 import net.pl3x.livemap.configuration.Lang;
 import net.pl3x.livemap.httpd.HttpdServer;
@@ -14,6 +15,8 @@ import net.pl3x.livemap.util.FileUtil;
 import net.pl3x.livemap.world.PaperWorld;
 import net.pl3x.livemap.world.PaperWorldRegistry;
 import net.pl3x.livemap.world.World;
+import net.pl3x.livemap.world.block.PaperBlockRegistry;
+import net.pl3x.livemap.world.chunk.ChunkLoader;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -23,7 +26,10 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
     private Path webDir;
     private Path tilesDir;
 
+    private final PaperBlockRegistry blockRegistry = new PaperBlockRegistry();
     private final PaperWorldRegistry worldRegistry = new PaperWorldRegistry();
+
+    private final ChunkLoader chunkLoader = new ChunkLoader();
 
     private final PaperArgs args = new PaperArgs();
 
@@ -45,15 +51,13 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
         this.webDir = dir.isAbsolute() ? dir : getDataPath().resolve(dir);
         this.tilesDir = getWebDir().resolve("tiles");
 
+        // web dir has to extract before colors config to load biome colors correctly
         FileUtil.extractDir("/web/", getWebDir(), !Config.WEB_DIR_READONLY);
 
-        // block registry
+        ColorsConfig.reload();
 
-        // biome registry
-
-        // render registry
-
-        // world registry
+        // registries
+        getBlockRegistry().rebuild();
         getWorldRegistry().rebuild();
 
         // internal webserver
@@ -125,8 +129,20 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
 
     @Override
     @NotNull
+    public PaperBlockRegistry getBlockRegistry() {
+        return this.blockRegistry;
+    }
+
+    @Override
+    @NotNull
     public PaperWorldRegistry getWorldRegistry() {
         return this.worldRegistry;
+    }
+
+    @Override
+    @NotNull
+    public ChunkLoader getChunkLoader() {
+        return this.chunkLoader;
     }
 
     @Override

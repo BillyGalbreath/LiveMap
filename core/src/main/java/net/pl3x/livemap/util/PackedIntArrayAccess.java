@@ -24,6 +24,8 @@
  */
 package net.pl3x.livemap.util;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Packed integer array.
  */
@@ -107,7 +109,7 @@ public class PackedIntArrayAccess {
      * @param data         Raw data array
      * @param elementCount Number of elements in the raw data
      */
-    public PackedIntArrayAccess(long[] data, int elementCount) {
+    public PackedIntArrayAccess(long @NotNull [] data, int elementCount) {
         this(Math.max(data.length * Long.SIZE / elementCount, 1), data);
     }
 
@@ -117,7 +119,7 @@ public class PackedIntArrayAccess {
      * @param bitsPerElement Bits per element in the raw data
      * @param data           Raw data array
      */
-    public PackedIntArrayAccess(int bitsPerElement, long[] data) {
+    public PackedIntArrayAccess(int bitsPerElement, long @NotNull [] data) {
         this.bitsPerElement = bitsPerElement;
         this.data = data;
 

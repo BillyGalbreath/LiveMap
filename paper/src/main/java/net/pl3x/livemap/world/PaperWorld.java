@@ -4,14 +4,14 @@ import io.papermc.paper.command.brigadier.argument.CustomArgumentType;
 import net.minecraft.server.level.ServerLevel;
 import net.pl3x.livemap.marker.Point;
 import net.pl3x.livemap.util.Unsafe;
-import net.pl3x.livemap.world.biome.BiomeRegistry;
+import net.pl3x.livemap.world.biome.PaperBiomeRegistry;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.jetbrains.annotations.NotNull;
 
 public class PaperWorld extends World {
     private final ServerLevel level;
 
-    private final BiomeRegistry biomeRegistry = new BiomeRegistry();
+    private final PaperBiomeRegistry biomeRegistry = new PaperBiomeRegistry(this);
 
     public PaperWorld(@NotNull org.bukkit.World world) {
         this(((CraftWorld) world).getHandle());
@@ -26,6 +26,8 @@ public class PaperWorld extends World {
             level.getServer().storageSource.getDimensionPath(level.dimension()).resolve("region")
         );
         this.level = level;
+
+        getBiomeRegistry().rebuild();
     }
 
     @Override
@@ -56,7 +58,7 @@ public class PaperWorld extends World {
 
     @Override
     @NotNull
-    public BiomeRegistry getBiomeRegistry() {
+    public PaperBiomeRegistry getBiomeRegistry() {
         return this.biomeRegistry;
     }
 

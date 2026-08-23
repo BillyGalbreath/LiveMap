@@ -1,12 +1,18 @@
 package net.pl3x.livemap.world;
 
-import java.nio.file.Path;
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.Objects;
+import net.pl3x.livemap.LiveMap;
+import net.pl3x.livemap.Logger;
 import net.pl3x.livemap.marker.Point;
 import net.pl3x.livemap.world.chunk.Chunk;
 import net.pl3x.livemap.world.chunk.EmptyChunk;
 import org.jetbrains.annotations.NotNull;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a region in a world.
@@ -47,7 +53,7 @@ public class Region extends Point {
     }
 
     private final World world;
-    private final Path file;
+    private final File file;
 
     private final Chunk[] chunks = new Chunk[1024];
 
@@ -73,7 +79,7 @@ public class Region extends Point {
     public Region(@NotNull World world, int regionX, int regionZ) {
         super(regionX, regionZ);
         this.world = world;
-        this.file = this.world.getRegionsDir().resolve("r.%d.%d.mca".formatted(regionX, regionZ));
+        this.file = this.world.getRegionsDir().resolve("r.%d.%d.mca".formatted(regionX, regionZ)).toFile();
 
         this.hash = Objects.hash(world, regionX, regionZ);
     }
@@ -94,7 +100,7 @@ public class Region extends Point {
      * @return Region's MCA file path
      */
     @NotNull
-    public Path getFile() {
+    public File getFile() {
         return this.file;
     }
 
@@ -109,7 +115,63 @@ public class Region extends Point {
      */
     @NotNull
     public Chunk getChunk(int chunkX, int chunkZ) {
-        return new EmptyChunk(this);
+        int index = ((chunkZ & 0x1F) << 5) | (chunkX & 0x1F);
+        Chunk chunk = this.chunks[index];
+        if (chunk == null) {
+            try (RandomAccessFile raf = new RandomAccessFile(getFile(), "r")) {
+                chunk = loadChunk(raf, index);
+            } catch (EOFException | FileNotFoundException ignore) {
+            } catch (IOException e) {
+                Logger.error("Failed to load chunk at region [%d, %d]".formatted(chunkX, chunkZ), e);
+            }
+            if (chunk == null) {
+                return this.chunks[index] = new EmptyChunk(this);
+            }
+        }
+        return chunk;
+    }
+
+    /**
+     * Load all chunks in the world (that exist).
+     *
+     * @throws IOException if an I/O error occurs
+     */
+    public void loadChunks() throws IOException {
+        if (!getFile().exists() || getFile().length() <= 0) {
+            return;
+        }
+        try (RandomAccessFile raf = new RandomAccessFile(getFile(), "r")) {
+            for (int index = 0; index < this.chunks.length; index++) {
+                //LiveMap.api().getRegionProcessor().checkPaused(); // todo
+                loadChunk(raf, index);
+            }
+        } catch (EOFException ignore) {
+        }
+    }
+
+    /**
+     * Load chunk from disk.
+     *
+     * @param raf   The region file
+     * @param index Index of chunk position inside region (0-1023)
+     * @return Requested chunk (may return EmptyChunk if none exists)
+     * @throws IOException if an I/O error occurs
+     */
+    @NotNull
+    public Chunk loadChunk(@NotNull RandomAccessFile raf, int index) throws IOException {
+        raf.seek(index * 4L);
+
+        byte[] header = new byte[4];
+        raf.readFully(header, 0, 4);
+
+        long offset = (header[0] & 0xFF) << 16;
+        offset |= (header[1] & 0xFF) << 8;
+        offset |= header[2] & 0xFF;
+        offset <<= 12;
+        int size = (header[3] & 0xFF) * 4096;
+
+        if (size <= 0) return this.chunks[index] = new EmptyChunk(this);
+        return this.chunks[index] = LiveMap.api().getChunkLoader().load(raf, offset, this);
     }
 
     @Override

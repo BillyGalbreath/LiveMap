@@ -1,11 +1,13 @@
 package net.pl3x.livemap.world.block;
 
 import net.pl3x.livemap.util.Registry;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A registry of all known blocks to be rendered.
  */
-public class BlockRegistry extends Registry<Block> {
+public abstract class BlockRegistry extends Registry<Block> {
     /**
      * Constructs a new instance of BlockRegistry.
      */
@@ -14,6 +16,49 @@ public class BlockRegistry extends Registry<Block> {
     }
 
     @Override
-    public void rebuild() {
+    @NotNull
+    public Block get(@NotNull Object key) {
+        return getOrDefault(key, Block.AIR);
+    }
+
+    /**
+     * Associates the specified value with the specified key in this map.
+     * If the map previously contained a mapping for the key, the old
+     * value is replaced.
+     *
+     * @param block Block to add to the registry.
+     * @return the previous entry associated with this block's id, or
+     * {@code null} if there was no mapping for this block.
+     */
+    @Nullable
+    public Block put(@NotNull Block block) {
+        return super.put(block.getId(), block);
+    }
+
+    /**
+     * Process the properties flag for this block.
+     *
+     * @param name Property name
+     * @param id   Block id
+     * @param flag Properties flag
+     * @return Properties flag
+     */
+    protected short processPropertyFlag(@NotNull String name, @NotNull String id, short flag) {
+        if (name.equals("age")) {
+            switch (id) {
+                case "minecraft:wheat":
+                case "minecraft:melon_stem":
+                case "minecraft:pumpkin_stem":
+                case "minecraft:cocoa":
+                    flag |= Block.FLAG_AGE;
+            }
+        }
+        if (name.equals("moisture") && id.equals("minecraft:farmland")) {
+            flag |= Block.FLAG_MOISTURE;
+        }
+        if (name.equals("power") && id.equals("minecraft:redstone_wire")) {
+            flag |= Block.FLAG_POWER;
+        }
+        return flag;
     }
 }

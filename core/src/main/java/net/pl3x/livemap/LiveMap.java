@@ -6,6 +6,8 @@ import java.nio.file.Path;
 import net.pl3x.livemap.httpd.HttpdServer;
 import net.pl3x.livemap.world.World;
 import net.pl3x.livemap.world.WorldRegistry;
+import net.pl3x.livemap.world.block.BlockRegistry;
+import net.pl3x.livemap.world.chunk.ChunkLoader;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -65,12 +67,28 @@ public interface LiveMap {
     HttpdServer getHttpdServer();
 
     /**
+     * Get the block registry.
+     *
+     * @return The block registry
+     */
+    @NotNull
+    BlockRegistry getBlockRegistry();
+
+    /**
      * Get the world registry.
      *
      * @return The world registry
      */
     @NotNull
     WorldRegistry getWorldRegistry();
+
+    /**
+     * Get the chunk loader.
+     *
+     * @return The chunk loader
+     */
+    @NotNull
+    ChunkLoader getChunkLoader();
 
     /**
      * Convenience methods to make using custom command arguments a little less painful
