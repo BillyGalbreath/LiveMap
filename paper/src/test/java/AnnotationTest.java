@@ -57,14 +57,49 @@ public class AnnotationTest {
                 }
 
                 if (mustBeAnnotated(Type.getReturnType(method.desc)) && !isWellAnnotated(method.invisibleAnnotations)) {
-                    warn(errors, clazz, method, "return value");
+                    // Paper start - Allow use of TYPE_USE annotations
+                    boolean warn = true;
+                    if (isWellAnnotated(method.visibleTypeAnnotations)) {
+                        warn = false;
+                    } else if (method.invisibleTypeAnnotations != null) {
+                        for (final org.objectweb.asm.tree.TypeAnnotationNode invisibleTypeAnnotation : method.invisibleTypeAnnotations) {
+                            final org.objectweb.asm.TypeReference ref = new org.objectweb.asm.TypeReference(invisibleTypeAnnotation.typeRef);
+                            if (ref.getSort() == org.objectweb.asm.TypeReference.METHOD_RETURN && java.util.Arrays.asList(ACCEPTED_ANNOTATIONS).contains(invisibleTypeAnnotation.desc)) {
+                                warn = false;
+                                break;
+                            }
+                        }
+                    }
+                    if (warn)
+                        // Paper end
+                        warn(errors, clazz, method, "return value");
                 }
 
                 Type[] paramTypes = Type.getArgumentTypes(method.desc);
                 List<ParameterNode> parameters = method.parameters;
 
+                dancing:
+                // Paper
                 for (int i = 0; i < paramTypes.length; i++) {
                     if (mustBeAnnotated(paramTypes[i]) ^ isWellAnnotated(method.invisibleParameterAnnotations == null ? null : method.invisibleParameterAnnotations[i])) {
+                        // Paper start
+                        if (method.invisibleTypeAnnotations != null) {
+                            for (final org.objectweb.asm.tree.TypeAnnotationNode invisibleTypeAnnotation : method.invisibleTypeAnnotations) {
+                                final org.objectweb.asm.TypeReference ref = new org.objectweb.asm.TypeReference(invisibleTypeAnnotation.typeRef);
+                                if (ref.getSort() == org.objectweb.asm.TypeReference.METHOD_FORMAL_PARAMETER && ref.getTypeParameterIndex() == i && java.util.Arrays.asList(ACCEPTED_ANNOTATIONS).contains(invisibleTypeAnnotation.desc)) {
+                                    continue dancing;
+                                }
+                            }
+                        }
+                        if (method.visibleTypeAnnotations != null) {
+                            for (final org.objectweb.asm.tree.TypeAnnotationNode invisibleTypeAnnotation : method.visibleTypeAnnotations) {
+                                final org.objectweb.asm.TypeReference ref = new org.objectweb.asm.TypeReference(invisibleTypeAnnotation.typeRef);
+                                if (ref.getSort() == org.objectweb.asm.TypeReference.METHOD_FORMAL_PARAMETER && ref.getTypeParameterIndex() == i && java.util.Arrays.asList(ACCEPTED_ANNOTATIONS).contains(invisibleTypeAnnotation.desc)) {
+                                    continue dancing;
+                                }
+                            }
+                        }
+                        // Paper end - Allow use of TYPE_USE annotations
                         ParameterNode paramNode = parameters == null ? null : parameters.get(i);
                         String paramName = paramNode == null ? null : paramNode.name;
 
@@ -81,13 +116,19 @@ public class AnnotationTest {
 
         Collections.sort(errors);
 
-        System.out.println("Found " + errors.size() + " missing annotation(s):");
+        StringBuilder builder = new StringBuilder()
+            .append("\nThere ")
+            .append(errors.size() != 1 ? "are " : "is ")
+            .append(errors.size())
+            .append(" missing annotation")
+            .append(errors.size() != 1 ? "s:\n" : ":\n");
+
         for (String message : errors) {
-            System.out.print("\t");
-            System.out.println(message);
+            builder.append("    ").append(message).append("\n");
         }
 
-        fail("There are " + errors.size() + " missing annotation(s)");
+        System.err.print(builder);
+        fail(builder.insert(0, "\n").toString());
     }
 
     private static void collectClasses(@NotNull File from, @NotNull Map<String, ClassNode> to) throws IOException {
@@ -121,11 +162,20 @@ public class AnnotationTest {
             return false;
         }
 
+        if (isSubclassOf(clazz, "org/bukkit/material/MaterialData", allClasses)) {
+            throw new AssertionError("Subclass of MaterialData must be deprecated: " + clazz.name);
+        }
+
         if (isSubclassOf(clazz, "java/lang/Exception", allClasses)
             || isSubclassOf(clazz, "java/lang/RuntimeException", allClasses)) {
             // Exceptions are excluded
             return false;
         }
+        // Paper start
+        if (isInternal(clazz.invisibleAnnotations)) {
+            return false;
+        }
+        // Paper end
 
         for (String excludedClass : EXCLUDED_CLASSES) {
             if (excludedClass.equals(clazz.name)) {
@@ -152,11 +202,57 @@ public class AnnotationTest {
             return false;
         }
 
+        // Exclude synthetic enum constructors
+        if (isEnumConstructor(clazz, method)) {
+            return false;
+        }
+
+        // Paper start
+        if (isInternal(method.invisibleAnnotations)) {
+            return false;
+        }
+        // Paper end
+
         // Anonymous classes have generated constructors, which can't be annotated nor invoked
         return !"<init>".equals(method.name) || !isAnonymous(clazz);
     }
 
-    private static boolean isWellAnnotated(@Nullable List<AnnotationNode> annotations) {
+    private static boolean isEnumConstructor(@NotNull ClassNode clazz, @NotNull MethodNode method) {
+        // Must be a class that is an enum
+        if ((clazz.access & Opcodes.ACC_ENUM) == 0) {
+            return false;
+        }
+
+        // Must be a constructor name `<init>`
+        if (!"<init>".equals(method.name)) {
+            return false;
+        }
+
+        // Parse argument types from the method descriptor
+        Type[] argTypes = Type.getArgumentTypes(method.desc);
+
+        // Enum constructors always start with (String, int) for name and ordinal
+        return argTypes.length >= 2 &&
+            argTypes[0].equals(Type.getObjectType("java/lang/String")) &&
+            argTypes[1].equals(Type.INT_TYPE);
+    }
+
+    // Paper start
+    private static boolean isInternal(List<? extends AnnotationNode> annotations) {
+        if (annotations == null) {
+            return false;
+        }
+        for (AnnotationNode node : annotations) {
+            if (node.desc.equals("Lorg/jetbrains/annotations/ApiStatus$Internal;")) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+    // Paper end
+
+    private static boolean isWellAnnotated(@Nullable List<? extends AnnotationNode> annotations) { // Paper
         if (annotations == null) {
             return false;
         }
