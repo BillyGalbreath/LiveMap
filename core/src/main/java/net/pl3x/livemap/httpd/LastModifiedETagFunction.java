@@ -43,7 +43,7 @@ final class LastModifiedETagFunction implements PathResourceManager.ETagFunction
         try {
             return new ETag(false, Long.toString(Files.getLastModifiedTime(path).toMillis()));
         } catch (IOException e) {
-            Logger.error("ETag function error:", e);
+            Logger.error("ETag function error&3:", e);
             return null;
         }
     }

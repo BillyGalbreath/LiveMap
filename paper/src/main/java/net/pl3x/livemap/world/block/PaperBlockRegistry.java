@@ -39,7 +39,10 @@ public class PaperBlockRegistry extends BlockRegistry {
     public void rebuild() {
         clear();
 
-        //Blocks.registerDefaults(); // todo
+        Logger.info("Gathering block information...");
+
+        // todo - load blocks from cache for persistent indexes (BlockInfo)
+        //Blocks.registerDefaults();
 
         var entries = ((CraftWorld) Bukkit.getWorlds().getFirst()).getHandle()
             .registryAccess().lookupOrThrow(Registries.BLOCK).entrySet();
@@ -57,13 +60,14 @@ public class PaperBlockRegistry extends BlockRegistry {
             int vanilla = entry.getValue().defaultMapColor().col;
 
             if (!ColorsConfig.BLOCK_COLORS.containsKey(id)) {
-                Logger.warn("Found block that is not in colors.yml: " + id + " (" + Colors.toHex(vanilla) + ")");
+                Logger.warn(" &7&l-&r block not in colors.yml&3:&7&o %s &r&3(&r%s&3)".formatted(id, Colors.toHex(vanilla)));
             }
 
             // todo - unique index for BlockInfo
             put(id, new Block(0, id, vanilla, properties));
         }
-        Logger.info("Registered %d blocks (%d in config)".formatted(size(), ColorsConfig.BLOCK_COLORS.size()));
+
+        Logger.info("Registered &3%d&r blocks".formatted(size()));
     }
 
     private short getPropertiesFlag(@NotNull String id, @NotNull net.minecraft.world.level.block.Block block) {

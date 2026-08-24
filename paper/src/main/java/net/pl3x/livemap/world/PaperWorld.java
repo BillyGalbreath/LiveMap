@@ -26,6 +26,7 @@ package net.pl3x.livemap.world;
 
 import io.papermc.paper.command.brigadier.argument.CustomArgumentType;
 import net.minecraft.server.level.ServerLevel;
+import net.pl3x.livemap.Logger;
 import net.pl3x.livemap.marker.Point;
 import net.pl3x.livemap.util.Unsafe;
 import net.pl3x.livemap.world.biome.PaperBiomeRegistry;
@@ -50,6 +51,13 @@ public class PaperWorld extends World {
             level.getServer().storageSource.getDimensionPath(level.dimension()).resolve("region")
         );
         this.level = level;
+
+        Logger.info(" &7&l-&r found &e%s&r (&3&o%s&r)".formatted(level.getTypeKey().identifier(), getName()));
+
+        if (!isEnabled()) {
+            Logger.info("   &7&l-&r &9skipping &3(&r&odisabled in config&3)");
+            return;
+        }
 
         getBiomeRegistry().rebuild();
     }

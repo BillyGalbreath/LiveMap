@@ -30,7 +30,6 @@ import io.undertow.server.handlers.resource.ResourceManager;
 import java.io.IOException;
 import net.pl3x.livemap.Logger;
 import net.pl3x.livemap.configuration.Config;
-import net.pl3x.livemap.configuration.Lang;
 
 /**
  * The internal undertow web server.
@@ -54,7 +53,7 @@ public class HttpdServer {
         }
 
         if (!Config.HTTPD_ENABLED) {
-            Logger.info(Lang.HTTPD_DISABLED);
+            Logger.info("&aInternal webserver is disabled");
             return;
         }
 
@@ -71,13 +70,10 @@ public class HttpdServer {
 
             Logger.LogFilter.HIDE_UNDERTOW_LOGS = false;
 
-            Logger.info(Lang.HTTPD_STARTED
-                .replace("<bind>", Config.HTTPD_BIND)
-                .replace("<port>", Integer.toString(Config.HTTPD_PORT))
-            );
+            Logger.info("&aInternal webserver started on &e%s&a:&e%s".formatted(Config.HTTPD_BIND, Config.HTTPD_PORT));
         } catch (IOException e) {
             this.server = null;
-            Logger.error(Lang.HTTPD_ERROR, e);
+            Logger.error("An error occurred starting the internal webserver", e);
         }
     }
 
@@ -96,6 +92,6 @@ public class HttpdServer {
 
         Logger.LogFilter.HIDE_UNDERTOW_LOGS = false;
 
-        Logger.info(Lang.HTTPD_STOPPED);
+        Logger.info("&aInternal webserver stopped");
     }
 }

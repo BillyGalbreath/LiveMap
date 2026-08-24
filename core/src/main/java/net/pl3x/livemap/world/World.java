@@ -36,6 +36,7 @@ import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadLocalRandom;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.configuration.Lang;
 import net.pl3x.livemap.marker.Point;
@@ -55,6 +56,8 @@ public abstract class World {
     private final Path regionDir;
     private final Path tilesDir;
 
+    private final boolean enabled;
+
     /**
      * Constructs a new instance of World.
      *
@@ -71,6 +74,8 @@ public abstract class World {
         this.type = type;
         this.regionDir = regionsDir;
         this.tilesDir = LiveMap.api().getTilesDir().resolve(name.replace(":", "-"));
+
+        this.enabled = ThreadLocalRandom.current().nextBoolean(); // todo - load from world config
     }
 
     /**
@@ -81,6 +86,15 @@ public abstract class World {
      */
     @NotNull
     public abstract <T> T getLevel();
+
+    /**
+     * Get whether map rendering is enabled or not for this world.
+     *
+     * @return True if map rendering is enabled
+     */
+    public boolean isEnabled() {
+        return this.enabled;
+    }
 
     /**
      * Get the name of this world.

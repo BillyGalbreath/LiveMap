@@ -28,6 +28,7 @@ import java.util.Locale;
 import java.util.UUID;
 import java.util.function.Function;
 import net.minecraft.server.level.ServerLevel;
+import net.pl3x.livemap.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
@@ -77,9 +78,14 @@ public class PaperWorldRegistry extends WorldRegistry {
 
     @Override
     public void rebuild() {
+        // clear out old registered worlds
         clear();
-        for (org.bukkit.World world : Bukkit.getWorlds()) {
-            put(obj2key(world), new PaperWorld(world));
+
+        Logger.info("Gathering world information...");
+
+        for (org.bukkit.World bukkit : Bukkit.getWorlds()) {
+            World world = new PaperWorld(bukkit);
+            put(obj2key(bukkit), world);
         }
     }
 

@@ -146,7 +146,7 @@ public class Region extends Point {
                 chunk = loadChunk(raf, index);
             } catch (EOFException | FileNotFoundException ignore) {
             } catch (IOException e) {
-                Logger.error("Failed to load chunk at region [%d, %d]".formatted(chunkX, chunkZ), e);
+                Logger.error("Failed to load chunk at region &3[&e%d&r, &e%d&3]".formatted(chunkX, chunkZ), e);
             }
             if (chunk == null) {
                 return this.chunks[index] = new EmptyChunk(this);

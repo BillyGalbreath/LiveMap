@@ -32,15 +32,6 @@ import net.pl3x.livemap.util.FileUtil;
  * LiveMap's language config.
  */
 public class Lang extends AbstractConfig {
-    @Key("internal-webserver-started")
-    public static String HTTPD_STARTED = "Internal webserver started on <bind> port(s) <port>";
-    @Key("internal-webserver-stopped")
-    public static String HTTPD_STOPPED = "Internal webserver stopped";
-    @Key("internal-webserver-error")
-    public static String HTTPD_ERROR = "An error occurred starting the internal webserver";
-    @Key("internal-webserver-disabled")
-    public static String HTTPD_DISABLED = "Internal webserver is disabled";
-
     @Key("error-invalid-world")
     public static String ERROR_INVALID_WORLD = "Invalid world name or id";
     @Key("error-missing-world")

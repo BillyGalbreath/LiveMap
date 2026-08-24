@@ -30,6 +30,10 @@ import net.pl3x.livemap.LiveMap;
  * LiveMap's main config.
  */
 public final class Config extends AbstractConfig {
+    @Key("settings.debug-mode")
+    @Comment("""
+        Extra logger/console output. (can be spammy)""")
+    public static boolean DEBUG_MODE = false;
     @Key("settings.language-file")
     @Comment("""
         The language file to use from the locale folder.""")

@@ -353,7 +353,7 @@ public final class Colors {
      */
     @NotNull
     public static String toHex(int rgb) {
-        return String.format("#%06X", rgb & 0xFFFFFF);
+        return "#%06X".formatted(rgb & 0xFFFFFF);
     }
 
     /**

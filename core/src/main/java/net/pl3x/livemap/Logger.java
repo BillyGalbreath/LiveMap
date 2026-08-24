@@ -25,8 +25,13 @@
 package net.pl3x.livemap;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import net.pl3x.livemap.configuration.Config;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.core.Filter;
@@ -41,6 +46,60 @@ import org.jetbrains.annotations.Nullable;
 public final class Logger {
     static java.util.logging.Logger logger;
 
+    private static final Pattern COLOR_PATTERN = Pattern.compile("(?i)[§&]([0-9a-fk-or])");
+    private static final Map<Character, String> ANSI_MAP = new HashMap<>() {{
+        put('0', uni(30)); // black
+        put('1', uni(34)); // dark blue
+        put('2', uni(32)); // dark green
+        put('3', uni(36)); // dark aqua
+        put('4', uni(31)); // dark red
+        put('5', uni(35)); // dark purple
+        put('6', uni(33)); // gold
+        put('7', uni(37)); // gray
+        put('8', uni(90)); // dark gray
+        put('9', uni(94)); // blue
+        put('a', uni(92)); // green
+        put('b', uni(96)); // aqua
+        put('c', uni(91)); // red
+        put('d', uni(95)); // light purple
+        put('e', uni(93)); // yellow
+        put('f', uni(37)); // white
+        put('l', uni(1));  // bold
+        put('m', uni(9));  // strikethrough
+        put('n', uni(4));  // underline
+        put('o', uni(3));  // italic
+        //put('r', uni(0));  // reset (handled manually)
+    }};
+    private static final String RESET = uni(0);
+    private static final String RESET_INFO = uni(0);
+    private static final String RESET_DEBUG = uni(0, 37);
+    private static final String RESET_WARN = uni(0, 93, 1);
+    private static final String RESET_ERROR = uni(0, 31, 1);
+
+    @NotNull
+    private static String uni(int @NotNull ... code) {
+        StringBuilder builder = new StringBuilder(6);
+        for (int i : code) {
+            builder.append("\u001B[%dm".formatted(i));
+        }
+        return builder.toString();
+    }
+
+    @NotNull
+    private static String ansi(@NotNull String msg, @NotNull String reset) {
+        Matcher matcher = COLOR_PATTERN.matcher(msg = msg.replaceAll("(?i)[§&]r", reset));
+        StringBuilder builder = new StringBuilder(msg.length() + 32).append(reset);
+
+        while (matcher.find()) {
+            char code = Character.toLowerCase(matcher.group(1).charAt(0));
+            String replacement = ANSI_MAP.getOrDefault(code, matcher.group());
+            matcher.appendReplacement(builder, Matcher.quoteReplacement(replacement));
+        }
+        matcher.appendTail(builder);
+
+        return builder.append(RESET).toString();
+    }
+
     static {
         ((org.apache.logging.log4j.core.Logger) LogManager.getRootLogger()).addFilter(new LogFilter());
     }
@@ -49,12 +108,36 @@ public final class Logger {
     }
 
     /**
+     * Log a debug message at the INFO level, if debug mode is enabled in config.
+     *
+     * @param message the debug message string to be logged
+     */
+    public static void debug(@NotNull String message) {
+        if (Config.DEBUG_MODE) {
+            logger.log(Level.INFO, ansi("&7[&eDEBUG&7] %s".formatted(message), RESET_DEBUG));
+        }
+    }
+
+    /**
+     * Log an exception (throwable) at the INFO level with an accompanying
+     * debug message, if debug mode is enabled in config.
+     *
+     * @param message   the debug message accompanying the exception
+     * @param throwable the exception (throwable) to log
+     */
+    public static void debug(@NotNull String message, @NotNull Throwable throwable) {
+        if (Config.DEBUG_MODE) {
+            logger.log(Level.INFO, ansi("&7[&eDEBUG&7] %s".formatted(message), RESET_DEBUG), throwable);
+        }
+    }
+
+    /**
      * Log a message at the INFO level.
      *
      * @param message the message string to be logged
      */
     public static void info(@NotNull String message) {
-        logger.log(Level.INFO, message);
+        logger.log(Level.INFO, ansi(message, RESET_INFO));
     }
 
     /**
@@ -64,7 +147,7 @@ public final class Logger {
      * @param throwable the exception (throwable) to log
      */
     public static void info(@NotNull String message, @NotNull Throwable throwable) {
-        logger.log(Level.INFO, message, throwable);
+        logger.log(Level.INFO, ansi(message, RESET_INFO), throwable);
     }
 
     /**
@@ -73,7 +156,7 @@ public final class Logger {
      * @param message the message string to be logged
      */
     public static void warn(@NotNull String message) {
-        logger.log(Level.WARNING, message);
+        logger.log(Level.WARNING, ansi(message, RESET_WARN));
     }
 
     /**
@@ -83,7 +166,7 @@ public final class Logger {
      * @param throwable the exception (throwable) to log
      */
     public static void warn(@NotNull String message, @NotNull Throwable throwable) {
-        logger.log(Level.WARNING, message, throwable);
+        logger.log(Level.WARNING, ansi(message, RESET_WARN), throwable);
     }
 
     /**
@@ -92,7 +175,7 @@ public final class Logger {
      * @param message the message string to be logged
      */
     public static void error(@NotNull String message) {
-        logger.log(Level.SEVERE, message);
+        logger.log(Level.SEVERE, ansi(message, RESET_ERROR));
     }
 
     /**
@@ -102,7 +185,7 @@ public final class Logger {
      * @param throwable the exception (throwable) to log
      */
     public static void error(@NotNull String message, @NotNull Throwable throwable) {
-        logger.log(Level.SEVERE, message, throwable);
+        logger.log(Level.SEVERE, ansi(message, RESET_ERROR), throwable);
     }
 
     /**

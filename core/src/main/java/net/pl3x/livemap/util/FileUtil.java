@@ -75,6 +75,7 @@ public final class FileUtil {
      */
     public static void extractDir(@NotNull String sourceDir, @NotNull Path outDir, boolean replace) {
         try (JarFile jarFile = new JarFile(getJarPath().toFile())) {
+            Logger.debug("Extracting &3%s&r directory from jar...".formatted(sourceDir));
             String path = sourceDir.substring(1);
             Enumeration<JarEntry> entries = jarFile.entries();
             while (entries.hasMoreElements()) {
@@ -86,15 +87,20 @@ public final class FileUtil {
                 Path file = outDir.resolve(name.substring(path.length()));
                 boolean exists = Files.exists(file);
                 if (!replace && exists) {
+                    Logger.debug("  &eexists&r   %s".formatted(name));
                     continue;
                 }
                 if (entry.isDirectory()) {
                     if (exists) {
+                        Logger.debug("  &eexists&r   %s".formatted(name));
                         continue;
                     }
                     try {
                         Files.createDirectories(file);
-                    } catch (IOException ignore) {
+                        Logger.debug("  &acreating&r %s".formatted(name));
+                    } catch (IOException e) {
+                        Logger.debug("  &c&lfailed&r   %s".formatted(name));
+                        Logger.error("Failed to create directory &3(&e%s&3)".formatted(name), e);
                     }
                     continue;
                 }
@@ -108,12 +114,14 @@ public final class FileUtil {
                         out.write(buffer, 0, readCount);
                     }
                     out.flush();
+                    Logger.debug("  &awriting&r  %s".formatted(name));
                 } catch (IOException e) {
-                    Logger.error("Failed to extract file (" + name + ") from jar!", e);
+                    Logger.debug("  &c&lfailed&r   %s".formatted(name));
+                    Logger.error("Failed to extract file &3(&e%s&3)&r from jar!".formatted(name), e);
                 }
             }
         } catch (IOException e) {
-            Logger.error("Failed to extract " + sourceDir + " directory from jar", e);
+            Logger.error("Failed to extract &o%s&r directory from jar!".formatted(sourceDir), e);
         }
     }
 
@@ -128,7 +136,7 @@ public final class FileUtil {
         try {
             return Files.exists(path) ? Files.readString(path) : "";
         } catch (IOException e) {
-            Logger.error("Error reading file: " + e.getMessage(), e);
+            Logger.error("Error reading file&3:&r %s".formatted(e.getMessage()), e);
             throw new RuntimeException(e);
         }
     }
