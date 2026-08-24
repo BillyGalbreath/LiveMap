@@ -74,14 +74,14 @@ public abstract class BlockRegistry extends Registry<Block> {
                 case "minecraft:melon_stem":
                 case "minecraft:pumpkin_stem":
                 case "minecraft:cocoa":
-                    flag |= Block.FLAG_AGE;
+                    flag |= Block.FLAG_PROPERTY_AGE;
             }
         }
         if (name.equals("moisture") && id.equals("minecraft:farmland")) {
-            flag |= Block.FLAG_MOISTURE;
+            flag |= Block.FLAG_PROPERTY_MOISTURE;
         }
         if (name.equals("power") && id.equals("minecraft:redstone_wire")) {
-            flag |= Block.FLAG_POWER;
+            flag |= Block.FLAG_PROPERTY_POWER;
         }
         return flag;
     }

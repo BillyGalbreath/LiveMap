@@ -47,10 +47,10 @@ public class PaperBlockRegistry extends BlockRegistry {
             String id = entry.getKey().identifier().toString();
 
             Block block = super.getOrDefault(id, null);
+            short properties = getPropertiesFlag(id, entry.getValue());
+
             if (block != null) {
-                // block already registered. let's fix its properties
-                short flags = getPropertiesFlag(id, entry.getValue());
-                block.setFlags((short) (block.getFlags() | flags));
+                block.setFlags((short) (block.getFlags() | properties));
                 continue;
             }
 
@@ -60,8 +60,8 @@ public class PaperBlockRegistry extends BlockRegistry {
                 Logger.warn("Found block that is not in colors.yml: " + id + " (" + Colors.toHex(vanilla) + ")");
             }
 
-            // todo - index?
-            put(id, new Block(0, id, vanilla, getPropertiesFlag(id, entry.getValue())));
+            // todo - unique index for BlockInfo
+            put(id, new Block(0, id, vanilla, properties));
         }
         Logger.info("Registered %d blocks (%d in config)".formatted(size(), ColorsConfig.BLOCK_COLORS.size()));
     }

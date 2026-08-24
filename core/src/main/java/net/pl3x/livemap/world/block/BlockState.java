@@ -78,7 +78,7 @@ public class BlockState {
     }
 
     /**
-     * Get state's age.
+     * Get state's age (crops).
      *
      * @return Age, or -1 if n/a
      */
@@ -87,7 +87,7 @@ public class BlockState {
     }
 
     /**
-     * Get state's moisture level.
+     * Get state's moisture level (farmland).
      *
      * @return Moisture level, or -1 if n/a
      */
@@ -96,11 +96,101 @@ public class BlockState {
     }
 
     /**
-     * Get state's power output.
+     * Get state's power output (redstone).
      *
      * @return Power output, or -1 if n/a
      */
     public byte getPower() {
         return this.power;
+    }
+
+    /**
+     * Check if this state's block is air.
+     *
+     * @return True if state's block is air
+     */
+    public boolean isAir() {
+        return getBlock().isAir();
+    }
+
+    /**
+     * Check if this state's block is flat.
+     *
+     * @return True if state's block is flat
+     */
+    public boolean isFlat() {
+        return getBlock().isFlat();
+    }
+
+    /**
+     * Check if this state's block is foliage.
+     *
+     * @return True if state's block is foliage
+     */
+    public boolean isFoliage() {
+        return getBlock().isFoliage();
+    }
+
+    /**
+     * Check if this state's block is dry foliage.
+     *
+     * @return True if state's block is dry foliage
+     */
+    public boolean isDryFoliage() {
+        return getBlock().isDryFoliage();
+    }
+
+    /**
+     * Check if this state's block is grass.
+     *
+     * @return True if state's block is grass
+     */
+    public boolean isGrass() {
+        return getBlock().isGrass();
+    }
+
+    /**
+     * Check if this state's block is water.
+     *
+     * @return True if state's block is water
+     */
+    public boolean isWater() {
+        return getBlock().isWater();
+    }
+
+    /**
+     * Check if this state's block is a fluid.
+     *
+     * @return True if state's block is a fluid
+     */
+    public boolean isFluid() {
+        return getBlock().isFluid();
+    }
+
+    /**
+     * Check if this state's block has age.
+     *
+     * @return True if state's block has age
+     */
+    public boolean hasAge() {
+        return getBlock().hasAge();
+    }
+
+    /**
+     * Check if this state's block has moisture.
+     *
+     * @return True if state's block has moisture
+     */
+    public boolean hasMoisture() {
+        return getBlock().hasMoisture();
+    }
+
+    /**
+     * Check if this state's block has power.
+     *
+     * @return True if state's block has power
+     */
+    public boolean hasPower() {
+        return getBlock().hasPower();
     }
 }

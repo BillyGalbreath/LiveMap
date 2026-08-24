@@ -39,68 +39,66 @@ public class Block {
      */
     public static final Block AIR = new Block(0, "minecraft:air", 0x000000);
 
-    // @formatter:off
     /**
      * This block is considered air.
      * <p>
      * Air blocks will be completely ignored.
      */
-    public static final short FLAG_AIR         = 0b0000000000000001;
+    public static final short FLAG_AIR = 1;
     /**
      * This block is considered flat.
      * <p>
      * Flat blocks will be ignored by the renderer to assist in better looking heightmap.
      */
-    public static final short FLAG_FLAT        = 0b0000000000000010;
+    public static final short FLAG_FLAT = 2;
     /**
      * This block is considered foliage.
      * <p>
      * Foliage blocks will use biome color override.
      */
-    public static final short FLAG_FOLIAGE     = 0b0000000000000100;
+    public static final short FLAG_FOLIAGE = 4;
     /**
      * This block is considered dry foliage.
      * <p>
      * Dry foliage blocks will use biome color override.
      */
-    public static final short FLAG_DRY_FOLIAGE = 0b0000000000001000;
+    public static final short FLAG_DRY_FOLIAGE = 8;
     /**
      * This block is considered grass.
      * <p>
      * Grass blocks will use biome color modifier.
      */
-    public static final short FLAG_GRASS       = 0b0000000000010000;
+    public static final short FLAG_GRASS = 16;
     /**
      * This block is considered water.
      * <p>
      * Water blocks will use biome color override.
      */
-    public static final short FLAG_WATER       = 0b0000000000100000;
+    public static final short FLAG_WATER = 32;
     /**
      * This block is considered fluid.
      * <p>
      * Fluid blocks can appear translucent, if configured.
      */
-    public static final short FLAG_FLUID       = 0b0000000001000000;
+    public static final short FLAG_FLUID = 64;
     /**
      * This block is considered to have age.
      * <p>
      * Aged blocks will use Mojang's color modifier.
      */
-    public static final short FLAG_AGE         = 0b0000000010000000;
+    public static final short FLAG_PROPERTY_AGE = 128;
     /**
-     * This block is considered able to hold moisture.
+     * This block is considered able to hold moisture (farmland).
      * <p>
      * Moisture blocks will use Mojang's color modifier.
      */
-    public static final short FLAG_MOISTURE    = 0b0000000100000000;
+    public static final short FLAG_PROPERTY_MOISTURE = 256;
     /**
-     * This block is considered to have redstone power.
+     * This block is considered to have power (redstone wire).
      * <p>
-     * Redstone powered blocks will use Mojang's color modifier.
+     * Powered blocks will use Mojang's color modifier.
      */
-    public static final short FLAG_POWER       = 0b0000001000000000;
-    // @formatter:on
+    public static final short FLAG_PROPERTY_POWER = 512;
 
     private final int index;
     private final String id;
@@ -129,7 +127,7 @@ public class Block {
      * @param index      Persistent unique identifying number
      * @param id         String id
      * @param vanilla    Vanilla's map color
-     * @param properties Properties flag(s)
+     * @param properties Properties flag(s) (marks which blocks have which properties)
      */
     public Block(int index, @NotNull String id, int vanilla, short properties) {
         this.index = index;
@@ -218,6 +216,96 @@ public class Block {
      */
     public void setFlags(short flags) {
         this.flags = flags;
+    }
+
+    /**
+     * Check if this block is air.
+     *
+     * @return True if block is air
+     */
+    public boolean isAir() {
+        return hasFlag(FLAG_AIR);
+    }
+
+    /**
+     * Check if this block is flat.
+     *
+     * @return True if block is flat
+     */
+    public boolean isFlat() {
+        return hasFlag(FLAG_FLAT);
+    }
+
+    /**
+     * Check if this block is foliage.
+     *
+     * @return True if block is foliage
+     */
+    public boolean isFoliage() {
+        return hasFlag(FLAG_FOLIAGE);
+    }
+
+    /**
+     * Check if this block is dry foliage.
+     *
+     * @return True if block is dry foliage
+     */
+    public boolean isDryFoliage() {
+        return hasFlag(FLAG_DRY_FOLIAGE);
+    }
+
+    /**
+     * Check if this block is grass.
+     *
+     * @return True if block is grass
+     */
+    public boolean isGrass() {
+        return hasFlag(FLAG_GRASS);
+    }
+
+    /**
+     * Check if this block is water.
+     *
+     * @return True if block is water
+     */
+    public boolean isWater() {
+        return hasFlag(FLAG_WATER);
+    }
+
+    /**
+     * Check if this block is a fluid.
+     *
+     * @return True if block is a fluid
+     */
+    public boolean isFluid() {
+        return hasFlag(FLAG_FLUID);
+    }
+
+    /**
+     * Check if this block has age.
+     *
+     * @return True if block has age
+     */
+    public boolean hasAge() {
+        return hasFlag(FLAG_PROPERTY_AGE);
+    }
+
+    /**
+     * Check if this block has moisture.
+     *
+     * @return True if block has moisture
+     */
+    public boolean hasMoisture() {
+        return hasFlag(FLAG_PROPERTY_MOISTURE);
+    }
+
+    /**
+     * Check if this block has power.
+     *
+     * @return True if block has power
+     */
+    public boolean hasPower() {
+        return hasFlag(FLAG_PROPERTY_POWER);
     }
 
     /**
