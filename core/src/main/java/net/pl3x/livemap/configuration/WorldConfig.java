@@ -41,26 +41,57 @@ import org.simpleyaml.configuration.ConfigurationSection;
  */
 public class WorldConfig extends AbstractConfig {
     @Key("enabled")
+    @Comment("""
+        Enables this world to be rendered on the map.""")
     public boolean ENABLED = true;
     @Key("order")
+    @Comment("""
+        The order the world shows in the world list on the webmap.""")
     public int ORDER = 0;
     @Key("name")
+    @Comment("""
+        The display name of the world in the world list.
+        Use <world> to use the official world name.""")
     public String NAME = "<world>";
 
     @Key("render.scan-chunks")
+    @Comment("""
+        Actively scan chunks in the world(s) when they change.
+        Set to false to allow worlds to show on webmap but not
+        trigger any automatic chunk updates.
+        Note: Commands are not affected by this.
+        """)
     public boolean SCAN_CHUNKS = true;
 
     @Key("render.center")
+    @Comment("""
+        Point [0,0] where the map center is at in the webmap.
+        Leave empty array [] to use spawn point instead.""")
     public Point CENTER = null;
 
     @Key("render.zoom.default")
+    @Comment("""
+        The default zoom when loading the map in browser.
+        Normal sized tiles (1 pixel = 1 block) are
+        always at zoom level 0.""")
     public int ZOOM_DEFAULT = 0;
     @Key("render.zoom.max-out")
+    @Comment("""
+        The maximum zoom out you can do on the map.
+        Each additional level requires a new set of tiles
+        to be rendered, so don't go too wild here.""")
     public int ZOOM_MAX_OUT = 3;
     @Key("render.zoom.min-out")
+    @Comment("""
+        Extra zoom in layers will stretch the original
+        tile images so you can zoom in further without
+        the extra cost of rendering more tiles.""")
     public int ZOOM_MIN_OUT = 2;
 
     @Key("render.renderers")
+    @Comment("""
+        Renderers to use. Each renderer will draw a different type of map.
+        The built-in renderer types include: basic, biomes, fancy, flowermap, inhabited, and nether_roof""")
     public List<Map<String, Object>> RENDERERS = new ArrayList<>() {{
         add(new LinkedHashMap<>() {{
             put("type", "fancy");
@@ -94,12 +125,22 @@ public class WorldConfig extends AbstractConfig {
         reload0();
 
         // setup comments on sections that have no fields
-        setComment("settings.default", """
+        setComment("render", """
+            Settings to control how rendering the world works.""");
+        setComment("render.zoom", """
+            Zoom settings control how the map zooms in and out and how
+            the tile images are stored on disk.
+            Warning: Changing these values will require a map reset.""");
+
+        // call directly on config because the node is outside the world's scope
+        getConfig().setComment("world-settings", """
+            These are the per-world settings. Each world can have their own unique values.""");
+        getConfig().setComment("world-settings.default", """
             These are the default settings that will be applied to all worlds.
             You can override any of these on a per-world basis by adding the
-            world below this section.""");
-        setComment("settings.default.render", """
-            Settings to control how rendering the world works.""");
+            world by name below this section.""");
+
+        save();
     }
 
     @Override
