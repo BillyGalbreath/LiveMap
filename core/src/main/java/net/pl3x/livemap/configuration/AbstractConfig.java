@@ -101,6 +101,10 @@ public abstract class AbstractConfig {
             }
         });
 
+        save();
+    }
+
+    protected void save() {
         try {
             getConfig().save();
         } catch (IOException e) {

@@ -25,6 +25,7 @@
 package net.pl3x.livemap.world.block;
 
 import java.util.Objects;
+import net.pl3x.livemap.configuration.BlocksConfig;
 import net.pl3x.livemap.configuration.ColorsConfig;
 import net.pl3x.livemap.render.image.Colors;
 import org.jetbrains.annotations.NotNull;
@@ -137,12 +138,12 @@ public class Block {
         this.color = color == 0 ? 0 : Colors.alpha(0xFF, color);
         this.vanilla = vanilla == 0 ? 0 : Colors.alpha(0xFF, vanilla);
 
-        int flat = ColorsConfig.BLOCKS_FLAT.contains(id) ? FLAG_FLAT : 0;
-        int air = ColorsConfig.BLOCKS_AIR.contains(id) ? FLAG_AIR : 0;
-        int foliage = ColorsConfig.BLOCKS_FOLIAGE.contains(id) ? FLAG_FOLIAGE : 0;
-        int dryFoliage = ColorsConfig.BLOCKS_DRY_FOLIAGE.contains(id) ? FLAG_DRY_FOLIAGE : 0;
-        int grass = ColorsConfig.BLOCKS_GRASS.contains(id) ? FLAG_GRASS : 0;
-        int water = ColorsConfig.BLOCKS_WATER.contains(id) ? FLAG_WATER : 0;
+        int flat = BlocksConfig.BLOCKS_FLAT.contains(id) ? FLAG_FLAT : 0;
+        int air = BlocksConfig.BLOCKS_AIR.contains(id) ? FLAG_AIR : 0;
+        int foliage = BlocksConfig.BLOCKS_FOLIAGE.contains(id) ? FLAG_FOLIAGE : 0;
+        int dryFoliage = BlocksConfig.BLOCKS_DRY_FOLIAGE.contains(id) ? FLAG_DRY_FOLIAGE : 0;
+        int grass = BlocksConfig.BLOCKS_GRASS.contains(id) ? FLAG_GRASS : 0;
+        int water = BlocksConfig.BLOCKS_WATER.contains(id) ? FLAG_WATER : 0;
         int fluid = water > 0 || "minecraft:lava".equals(id) ? FLAG_FLUID : 0;
 
         this.flags = (short) (flat | air | foliage | dryFoliage | grass | water | fluid | properties);

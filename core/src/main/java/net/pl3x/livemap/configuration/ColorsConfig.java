@@ -24,9 +24,7 @@
 
 package net.pl3x.livemap.configuration;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.render.image.Colors;
@@ -37,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
  * Configurable colors config.
  */
 public final class ColorsConfig extends AbstractConfig {
-    @Key("blocks.colors")
+    @Key("colors.blocks")
     @Comment("""
         Each block has a specific color assigned to it. You can
         pick your own color here for any blocks you want to change.
@@ -1150,167 +1148,7 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:zombie_wall_head", 0x416A30);
     }};
 
-    @Key("blocks.air")
-    @Comment("""
-        List of blocks that are considered air when it comes
-        to coloring. Blocks listed here will not be rendered.""")
-    public static List<String> BLOCKS_AIR = new ArrayList<>() {{
-        add("minecraft:air");
-        add("minecraft:cave_air");
-        add("minecraft:void_air");
-    }};
-
-    @Key("blocks.dry-foliage")
-    @Comment("""
-        List of blocks that are considered dry foliage when it comes
-        to coloring. Blocks listed here will use the biome's
-        dry foliage color when rendering.""")
-    public static List<String> BLOCKS_DRY_FOLIAGE = new ArrayList<>() {{
-        add("minecraft:leaf_litter");
-    }};
-
-    @Key("blocks.foliage")
-    @Comment("""
-        List of blocks that are considered foliage when it comes
-        to coloring. Blocks listed here will use the biome's
-        foliage color when rendering.
-        Note: Birch and Spruce are intentionally absent by default.""")
-    public static List<String> BLOCKS_FOLIAGE = new ArrayList<>() {{
-        add("minecraft:acacia_leaves");
-        //add("minecraft:birch_leaves"); // birch 0x80A755
-        add("minecraft:dark_oak_leaves");
-        add("minecraft:jungle_leaves");
-        add("minecraft:mangrove_leaves"); // mangrove? 0x92C648
-        add("minecraft:oak_leaves");
-        //add("minecraft:spruce_leaves"); // evergreen 0x619961
-        add("minecraft:vine");
-    }};
-
-    @Key("blocks.grass")
-    @Comment("""
-        List of blocks that are considered grass when it comes
-        to coloring. Blocks listed here will use the biome's
-        grass color modifier when rendering.""")
-    public static List<String> BLOCKS_GRASS = new ArrayList<>() {{
-        add("minecraft:bush");
-        add("minecraft:fern");
-        add("minecraft:grass");
-        add("minecraft:grass_block");
-        add("minecraft:large_fern");
-        add("minecraft:potted_fern");
-        add("minecraft:short_grass");
-        add("minecraft:tall_grass");
-    }};
-
-    @Key("blocks.water")
-    @Comment("""
-        List of blocks that are considered water when it comes
-        to coloring. Blocks listed here will use the biome's
-        water color when rendering.""")
-    public static List<String> BLOCKS_WATER = new ArrayList<>() {{
-        add("minecraft:bubble_column");
-        add("minecraft:kelp");
-        add("minecraft:kelp_plant");
-        add("minecraft:seagrass");
-        add("minecraft:tall_seagrass");
-        add("minecraft:water");
-        add("minecraft:water_cauldron");
-    }};
-
-    @Key("blocks.flat")
-    @Comment("""
-        List of blocks that are considered "flat" when it comes
-        to heightmaps. Blocks listed here will use the Y coordinate
-        below them when rendering.""")
-    public static List<String> BLOCKS_FLAT = new ArrayList<>() {{
-        add("minecraft:acacia_pressure_plate");
-        add("minecraft:acacia_trapdoor");
-        add("minecraft:bamboo_pressure_plate");
-        add("minecraft:bamboo_trapdoor");
-        add("minecraft:birch_pressure_plate");
-        add("minecraft:birch_trapdoor");
-        add("minecraft:black_carpet");
-        add("minecraft:blue_carpet");
-        add("minecraft:brown_carpet");
-        add("minecraft:cherry_pressure_plate");
-        add("minecraft:cherry_trapdoor");
-        add("minecraft:crimson_pressure_plate");
-        add("minecraft:crimson_trapdoor");
-        add("minecraft:cyan_carpet");
-        add("minecraft:dark_oak_pressure_plate");
-        add("minecraft:dark_oak_trapdoor");
-        add("minecraft:green_carpet");
-        add("minecraft:gray_carpet");
-        add("minecraft:heavy_weighted_pressure_plate");
-        add("minecraft:iron_trapdoor");
-        add("minecraft:jungle_pressure_plate");
-        add("minecraft:jungle_trapdoor");
-        add("minecraft:leaf_litter");
-        add("minecraft:light_blue_carpet");
-        add("minecraft:light_gray_carpet");
-        add("minecraft:light_weighted_pressure_plate");
-        add("minecraft:lime_carpet");
-        add("minecraft:magenta_carpet");
-        add("minecraft:mangrove_pressure_plate");
-        add("minecraft:mangrove_trapdoor");
-        add("minecraft:moss_carpet");
-        add("minecraft:oak_pressure_plate");
-        add("minecraft:oak_trapdoor");
-        add("minecraft:orange_carpet");
-        add("minecraft:pale_moss_carpet");
-        add("minecraft:pale_oak_pressure_plate");
-        add("minecraft:pink_carpet");
-        add("minecraft:polished_blackstone_pressure_plate");
-        add("minecraft:purple_carpet");
-        add("minecraft:red_carpet");
-        add("minecraft:redstone_wire");
-        add("minecraft:snow");
-        add("minecraft:spruce_pressure_plate");
-        add("minecraft:spruce_trapdoor");
-        add("minecraft:stone_pressure_plate");
-        add("minecraft:warped_pressure_plate");
-        add("minecraft:warped_trapdoor");
-        add("minecraft:white_carpet");
-        add("minecraft:yellow_carpet");
-    }};
-
-    @Key("biomes.color-overrides.foliage")
-    @Comment("""
-        Override foliage colors per biome.""")
-    public static Map<String, Integer> BIOME_FOLIAGE = new LinkedHashMap<>() {{
-        put("minecraft:badlands", 0x9E814D);
-        put("minecraft:bamboo_jungle", 0x1F8907);
-        put("minecraft:dark_forest", 0x1C7B07);
-        put("minecraft:eroded_badlands", 0x9E814D);
-        put("minecraft:jungle", 0x1F8907);
-        put("minecraft:mangrove_swamp", 0x8DB127);
-        put("minecraft:sparse_jungle", 0x1F8907);
-        put("minecraft:swamp", 0x6A7039);
-        put("minecraft:wooded_badlands", 0x9E814D);
-    }};
-
-    @Key("biomes.color-overrides.dry-foliage")
-    @Comment("""
-        Override foliage colors per biome.""")
-    public static Map<String, Integer> BIOME_DRY_FOLIAGE = new LinkedHashMap<>() {{
-        put("minecraft:badlands", 0x9E814D);
-    }};
-
-    @Key("biomes.color-overrides.grass")
-    @Comment("""
-        Override grass colors per biome.""")
-    public static Map<String, Integer> BIOME_GRASS = new LinkedHashMap<>() {{
-        put("minecraft:badlands", 0x90814D);
-        put("minecraft:eroded_badlands", 0x90814D);
-        put("minecraft:wooded_badlands", 0x90814D);
-    }};
-
-    @Key("biomes.color-overrides.water")
-    @Comment("""
-        Override water colors per biome.""")
-    public static Map<String, Integer> BIOME_WATER = new LinkedHashMap<>();
-
-    @Key("biomes.colors")
+    @Key("colors.biomes")
     @Comment("""
         Each biome has a specific color assigned to it. You can
         pick your own color here for any biomes you want to change.""")
@@ -1380,6 +1218,42 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:windswept_savanna", 0xE5DA87);
         put("minecraft:wooded_badlands", 0xB09765);
     }};
+
+    @Key("colors.foliage")
+    @Comment("""
+        Override foliage colors per biome.""")
+    public static Map<String, Integer> OVERRIDES_FOLIAGE = new LinkedHashMap<>() {{
+        put("minecraft:badlands", 0x9E814D);
+        put("minecraft:bamboo_jungle", 0x1F8907);
+        put("minecraft:dark_forest", 0x1C7B07);
+        put("minecraft:eroded_badlands", 0x9E814D);
+        put("minecraft:jungle", 0x1F8907);
+        put("minecraft:mangrove_swamp", 0x8DB127);
+        put("minecraft:sparse_jungle", 0x1F8907);
+        put("minecraft:swamp", 0x6A7039);
+        put("minecraft:wooded_badlands", 0x9E814D);
+    }};
+
+    @Key("colors.dry-foliage")
+    @Comment("""
+        Override dry foliage colors per biome.""")
+    public static Map<String, Integer> OVERRIDES_DRY_FOLIAGE = new LinkedHashMap<>() {{
+        put("minecraft:badlands", 0x9E814D);
+    }};
+
+    @Key("colors.grass")
+    @Comment("""
+        Override grass colors per biome.""")
+    public static Map<String, Integer> OVERRIDES_GRASS = new LinkedHashMap<>() {{
+        put("minecraft:badlands", 0x90814D);
+        put("minecraft:eroded_badlands", 0x90814D);
+        put("minecraft:wooded_badlands", 0x90814D);
+    }};
+
+    @Key("colors.water")
+    @Comment("""
+        Override water colors per biome.""")
+    public static Map<String, Integer> OVERRIDES_WATER = new LinkedHashMap<>();
 
     private static final ColorsConfig CONFIG = new ColorsConfig();
 

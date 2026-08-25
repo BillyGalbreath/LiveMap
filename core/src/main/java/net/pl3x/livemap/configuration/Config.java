@@ -37,7 +37,7 @@ public final class Config extends AbstractConfig {
     @Key("settings.language-file")
     @Comment("""
         The language file to use from the locale folder.""")
-    public static String LANGUAGE_FILE = "en-us.yml";
+    public static String LANGUAGE_FILE = "en_us.yml";
 
     @Key("settings.web-directory.path")
     @Comment("""
@@ -45,7 +45,6 @@ public final class Config extends AbstractConfig {
         Relative paths are from LiveMap's plugin directory,
         but absolute paths are supported, too.""")
     public static String WEB_DIR = "web";
-
     @Key("settings.web-directory.read-only")
     @Comment("""
         Set to true if you don't want LiveMap to overwrite
@@ -57,13 +56,11 @@ public final class Config extends AbstractConfig {
     @Comment("""
         Enable the built-in web server for regular http.""")
     public static boolean HTTPD_ENABLED = true;
-
     @Key("settings.internal-webserver.bind")
     @Comment("""
         The interface the built-in web server should bind to for http requests.
         Warning: If you don't understand what this is leave it set to 0.0.0.0""")
     public static String HTTPD_BIND = "0.0.0.0";
-
     @Key("settings.internal-webserver.port")
     @Comment("""
         The port the built-in web server listens to for http requests.
@@ -88,5 +85,21 @@ public final class Config extends AbstractConfig {
      */
     public static void reload() {
         CONFIG.reload0();
+    }
+
+    @Override
+    protected void reload0() {
+        // actually reload the config
+        super.reload0();
+
+        // setup comments on sections that have no fields
+        setComment("settings.web-directory", """
+            Settings for the directory all the web files sit in.""");
+        setComment("settings.internal-webserver", """
+            Settings for the built-in webserver.""");
+        setComment("settings.performance", """
+            Performance related settings.""");
+
+        save();
     }
 }

@@ -61,16 +61,16 @@ public class PaperBiomeRegistry extends BiomeRegistry {
                 0,// todo - index (saved to disk for persistent BlockInfo)
                 id,
                 ColorsConfig.BIOME_COLORS.getOrDefault(id, 0),
-                Objects.requireNonNullElseGet(ColorsConfig.BIOME_DRY_FOLIAGE.get(id),                // custom
+                Objects.requireNonNullElseGet(ColorsConfig.OVERRIDES_DRY_FOLIAGE.get(id),            // custom
                     () -> biome.getSpecialEffects().dryFoliageColorOverride().orElseGet(             // vanilla
                         () -> getDefaultColor(temperature, humidity, Colors.COLORMAP_DRY_FOLIAGE))), // fallback
-                Objects.requireNonNullElseGet(ColorsConfig.BIOME_FOLIAGE.get(id),
+                Objects.requireNonNullElseGet(ColorsConfig.OVERRIDES_FOLIAGE.get(id),
                     () -> biome.getSpecialEffects().foliageColorOverride().orElseGet(
                         () -> getDefaultColor(temperature, humidity, Colors.COLORMAP_FOLIAGE))),
-                Objects.requireNonNullElseGet(ColorsConfig.BIOME_GRASS.get(id),
+                Objects.requireNonNullElseGet(ColorsConfig.OVERRIDES_GRASS.get(id),
                     () -> biome.getSpecialEffects().grassColorOverride().orElseGet(
                         () -> getDefaultColor(temperature, humidity, Colors.COLORMAP_GRASS))),
-                Objects.requireNonNullElseGet(ColorsConfig.BIOME_WATER.get(id),
+                Objects.requireNonNullElseGet(ColorsConfig.OVERRIDES_WATER.get(id),
                     () -> biome.getSpecialEffects().waterColor()),
                 (x, z, color) -> biome.getSpecialEffects().grassColorModifier().modifyColor(x, z, color)
             ));
