@@ -104,6 +104,9 @@ public abstract class AbstractConfig {
         save();
     }
 
+    /**
+     * Saves the config in memory to disk.
+     */
     protected void save() {
         try {
             getConfig().save();

@@ -88,9 +88,11 @@ tasks {
       "https://carleslc.me/Simple-YAML/doc/"
     )
     exclude(
+      "net/pl3x/livemap/configuration/BlocksConfig.java",
       "net/pl3x/livemap/configuration/ColorsConfig.java",
       "net/pl3x/livemap/configuration/Config.java",
       "net/pl3x/livemap/configuration/Lang.java",
+      "net/pl3x/livemap/configuration/WorldConfig.java",
       "net/pl3x/livemap/world/block/Blocks.java"
     )
   }

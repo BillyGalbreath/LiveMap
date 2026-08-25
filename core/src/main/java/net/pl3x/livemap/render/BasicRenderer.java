@@ -24,14 +24,24 @@
 
 package net.pl3x.livemap.render;
 
+import net.pl3x.livemap.render.heightmap.Heightmap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 /**
- * A registry of all map renderers.
+ * A basic renderer.
  */
-public class RenderRegistry {
+public class BasicRenderer extends Renderer {
     /**
-     * Constructs a new instance of RenderRegistry.
+     * Constructs a new instance of BasicRenderer.
+     *
+     * @param name              Display name for renderer
+     * @param icon              Icon file for webmap
+     * @param heightmap         The heightmap to use
+     * @param biomeBlend        Number of blocks to blend biome tints
+     * @param translucentFluids True to render fluids as translucent
      */
-    public RenderRegistry() {
-        // Explicit constructor to satisfy Javadoc and linter tools
+    public BasicRenderer(@NotNull String name, @NotNull String icon, @Nullable Heightmap heightmap, int biomeBlend, boolean translucentFluids) {
+        super(Type.BASIC, name, icon, heightmap, biomeBlend, translucentFluids);
     }
 }

@@ -1,0 +1,117 @@
+settings:
+  debug-mode: false
+  language-file: en_us.yml
+  web-directory:
+    path: web/
+    read-only: false
+  internal-webserver:
+    enabled: true
+    bind: 0.0.0.0
+    port: 8080
+  performance:
+    render-threads: -1
+world-settings:
+  default:
+    enabled: true
+    order: 0
+    name: <world>
+    render:
+      scan-chunks: true
+      center:
+        x: -1
+        z: -1
+      zoom:
+        default: 0
+        max-out: 3
+        max-in: 2
+      visible-areas:
+        - type: world-border
+      renderers:
+        - type: fancy
+          name: Fancy
+          icon: overworld_fancy.png
+          heightmap: FANCY
+          biome-blend: 3
+          translucent-fluids: true
+  world:
+    enabled: true
+    order: 0
+    name: Overworld
+    render:
+      renderers:
+        - type: fancy
+          icon: overworld_fancy.png
+          name: Fancy
+          heightmap: fancy
+          biome-blend: 3
+          translucent-fluids: true
+        - type: basic
+          icon: overworld_basic.png
+          name: Basic
+          heightmap: basic
+          biome-blend: 0
+          translucent-fluids: false
+        - type: biomes
+          icon: overworld_biomes.png
+          name: Biomes
+          heightmap: fancy
+          biome-blend: 0
+          translucent-fluids: false
+        - type: flowermap
+          icon: flowermap.png
+          name: Flowers
+          heightmap: fancy
+          biome-blend: 0
+          translucent-fluids: false
+        - type: inhabited
+          icon: inhabited.png
+          name: Inhabited
+          heightmap: fancy
+          biome-blend: 0
+          translucent-fluids: false
+  world_nether:
+    order: 1
+    display-name: The Nether
+    render:
+      renderers:
+        - type: fancy
+          icon: nether_fancy.png
+          name: Fancy
+          heightmap: fancy
+          biome-blend: 0
+          translucent-fluids: true
+        - type: basic
+          icon: nether_basic.png
+          name: Basic
+          heightmap: basic
+          biome-blend: 0
+          translucent-fluids: false
+        - type: nether_roof
+          icon: nether_roof.png
+          name: Roof
+          heightmap: fancy
+          biome-blend: 0
+          translucent-fluids: false
+        - type: biomes
+          icon: nether_biomes.png
+          name: Biomes
+          heightmap: fancy
+          biome-blend: 0
+          translucent-fluids: false
+  world_the_end:
+    order: 2
+    display-name: The End
+    render:
+      renderers:
+        - type: basic
+          icon: the_end_basic.png
+          name: Basic
+          heightmap: fancy
+          biome-blend: 0
+          translucent-fluids: true
+        - type: biomes
+          icon: the_end_biomes.png
+          name: Biomes
+          heightmap: fancy
+          biome-blend: 0
+          translucent-fluids: false

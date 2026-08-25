@@ -36,10 +36,11 @@ import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ThreadLocalRandom;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.configuration.Lang;
+import net.pl3x.livemap.configuration.WorldConfig;
 import net.pl3x.livemap.marker.Point;
+import net.pl3x.livemap.render.RendererRegistry;
 import net.pl3x.livemap.world.biome.BiomeRegistry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +57,7 @@ public abstract class World {
     private final Path regionDir;
     private final Path tilesDir;
 
-    private final boolean enabled;
+    private final WorldConfig config;
 
     /**
      * Constructs a new instance of World.
@@ -75,7 +76,7 @@ public abstract class World {
         this.regionDir = regionsDir;
         this.tilesDir = LiveMap.api().getTilesDir().resolve(name.replace(":", "-"));
 
-        this.enabled = ThreadLocalRandom.current().nextBoolean(); // todo - load from world config
+        this.config = new WorldConfig(this);
     }
 
     /**
@@ -93,7 +94,17 @@ public abstract class World {
      * @return True if map rendering is enabled
      */
     public boolean isEnabled() {
-        return this.enabled;
+        return getConfig().ENABLED;
+    }
+
+    /**
+     * Get configuration for this world.
+     *
+     * @return World config
+     */
+    @NotNull
+    public WorldConfig getConfig() {
+        return this.config;
     }
 
     /**
@@ -194,12 +205,48 @@ public abstract class World {
     public abstract int getHeight();
 
     /**
+     * Get world border's minimum X coordinate.
+     *
+     * @return Minimum X coordinate
+     */
+    public abstract double getBorderMinX();
+
+    /**
+     * Get world border's minimum Z coordinate.
+     *
+     * @return Minimum z coordinate
+     */
+    public abstract double getBorderMinZ();
+
+    /**
+     * Get world border's maximum X coordinate.
+     *
+     * @return Maximum X coordinate
+     */
+    public abstract double getBorderMaxX();
+
+    /**
+     * Get world border's maximum Z coordinate.
+     *
+     * @return Maximum Z coordinate
+     */
+    public abstract double getBorderMaxZ();
+
+    /**
      * Get the biome registry.
      *
      * @return The biome registry
      */
     @NotNull
     public abstract BiomeRegistry getBiomeRegistry();
+
+    /**
+     * Get the renderer registry.
+     *
+     * @return The renderer registry
+     */
+    @NotNull
+    public abstract RendererRegistry getRendererRegistry();
 
     @Override
     public boolean equals(@Nullable Object o) {

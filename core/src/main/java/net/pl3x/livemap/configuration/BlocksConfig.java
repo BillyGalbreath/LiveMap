@@ -28,6 +28,9 @@ import java.util.ArrayList;
 import java.util.List;
 import net.pl3x.livemap.LiveMap;
 
+/**
+ * Configurable block types config.
+ */
 public class BlocksConfig extends AbstractConfig {
     @Key("blocks.air")
     @Comment("""
@@ -198,6 +201,9 @@ public class BlocksConfig extends AbstractConfig {
 
     private static final BlocksConfig CONFIG = new BlocksConfig();
 
+    /**
+     * Constructs a new instance of BlocksConfig.
+     */
     public BlocksConfig() {
         super(LiveMap.api().getDataPath().resolve("blocks.yml"));
     }
