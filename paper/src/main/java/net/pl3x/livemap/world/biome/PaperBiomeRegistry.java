@@ -43,7 +43,7 @@ public class PaperBiomeRegistry extends BiomeRegistry {
     public void rebuild() {
         clear();
 
-        Logger.info("   &7&l-&r gathering biomes information...");
+        Logger.info("   &7&l-&r Registering biomes...");
 
         var entries = this.world.<ServerLevel>getLevel()
             .registryAccess().lookupOrThrow(Registries.BIOME).entrySet();
@@ -76,6 +76,6 @@ public class PaperBiomeRegistry extends BiomeRegistry {
             ));
         }
 
-        Logger.info("   &7&l-&r registered &3%d&r biomes".formatted(size()));
+        Logger.info("     &7&l-&r registered &3%d&r biomes".formatted(size()));
     }
 }

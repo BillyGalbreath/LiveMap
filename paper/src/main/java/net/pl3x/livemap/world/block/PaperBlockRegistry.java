@@ -39,7 +39,7 @@ public class PaperBlockRegistry extends BlockRegistry {
     public void rebuild() {
         clear();
 
-        Logger.info("Gathering block information...");
+        Logger.info("Registering blocks...");
 
         // todo - load blocks from cache for persistent indexes (BlockInfo)
         //Blocks.registerDefaults();
@@ -67,7 +67,7 @@ public class PaperBlockRegistry extends BlockRegistry {
             put(id, new Block(0, id, vanilla, properties));
         }
 
-        Logger.info("Registered &3%d&r blocks".formatted(size()));
+        Logger.info(" &7&l-&r registered &3%d&r blocks".formatted(size()));
     }
 
     private short getPropertiesFlag(@NotNull String id, @NotNull net.minecraft.world.level.block.Block block) {
