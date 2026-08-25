@@ -90,8 +90,7 @@ public class WorldConfig extends AbstractConfig {
 
     @Key("render.renderers")
     @Comment("""
-        Renderers to use. Each renderer will draw a different type of map.
-        The built-in renderer types include: basic, biomes, fancy, flowermap, inhabited, and nether_roof""")
+        List of renderers to use. Each renderer will draw a different type of map.""")
     public List<Map<String, Object>> RENDERERS = new ArrayList<>() {{
         add(new LinkedHashMap<>() {{
             put("type", "fancy");
@@ -131,8 +130,25 @@ public class WorldConfig extends AbstractConfig {
             Zoom settings control how the map zooms in and out and how
             the tile images are stored on disk.
             Warning: Changing these values will require a map reset.""");
+        // todo https://github.com/Carleslc/Simple-YAML/issues/84
+        setComment("render.renderers[0].type", """
+            The built-in types include: basic, biomes, fancy, flowermap, inhabited, nether_roof.""");
+        setComment("render.renderers[0].name", """
+            The display name for this renderer. It is viewable on the webmap when mouse hovers over the icon.""");
+        setComment("render.renderers[0].icon", """
+            "This can be any image under 'web/images/icon/' directory.""");
+        setComment("render.renderers[0].heightmap", """
+            The built-in heightmaps include: basic, fancy.""");
+        setComment("render.renderers[0].biome-blend", """
+            Enables blending of biome grass/foliage/water colors similar to
+            the client's biome blending option.
+            Values are clamped to 0-7 to represent the 8 possible values in the client.""");
+        setComment("render.renderers[0].translucent-fluids", """
+            Enable translucent fluids.
+            This will make the fluids look fancier and translucent,
+            so you can see the blocks below in shallow fluids.""");
 
-        // call directly on config because the node is outside the world's scope
+        // call directly on parent config because these nodes are outside the world's scope
         getConfig().setComment("world-settings", """
             These are the per-world settings. Each world can have their own unique values.""");
         getConfig().setComment("world-settings.default", """
@@ -140,7 +156,15 @@ public class WorldConfig extends AbstractConfig {
             You can override any of these on a per-world basis by adding the
             world by name below this section.""");
 
+        // save back to disk (for comments and default values)
         save();
+
+        // cleanup user input where needed
+        this.RENDERERS.forEach(renderer -> {
+            int before = (int) renderer.get("biome-blend");
+            int after = Math.clamp(before, 0, 7);
+            renderer.put("biome-blend", after);
+        });
     }
 
     @Override
