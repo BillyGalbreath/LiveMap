@@ -95,7 +95,26 @@ public class Point implements JsonSerializable {
     @NotNull
     public static Point of(double x, double z) {
         // floor first because casting alone truncates towards zero
-        return of((int) Math.floor(x), (int) Math.floor(z));
+        return of(
+            (int) Math.floor(x),
+            (int) Math.floor(z)
+        );
+    }
+
+    /**
+     * Constructs a new instance of Point.
+     *
+     * @param x X coordinate
+     * @param z Z coordinate
+     * @return A new point
+     */
+    @NotNull
+    public static Point of(@NotNull Number x, @NotNull Number z) {
+        // floor first because intValue() truncates towards zero
+        return of(
+            (int) Math.floor(x.doubleValue()),
+            (int) Math.floor(z.doubleValue())
+        );
     }
 
     private final int x;
@@ -110,6 +129,34 @@ public class Point implements JsonSerializable {
     public Point(int x, int z) {
         this.x = x;
         this.z = z;
+    }
+
+    /**
+     * Constructs a new instance of Point.
+     *
+     * @param x X coordinate
+     * @param z Z coordinate
+     */
+    public Point(double x, double z) {
+        // floor first because casting alone truncates towards zero
+        this(
+            (int) Math.floor(x),
+            (int) Math.floor(z)
+        );
+    }
+
+    /**
+     * Constructs a new instance of Point.
+     *
+     * @param x X coordinate
+     * @param z Z coordinate
+     */
+    public Point(@NotNull Number x, @NotNull Number z) {
+        // floor first because intValue() truncates towards zero
+        this(
+            (int) Math.floor(x.doubleValue()),
+            (int) Math.floor(z.doubleValue())
+        );
     }
 
     @Override

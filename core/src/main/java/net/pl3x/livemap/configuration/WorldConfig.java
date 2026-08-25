@@ -167,14 +167,16 @@ public class WorldConfig extends AbstractConfig {
                 return null;
             }
             Map<String, Object> map = section.getMapValues(false);
-            try {
-                return Point.of(
-                    (int) map.get("x"),
-                    (int) map.get("z")
-                );
-            } catch (Exception e) {
+            if (map == null) {
                 return null;
             }
+            if (!(map.get("x") instanceof Number xNum)) {
+                return null;
+            }
+            if (!(map.get("z") instanceof Number zNum)) {
+                return null;
+            }
+            return Point.of(xNum, zNum);
         }
         return super.get(path);
     }

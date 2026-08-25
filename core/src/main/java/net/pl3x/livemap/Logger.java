@@ -320,11 +320,7 @@ public final class Logger {
         @Override
         @Nullable
         public State getState() {
-            try {
-                return State.STARTED;
-            } catch (Exception exception) {
-                return null;
-            }
+            return State.STARTED;
         }
 
         @Override

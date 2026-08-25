@@ -31,12 +31,36 @@ import org.jetbrains.annotations.NotNull;
  * Represents a state of a block.
  */
 public class BlockState {
+    /**
+     * Parse property from string to byte without the overhead of try/catch NumberFormatException.
+     * <p>
+     * Note: This is oversimplified by not processing negative values.
+     *
+     * @param property String value to parse
+     * @return Property value as byte
+     */
     private static byte parseProperty(@NotNull String property) {
-        try {
-            return Integer.valueOf(property).byteValue();
-        } catch (NumberFormatException e) {
+        if (property.isBlank()) {
             return -1;
         }
+
+        int len = property.length();
+        int result = 0;
+
+        // parse each digit
+        for (int i = 0; i < len; i++) {
+            char c = property.charAt(i);
+
+            // instantly reject non-digits (including '-')
+            if (c < '0' || c > '9') {
+                return -1;
+            }
+
+            // add to the next digit
+            result = result * 10 + (c - '0');
+        }
+
+        return (byte) result;
     }
 
     private final Block block;
