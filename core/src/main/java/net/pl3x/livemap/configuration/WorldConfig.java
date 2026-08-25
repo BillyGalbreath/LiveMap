@@ -141,8 +141,12 @@ public class WorldConfig extends AbstractConfig {
     @Override
     protected void set(@NotNull String path, @Nullable Object value) {
         if (path.contains("render.center")) {
-            Point center = Unsafe.cast(value);
-            value = center == null ? new int[0] : new int[]{center.getX(), center.getZ()};
+            if (value == null) {
+                value = new int[0];
+            } else {
+                Point center = Unsafe.cast(value);
+                value = new int[]{center.getX(), center.getZ()};
+            }
         }
         getConfig().set(path, value);
     }
