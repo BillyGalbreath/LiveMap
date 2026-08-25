@@ -29,6 +29,7 @@ import java.util.Map;
 import net.pl3x.livemap.Logger;
 import net.pl3x.livemap.render.heightmap.Heightmap;
 import net.pl3x.livemap.util.Registry;
+import net.pl3x.livemap.util.Unsafe;
 import net.pl3x.livemap.world.World;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,20 +59,21 @@ public class RendererRegistry extends Registry<Renderer> {
 
         List<Map<String, Object>> list = this.world.getConfig().RENDERERS;
         for (Map<String, Object> map : list) {
-            Renderer.Type type = Renderer.Type.get((String) map.get("type"));
+            String typeStr = Unsafe.cast(map.get("type"));
+            Renderer.Type type = Renderer.Type.get(typeStr);
             if (type == null) {
-                Logger.warn("     &7&l-&r unknown renderer type&3: &f&o%s".formatted(map.get("type")));
+                Logger.warn("     &7&l-&r unknown renderer type&3: &f&o%s".formatted(typeStr));
                 continue;
             }
             Renderer renderer;
             try {
-                Heightmap.Type heightmap = Heightmap.Type.get((String) map.get("heightmap"));
+                Heightmap.Type heightmap = Heightmap.Type.get(Unsafe.cast(map.get("heightmap")));
                 renderer = type.create(
-                    (String) map.get("name"),
-                    (String) map.get("icon"),
+                    Unsafe.cast(map.get("name")),
+                    Unsafe.cast(map.get("icon")),
                     heightmap == null ? null : heightmap.create(),
-                    (int) map.getOrDefault("biome-blend", 0),
-                    (boolean) map.getOrDefault("translucent-fluids", false)
+                    Unsafe.cast(map.getOrDefault("biome-blend", 0)),
+                    Unsafe.cast(map.getOrDefault("translucent-fluids", false))
                 );
             } catch (RuntimeException e) {
                 Logger.error("     &7&l-&r unable to create renderer type %s".formatted(type.id()), e);
