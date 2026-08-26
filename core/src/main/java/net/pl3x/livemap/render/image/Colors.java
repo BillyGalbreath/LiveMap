@@ -41,28 +41,28 @@ public final class Colors {
     /**
      * Colors for wheat, based on age.
      */
-    public static int[] BLOCK_WHEAT_COLOR = new int[8];
+    public static final int[] BLOCK_WHEAT_COLOR = new int[8];
     /**
      * Colors for melon/pumpkin stems, based on age.
      */
-    public static int[] BLOCK_STEM_COLOR = new int[8];
+    public static final int[] BLOCK_STEM_COLOR = new int[8];
     /**
      * Colors for cocoa block, based on age.
      */
-    public static int[] BLOCK_COCOA_COLOR = {0x6A682E, 0x654721, 0x703715};
+    public static final int[] BLOCK_COCOA_COLOR = {0x6A682E, 0x654721, 0x703715};
 
     /**
      * Colormap from gradient image for grass.
      */
-    public static int[] COLORMAP_GRASS;
+    public static final int[] COLORMAP_GRASS;
     /**
      * Colormap from gradient image for dry foliage.
      */
-    public static int[] COLORMAP_DRY_FOLIAGE;
+    public static final int[] COLORMAP_DRY_FOLIAGE;
     /**
      * Colormap from gradient image for foliage.
      */
-    public static int[] COLORMAP_FOLIAGE;
+    public static final int[] COLORMAP_FOLIAGE;
 
     static {
         for (int i = 0; i < 8; i++) {
@@ -70,21 +70,26 @@ public final class Colors {
             BLOCK_STEM_COLOR[i] = rgb(i << 5, 0xFF - (i << 3), i << 2);
         }
         Path imagesDir = LiveMap.api().getWebDir().resolve("images");
+        int[] grass, dryFoliage, foliage;
         try {
-            COLORMAP_GRASS = getColorsFromImage(ImageIO.read(imagesDir.resolve("grass.png").toFile()));
-            COLORMAP_DRY_FOLIAGE = getColorsFromImage(ImageIO.read(imagesDir.resolve("dry_foliage.png").toFile()));
-            COLORMAP_FOLIAGE = getColorsFromImage(ImageIO.read(imagesDir.resolve("foliage.png").toFile()));
+            grass = getColorsFromImage(ImageIO.read(imagesDir.resolve("grass.png").toFile()));
+            dryFoliage = getColorsFromImage(ImageIO.read(imagesDir.resolve("dry_foliage.png").toFile()));
+            foliage = getColorsFromImage(ImageIO.read(imagesDir.resolve("foliage.png").toFile()));
         } catch (IOException e) {
-            COLORMAP_GRASS = new int[0];
-            COLORMAP_DRY_FOLIAGE = new int[0];
-            COLORMAP_FOLIAGE = new int[0];
+            grass = new int[0];
+            dryFoliage = new int[0];
+            foliage = new int[0];
         }
+
+        COLORMAP_GRASS = grass;
+        COLORMAP_DRY_FOLIAGE = dryFoliage;
+        COLORMAP_FOLIAGE = foliage;
     }
 
     private Colors() {
     }
 
-    private static int[] getColorsFromImage(@NotNull BufferedImage image) {
+    private static int @NotNull [] getColorsFromImage(@NotNull BufferedImage image) {
         int[] map = new int[256 * 256];
         for (int x = 0; x < 256; ++x) {
             for (int y = 0; y < 256; ++y) {

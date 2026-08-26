@@ -69,6 +69,7 @@ public final class Unsafe {
          *
          * @return textual reason when the annotated value could be null, for documentation purposes
          */
+        @SuppressWarnings("UnusedReturnValue")
         @NonNls String value() default "";
     }
 }

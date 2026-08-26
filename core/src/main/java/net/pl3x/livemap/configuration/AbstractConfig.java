@@ -240,7 +240,6 @@ public abstract class AbstractConfig {
      *
      * @param <T> Type of config
      */
-    @SuppressWarnings("ClassCanBeRecord")
     protected static class KeyedField<T extends AbstractConfig> {
         private final T config;
         private final Field field;

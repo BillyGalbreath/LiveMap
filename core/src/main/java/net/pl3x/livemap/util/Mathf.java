@@ -71,18 +71,6 @@ public final class Mathf {
     }
 
     /**
-     * Clamp a value between min and max (inclusive).
-     *
-     * @param min   Minimum value
-     * @param max   Maximum value
-     * @param value Value to clamp
-     * @return Clamped value between min and max
-     */
-    public static float clamp(float min, float max, float value) {
-        return Math.min(Math.max(value, min), max);
-    }
-
-    /**
      * Get the square of a number (n * n).
      *
      * @param n The number to square

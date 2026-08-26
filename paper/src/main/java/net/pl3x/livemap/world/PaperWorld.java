@@ -129,6 +129,7 @@ public class PaperWorld extends World {
         return "Paper" + super.toString();
     }
 
+    @SuppressWarnings("unused")
     public static class Argument extends World.Argument implements CustomArgumentType<World, String> {
     }
 }

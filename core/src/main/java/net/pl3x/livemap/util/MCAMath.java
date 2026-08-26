@@ -72,6 +72,7 @@ public final class MCAMath {
 
         if (bitoffset > 0 && firstLong + 1 < data.length) {
             long value2 = data[firstLong + 1];
+            //noinspection ShiftOutOfRange - overflow is purposeful
             value2 = value2 << -bitoffset;
             value = value | value2;
         }

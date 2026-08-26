@@ -206,6 +206,7 @@ public abstract class Chunk {
     /**
      * Represents raw NBT data for chunks.
      */
+    @SuppressWarnings("CanBeFinal")
     public static class NBT {
         @NBTName("DataVersion")
         int version = 0;
@@ -230,6 +231,7 @@ public abstract class Chunk {
     /**
      * Represents a chunk section (16x16x16 blocks).
      */
+    @SuppressWarnings("CanBeFinal")
     public static class Section {
         /**
          * Constructs a new instance of Section.
@@ -241,6 +243,7 @@ public abstract class Chunk {
         /**
          * Represents raw NBT data for chunk sections.
          */
+        @SuppressWarnings("CanBeFinal")
         public static class NBT {
             @NBTName("Y")
             int y = 0;

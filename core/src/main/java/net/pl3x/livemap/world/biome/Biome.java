@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a Minecraft biome and its color and relevant properties.
  */
+@SuppressWarnings("ClassCanBeRecord")
 public class Biome {
     /**
      * The default biome to use when no other biome exists. This is the same as the <code>minecraft:ocean</code> biome.

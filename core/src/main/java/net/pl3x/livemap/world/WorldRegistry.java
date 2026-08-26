@@ -50,12 +50,7 @@ public abstract class WorldRegistry extends Registry<World> {
     public World remove(@NotNull String key) {
         World world = super.remove(key);
         if (world != null) {
-            // todo
-            //LiveMap.api().getEventRegistry().callEvent(new WorldUnloadedEvent(world));
-            //world.getMarkerTask().cancel();
-            //world.getLiveDataTask().cancel();
-            //world.getRegionFileWatcher().stop();
-            //world.cleanup();
+            world.discard();
         }
         return world;
     }
@@ -63,9 +58,6 @@ public abstract class WorldRegistry extends Registry<World> {
     @Override
     public void clear() {
         // cleanup world data
-        values().forEach(World::discard);
-
-        // clear out worlds
-        super.clear();
+        values().forEach(this::remove);
     }
 }

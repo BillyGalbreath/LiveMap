@@ -51,12 +51,12 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
     private Path webDir;
     private Path tilesDir;
 
-    private final PaperBlockRegistry blockRegistry = new PaperBlockRegistry();
-    private final PaperWorldRegistry worldRegistry = new PaperWorldRegistry();
+    private final PaperBlockRegistry blockRegistry;
+    private final PaperWorldRegistry worldRegistry;
 
-    private final ChunkLoader chunkLoader = new ChunkLoader();
+    private final ChunkLoader chunkLoader;
 
-    private final PaperArgs args = new PaperArgs();
+    private final PaperArgs args;
 
     private HttpdServer httpdServer;
     private Metrics metrics;
@@ -65,6 +65,13 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
         super();
         Provider.api = this;
         Logger.logger = getLogger();
+
+        this.blockRegistry = new PaperBlockRegistry();
+        this.worldRegistry = new PaperWorldRegistry();
+
+        this.chunkLoader = new ChunkLoader();
+
+        this.args = new PaperArgs();
     }
 
     @Override

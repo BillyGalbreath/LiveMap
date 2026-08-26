@@ -251,6 +251,7 @@ public final class Chunk_1_18 extends Chunk {
     /**
      * Represents raw NBT data for chunks.
      */
+    @SuppressWarnings("CanBeFinal")
     public static class NBT extends Chunk.NBT {
         @NBTName("Status")
         String status = "minecraft:empty";
@@ -275,6 +276,7 @@ public final class Chunk_1_18 extends Chunk {
     /**
      * Represents raw NBT data for chunk heightmaps.
      */
+    @SuppressWarnings("CanBeFinal")
     public static class HeightmapsNBT {
         @NBTName("WORLD_SURFACE")
         long[] worldSurface = EMPTY_LONG_ARRAY;
@@ -290,6 +292,7 @@ public final class Chunk_1_18 extends Chunk {
     /**
      * Represents raw NBT data for chunk sections.
      */
+    @SuppressWarnings("CanBeFinal")
     public static class SectionNBT extends Chunk.Section.NBT {
         @NBTName("block_states")
         BlockStatesNBT blockStates = EMPTY_BLOCKSTATES_NBT;
@@ -308,6 +311,7 @@ public final class Chunk_1_18 extends Chunk {
     /**
      * Represents raw NBT data for block states.
      */
+    @SuppressWarnings("CanBeFinal")
     public static class BlockStatesNBT {
         @NBTName("palette")
         BlockState[] palette = EMPTY_BLOCKSTATE_ARRAY;
@@ -326,6 +330,7 @@ public final class Chunk_1_18 extends Chunk {
     /**
      * Represents raw NBT data for biomes.
      */
+    @SuppressWarnings("CanBeFinal")
     public static class BiomesNBT {
         @NBTName("palette")
         String[] palette = EMPTY_STRING_ARRAY;

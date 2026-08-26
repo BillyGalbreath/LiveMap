@@ -48,7 +48,7 @@ final class TilesPathHandler extends io.undertow.server.handlers.PathHandler {
     public void handleRequest(@NotNull HttpServerExchange exchange) throws Exception {
         String url = exchange.getRelativePath();
         if (url.contains("/tiles/")) {
-            // do not cache anything in the tiles directory (includes json files)
+            // do not cache anything in the tiles directory (includes JSON files)
             exchange.getResponseHeaders().put(Headers.CACHE_CONTROL, "max-age=0, must-revalidate, no-cache");
         }
         handler.handleRequest(exchange);
