@@ -31,6 +31,7 @@ import java.nio.file.Path;
 import java.util.List;
 import net.pl3x.livemap.command.LiveMapCommand;
 import net.pl3x.livemap.command.PaperSource;
+import net.pl3x.livemap.configuration.BlocksConfig;
 import net.pl3x.livemap.configuration.ColorsConfig;
 import net.pl3x.livemap.configuration.Config;
 import net.pl3x.livemap.configuration.Lang;
@@ -68,9 +69,11 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
 
     @Override
     public void onEnable() {
+        // main configs
         Config.reload();
         Lang.reload();
 
+        // calculate directories
         Path dir = Path.of(Config.WEB_DIR);
         this.webDir = dir.isAbsolute() ? dir : getDataPath().resolve(dir);
         this.tilesDir = getWebDir().resolve("tiles");
@@ -78,9 +81,11 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
         // web dir has to extract before colors config to load biome colors correctly
         FileUtil.extractDir("/web/", getWebDir(), !Config.WEB_DIR_READONLY);
 
+        // other configs
+        BlocksConfig.reload();
         ColorsConfig.reload();
 
-        // registries
+        // rebuild registries
         getBlockRegistry().rebuild();
         getWorldRegistry().rebuild();
 
@@ -98,6 +103,7 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
         );
 
         // scheduler
+        // todo
 
         // bstats metrics
         this.metrics = new Metrics(this, 26542);

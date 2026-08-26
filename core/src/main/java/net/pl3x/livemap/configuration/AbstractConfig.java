@@ -83,7 +83,7 @@ public abstract class AbstractConfig {
             throw new RuntimeException(e);
         }
 
-        // load data from yaml
+        // populate keyed fields from yaml data
         Arrays.stream(getClass().getDeclaredFields()).forEach(field -> {
             Key key = field.getDeclaredAnnotation(Key.class);
             if (key == null) {
@@ -100,8 +100,6 @@ public abstract class AbstractConfig {
                 Logger.warn("Failed to load &3%s&r from &3%s&r".formatted(key.value(), this.path.getFileName().toString()), e);
             }
         });
-
-        save();
     }
 
     /**

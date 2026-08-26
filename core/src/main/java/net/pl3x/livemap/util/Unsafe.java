@@ -45,7 +45,7 @@ public final class Unsafe {
      * @param <T> Type to cast to
      * @return Object as T
      */
-    @UnknownNullability(value = "Unsafe cast. Could be null.")
+    @UnknownNullability("Unsafe cast. Could be null.")
     @SuppressWarnings("unchecked")
     public static <T> T cast(@UnknownNullability Object obj) {
         return (T) obj;

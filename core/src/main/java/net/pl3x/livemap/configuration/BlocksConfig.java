@@ -31,7 +31,7 @@ import net.pl3x.livemap.LiveMap;
 /**
  * Configurable block types config.
  */
-public class BlocksConfig extends AbstractConfig {
+public final class BlocksConfig extends AbstractConfig {
     @Key("blocks.air")
     @Comment("""
         List of blocks that are considered air when it comes
@@ -204,7 +204,7 @@ public class BlocksConfig extends AbstractConfig {
     /**
      * Constructs a new instance of BlocksConfig.
      */
-    public BlocksConfig() {
+    private BlocksConfig() {
         super(LiveMap.api().getDataPath().resolve("blocks.yml"));
     }
 
@@ -213,5 +213,6 @@ public class BlocksConfig extends AbstractConfig {
      */
     public static void reload() {
         CONFIG.reload0();
+        CONFIG.save();
     }
 }

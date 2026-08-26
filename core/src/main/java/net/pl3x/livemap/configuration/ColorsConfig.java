@@ -1257,7 +1257,10 @@ public final class ColorsConfig extends AbstractConfig {
 
     private static final ColorsConfig CONFIG = new ColorsConfig();
 
-    public ColorsConfig() {
+    /**
+     * Constructs a new instance of ColorsConfig.
+     */
+    private ColorsConfig() {
         super(LiveMap.api().getDataPath().resolve("colors.yml"));
     }
 
@@ -1266,6 +1269,7 @@ public final class ColorsConfig extends AbstractConfig {
      */
     public static void reload() {
         CONFIG.reload0();
+        CONFIG.save();
     }
 
     @Override

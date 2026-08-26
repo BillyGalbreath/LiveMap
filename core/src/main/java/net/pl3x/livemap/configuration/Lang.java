@@ -31,7 +31,7 @@ import net.pl3x.livemap.util.FileUtil;
 /**
  * LiveMap's language config.
  */
-public class Lang extends AbstractConfig {
+public final class Lang extends AbstractConfig {
     @Key("error-invalid-world")
     public static String ERROR_INVALID_WORLD = "Invalid world name or id";
     @Key("error-missing-world")
@@ -44,8 +44,11 @@ public class Lang extends AbstractConfig {
     @Key("command-fullrender-errored")
     public static String FULLRENDER_ERRORED = "<red>Fullrender errored on <grey><world>\n<red>Error: <error>";
 
-    private static final Lang LANG = new Lang();
+    private static final Lang CONFIG = new Lang();
 
+    /**
+     * Constructs a new instance of Lang.
+     */
     private Lang() {
         Path dir = LiveMap.api().getDataPath().resolve("lang");
 
@@ -59,6 +62,7 @@ public class Lang extends AbstractConfig {
      * Reloads configuration from YAML file.
      */
     public static void reload() {
-        LANG.reload0();
+        CONFIG.reload0();
+        CONFIG.save();
     }
 }

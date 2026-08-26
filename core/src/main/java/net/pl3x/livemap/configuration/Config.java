@@ -76,6 +76,9 @@ public final class Config extends AbstractConfig {
 
     private static final Config CONFIG = new Config();
 
+    /**
+     * Constructs a new instance of Config.
+     */
     private Config() {
         super(LiveMap.api().getDataPath().resolve("config.yml"));
     }
@@ -85,6 +88,7 @@ public final class Config extends AbstractConfig {
      */
     public static void reload() {
         CONFIG.reload0();
+        CONFIG.save();
     }
 
     @Override
@@ -118,7 +122,5 @@ public final class Config extends AbstractConfig {
             Settings for the built-in webserver.""");
         setComment("settings.performance", """
             Performance related settings.""");
-
-        save();
     }
 }

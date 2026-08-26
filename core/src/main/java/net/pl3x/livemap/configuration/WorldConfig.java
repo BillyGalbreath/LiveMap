@@ -37,9 +37,9 @@ import org.jetbrains.annotations.Nullable;
 import org.simpleyaml.configuration.ConfigurationSection;
 
 /**
- * Per world configuration.
+ * Per-world configuration.
  */
-public class WorldConfig extends AbstractConfig {
+public final class WorldConfig extends AbstractConfig {
     @Key("enabled")
     @Comment("""
         Enables this world to be rendered on the map.""")
