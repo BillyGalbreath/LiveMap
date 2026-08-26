@@ -123,13 +123,8 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
             this.httpdServer = null;
         }
 
-        // block registry
-
-        // biome registry
-
-        // render registry
-
-        // world registry
+        // clear registries
+        getBlockRegistry().clear();
         getWorldRegistry().clear();
     }
 

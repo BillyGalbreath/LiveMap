@@ -279,6 +279,11 @@ public abstract class World {
             + "]";
     }
 
+    public void discard() {
+        getBiomeRegistry().clear();
+        getRendererRegistry().clear();
+    }
+
     /**
      * Represents a custom command argument for our world type.
      */

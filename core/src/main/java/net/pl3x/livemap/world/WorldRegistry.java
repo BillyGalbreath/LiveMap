@@ -59,4 +59,13 @@ public abstract class WorldRegistry extends Registry<World> {
         }
         return world;
     }
+
+    @Override
+    public void clear() {
+        // cleanup world data
+        values().forEach(World::discard);
+
+        // clear out worlds
+        super.clear();
+    }
 }
