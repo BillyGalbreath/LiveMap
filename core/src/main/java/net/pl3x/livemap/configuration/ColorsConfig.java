@@ -1328,7 +1328,9 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:eroded_badlands", 0x9E814D);
         put("minecraft:jungle", 0x1F8907);
         put("minecraft:mangrove_swamp", 0x8DB127);
+        // todo pale_garden?
         put("minecraft:sparse_jungle", 0x1F8907);
+        // todo sulfur_caves?
         put("minecraft:swamp", 0x6A7039);
         put("minecraft:wooded_badlands", 0x9E814D);
     }};
@@ -1338,6 +1340,8 @@ public final class ColorsConfig extends AbstractConfig {
         Override dry foliage colors per biome.""")
     public static Map<String, Integer> OVERRIDES_DRY_FOLIAGE = new LinkedHashMap<>() {{
         put("minecraft:badlands", 0x9E814D);
+        // todo pale_garden?
+        // todo sulfur_caves?
     }};
 
     @Key("colors.grass")
@@ -1346,13 +1350,18 @@ public final class ColorsConfig extends AbstractConfig {
     public static Map<String, Integer> OVERRIDES_GRASS = new LinkedHashMap<>() {{
         put("minecraft:badlands", 0x90814D);
         put("minecraft:eroded_badlands", 0x90814D);
+        // todo pale_garden?
+        // todo sulfur_caves?
         put("minecraft:wooded_badlands", 0x90814D);
     }};
 
     @Key("colors.water")
     @Comment("""
         Override water colors per biome.""")
-    public static Map<String, Integer> OVERRIDES_WATER = new LinkedHashMap<>();
+    public static Map<String, Integer> OVERRIDES_WATER = new LinkedHashMap<>() {{
+        // todo pale_garden?
+        // todo sulfur_caves?
+    }};
 
     private static final ColorsConfig CONFIG = new ColorsConfig();
 
