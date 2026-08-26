@@ -74,7 +74,7 @@ public abstract class AbstractConfig {
      * Reloads configuration from YAML file.
      */
     protected void reload0() {
-        // read yaml from file
+        // read YAML from file
         try {
             getConfig().createOrLoadWithComments();
         } catch (InvalidConfigurationException e) {
@@ -85,6 +85,26 @@ public abstract class AbstractConfig {
         }
 
         // populate keyed fields from yaml data
+        yaml2Fields();
+
+        // cleanup user input where needed
+        cleanup();
+
+        // populate YAML data from keyed fields
+        fields2Yaml();
+
+        // save YAML to disk
+        try {
+            getConfig().save();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Populate keyed fields from yaml data.
+     */
+    protected void yaml2Fields() {
         Arrays.stream(getClass().getDeclaredFields())
             .map(field -> KeyedField.of(this, field))
             .filter(Objects::nonNull)
@@ -99,14 +119,25 @@ public abstract class AbstractConfig {
     }
 
     /**
-     * Saves the config in memory to disk.
+     * Populate YAML data from keyed fields.
      */
-    protected void save() {
-        try {
-            getConfig().save();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    protected void fields2Yaml() {
+        Arrays.stream(getClass().getDeclaredFields())
+            .map(field -> KeyedField.of(this, field))
+            .filter(Objects::nonNull)
+            .forEach(field -> {
+                try {
+                    set(field.key(), field.value());
+                } catch (Throwable e) {
+                    Logger.warn("Failed to save &3%s&r to &3%s&r".formatted(field.key(), this.path.getFileName()), e);
+                }
+            });
+    }
+
+    /**
+     * Cleanup comments and user input (etc.) where needed.
+     */
+    protected void cleanup() {
     }
 
     /**

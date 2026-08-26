@@ -24,7 +24,10 @@
 
 package net.pl3x.livemap.configuration;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.render.image.Colors;
@@ -1269,7 +1272,26 @@ public final class ColorsConfig extends AbstractConfig {
      */
     public static void reload() {
         CONFIG.reload0();
-        CONFIG.save();
+    }
+
+    @Override
+    protected void cleanup() {
+        // sort map keys alphabetically
+        sort(BLOCK_COLORS);
+        sort(BIOME_COLORS);
+        sort(OVERRIDES_FOLIAGE);
+        sort(OVERRIDES_DRY_FOLIAGE);
+        sort(OVERRIDES_GRASS);
+        sort(OVERRIDES_WATER);
+    }
+
+    private static void sort(@NotNull Map<String, Integer> map) {
+        List<String> keys = new ArrayList<>(map.keySet());
+        Collections.sort(keys);
+        LinkedHashMap<String, Integer> temp = new LinkedHashMap<>(map.size());
+        keys.forEach(key -> temp.put(key, map.get(key)));
+        map.clear();
+        map.putAll(temp);
     }
 
     @Override

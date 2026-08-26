@@ -63,6 +63,10 @@ public final class Lang extends AbstractConfig {
      */
     public static void reload() {
         CONFIG.reload0();
-        CONFIG.save();
+    }
+
+    @Override
+    protected void fields2Yaml() {
+        // nothing to update
     }
 }

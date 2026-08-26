@@ -120,9 +120,11 @@ public final class WorldConfig extends AbstractConfig {
      * Reloads configuration from YAML file.
      */
     public void reload() {
-        // actually reload the config
         reload0();
+    }
 
+    @Override
+    protected void cleanup() {
         // setup comments on sections that have no fields
         setComment("render", """
             Settings to control how rendering the world works.""");
@@ -156,15 +158,18 @@ public final class WorldConfig extends AbstractConfig {
             You can override any of these on a per-world basis by adding the
             world by name below this section.""");
 
-        // save back to disk (for comments and default values)
-        save();
-
         // cleanup user input where needed
         this.RENDERERS.forEach(renderer -> {
             int before = (int) renderer.get("biome-blend");
             int after = Math.clamp(before, 0, 7);
             renderer.put("biome-blend", after);
         });
+    }
+
+    @Override
+    protected void fields2Yaml() {
+        // unable to tell if fields were populated from defaults or
+        // per-world settings, so do not populate YAML from the fields.
     }
 
     @Override

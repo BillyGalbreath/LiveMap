@@ -88,14 +88,10 @@ public final class Config extends AbstractConfig {
      */
     public static void reload() {
         CONFIG.reload0();
-        CONFIG.save();
     }
 
     @Override
-    protected void reload0() {
-        // actually reload the config
-        super.reload0();
-
+    protected void cleanup() {
         // setup comments on sections that have no fields
         setComment("settings", """
             -----------------------------------------------
@@ -122,5 +118,10 @@ public final class Config extends AbstractConfig {
             Settings for the built-in webserver.""");
         setComment("settings.performance", """
             Performance related settings.""");
+    }
+
+    @Override
+    protected void fields2Yaml() {
+        // nothing to update
     }
 }

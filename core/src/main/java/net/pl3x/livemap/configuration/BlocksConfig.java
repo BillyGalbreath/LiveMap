@@ -25,6 +25,7 @@
 package net.pl3x.livemap.configuration;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import net.pl3x.livemap.LiveMap;
 
@@ -213,6 +214,17 @@ public final class BlocksConfig extends AbstractConfig {
      */
     public static void reload() {
         CONFIG.reload0();
-        CONFIG.save();
+    }
+
+    @Override
+    protected void cleanup() {
+        // sort lists alphabetically
+        Collections.sort(BLOCKS_AIR);
+        Collections.sort(BLOCKS_DRY_FOLIAGE);
+        Collections.sort(BLOCKS_FOLIAGE);
+        Collections.sort(BLOCKS_GLASS);
+        Collections.sort(BLOCKS_GRASS);
+        Collections.sort(BLOCKS_WATER);
+        Collections.sort(BLOCKS_FLAT);
     }
 }
