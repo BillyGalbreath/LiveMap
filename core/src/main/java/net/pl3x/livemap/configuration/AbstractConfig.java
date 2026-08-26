@@ -93,9 +93,7 @@ public abstract class AbstractConfig {
                 Object value = getAndSetDefault(key.value(), field.get(this));
                 field.set(this, value instanceof String str ? str.translateEscapes() : value);
                 Comment comment = field.getDeclaredAnnotation(Comment.class);
-                if (comment != null) {
-                    setComment(key.value(), comment.value());
-                }
+                setComment(key.value(), comment != null ? comment.value() : null);
             } catch (Throwable e) {
                 Logger.warn("Failed to load &3%s&r from &3%s&r".formatted(key.value(), this.path.getFileName().toString()), e);
             }
