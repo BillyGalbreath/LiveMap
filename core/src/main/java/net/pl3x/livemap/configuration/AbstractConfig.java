@@ -29,6 +29,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -84,20 +85,17 @@ public abstract class AbstractConfig {
         }
 
         // populate keyed fields from yaml data
-        Arrays.stream(getClass().getDeclaredFields()).forEach(field -> {
-            Key key = field.getDeclaredAnnotation(Key.class);
-            if (key == null) {
-                return;
-            }
-            try {
-                Object value = getAndSetDefault(key.value(), field.get(this));
-                field.set(this, value instanceof String str ? str.translateEscapes() : value);
-                Comment comment = field.getDeclaredAnnotation(Comment.class);
-                setComment(key.value(), comment != null ? comment.value() : null);
-            } catch (Throwable e) {
-                Logger.warn("Failed to load &3%s&r from &3%s&r".formatted(key.value(), this.path.getFileName().toString()), e);
-            }
-        });
+        Arrays.stream(getClass().getDeclaredFields())
+            .map(field -> KeyedField.of(this, field))
+            .filter(Objects::nonNull)
+            .forEach(field -> {
+                try {
+                    field.value(getAndSetDefault(field.key(), field.value()));
+                    setComment(field.key(), field.comment());
+                } catch (Throwable e) {
+                    Logger.warn("Failed to load &3%s&r from &3%s&r".formatted(field.key(), this.path.getFileName()), e);
+                }
+            });
     }
 
     /**
@@ -204,6 +202,87 @@ public abstract class AbstractConfig {
      */
     protected void setComment(@NotNull String path, @Nullable String comment) {
         getConfig().setComment(path, comment, CommentType.BLOCK);
+    }
+
+    /**
+     * Represents a keyed class field for convenient YAML purposes.
+     *
+     * @param <T> Type of config
+     */
+    @SuppressWarnings("ClassCanBeRecord")
+    protected static class KeyedField<T extends AbstractConfig> {
+        private final T config;
+        private final Field field;
+        private final String key;
+        private final String comment;
+
+        /**
+         * Try to create a new FieldKey for specific field and config.
+         *
+         * @param config Config containing field
+         * @param field  The field to use
+         * @param <T>    Type of config
+         * @return New FieldKey object, or null if there is no key for the field
+         */
+        @Nullable
+        protected static <T extends AbstractConfig> AbstractConfig.KeyedField<T> of(@NotNull T config, @NotNull Field field) {
+            Key key = field.getDeclaredAnnotation(Key.class);
+            if (key == null || key.value() == null) {
+                return null;
+            }
+            Comment comment = field.getDeclaredAnnotation(Comment.class);
+            return new KeyedField<>(config, field, key.value(), comment == null ? null : comment.value());
+        }
+
+        private KeyedField(@NotNull T config, @NotNull Field field, @NotNull String key, @Nullable String comment) {
+            this.config = config;
+            this.field = field;
+            this.key = key;
+            this.comment = comment;
+        }
+
+        /**
+         * Get the YAML key (a.k.a. path) for this field.
+         *
+         * @return YAML key
+         */
+        @NotNull
+        public String key() {
+            return this.key;
+        }
+
+        /**
+         * Get the YAML comment for this field.
+         *
+         * @return YAML comment
+         */
+        @Nullable
+        public String comment() {
+            return this.comment;
+        }
+
+        /**
+         * Get the value of the field.
+         *
+         * @return Current field value
+         * @throws IllegalAccessException if this Field object is enforcing Java language access
+         *                                control and the underlying field is inaccessible
+         */
+        @Nullable
+        public Object value() throws IllegalAccessException {
+            return this.field.get(this.config);
+        }
+
+        /**
+         * Set a new value to the field.
+         *
+         * @param value Value to set
+         * @throws IllegalAccessException if this Field object is enforcing Java language access control
+         *                                and the underlying field is either inaccessible or final
+         */
+        public void value(@Nullable Object value) throws IllegalAccessException {
+            this.field.set(this.config, value);
+        }
     }
 
     /**
