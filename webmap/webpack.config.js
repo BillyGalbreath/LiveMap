@@ -87,6 +87,7 @@ module.exports = {
   resolve: {
     extensions: [".ts", ".js", ".css"]
   },
+  stats: "errors-only",
   plugins: [
     new CopyPlugin({
       patterns: [

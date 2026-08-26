@@ -9,14 +9,16 @@ java {
 }
 
 dependencies {
+  // include into livemap jar
   implementation(libs.bundles.adventure)
   implementation(libs.caffeine)
   implementation(libs.bluenbt)
-  implementation(libs.simpleYaml) {
-    exclude("org.yaml", "snakeyaml")
-  }
   implementation(libs.undertow)
 
+  // included by paper module
+  compileOnly(libs.simpleYaml)
+
+  // will be provided at runtime
   compileOnly(libs.annotations)
   compileOnly(libs.apache)
   compileOnly(libs.brigadier)
@@ -36,6 +38,9 @@ tasks {
     mergeServiceFiles()
     archiveClassifier.set("")
 
+    // shuts up a weird undertow warning in build output
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+
     exclude(
       "META-INF/LICENSE*",
       "META-INF/maven/**/*",
@@ -53,6 +58,7 @@ tasks {
       "net.kyori.adventure",
       "org.checkerframework",
       "org.jboss",
+      "org.jspecify",
       "org.simpleyaml",
       "org.wildfly",
       "org.xnio",

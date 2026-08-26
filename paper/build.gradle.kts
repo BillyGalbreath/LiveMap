@@ -7,6 +7,7 @@ dependencies {
   compileOnly(project(":core"))
 
   implementation(libs.bstats)
+  implementation(libs.simpleYaml)
 
   paperweight.paperDevBundle(libs.versions.paper)
 }
@@ -23,8 +24,14 @@ tasks {
   shadowJar {
     archiveClassifier.set("")
 
+    exclude(
+      "META-INF/maven/**/*"
+    )
+
     arrayOf(
-      "org.bstats"
+      "org.bstats",
+      "org.simpleyaml",
+      "org.yaml",
     ).forEach { relocate(it, "${rootProject.group}.libs.$it") }
   }
 }
