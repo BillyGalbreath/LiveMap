@@ -35,71 +35,16 @@ import org.jetbrains.annotations.Nullable;
  * Represents a minecraft block.
  */
 public class Block {
-    /**
-     * Default block of just air.
-     */
     public static final Block AIR = new Block(0, "minecraft:air", 0x000000);
 
-    /**
-     * This block is considered air.
-     * <p>
-     * Air blocks will be completely ignored.
-     */
-    public static final short FLAG_AIR = 1;
-    /**
-     * This block is considered flat.
-     * <p>
-     * Flat blocks will be ignored by the renderer to assist in better looking heightmap.
-     */
-    public static final short FLAG_FLAT = 2;
-    /**
-     * This block is considered foliage.
-     * <p>
-     * Foliage blocks will use biome color override.
-     */
-    public static final short FLAG_FOLIAGE = 4;
-    /**
-     * This block is considered dry foliage.
-     * <p>
-     * Dry foliage blocks will use biome color override.
-     */
-    public static final short FLAG_DRY_FOLIAGE = 8;
-    /**
-     * This block is considered grass.
-     * <p>
-     * Grass blocks will use biome color modifier.
-     */
-    public static final short FLAG_GRASS = 16;
-    /**
-     * This block is considered water.
-     * <p>
-     * Water blocks will use biome color override.
-     */
-    public static final short FLAG_WATER = 32;
-    /**
-     * This block is considered fluid.
-     * <p>
-     * Fluid blocks can appear translucent, if configured.
-     */
-    public static final short FLAG_FLUID = 64;
-    /**
-     * This block is considered to have age.
-     * <p>
-     * Aged blocks will use Mojang's color modifier.
-     */
-    public static final short FLAG_PROPERTY_AGE = 128;
-    /**
-     * This block is considered able to hold moisture (farmland).
-     * <p>
-     * Moisture blocks will use Mojang's color modifier.
-     */
-    public static final short FLAG_PROPERTY_MOISTURE = 256;
-    /**
-     * This block is considered to have power (redstone wire).
-     * <p>
-     * Powered blocks will use Mojang's color modifier.
-     */
-    public static final short FLAG_PROPERTY_POWER = 512;
+    public static final short FLAG_AIR = 0b0000000000000001;
+    public static final short FLAG_FLAT = 0b0000000000000010;
+    public static final short FLAG_FOLIAGE = 0b0000000000000100;
+    public static final short FLAG_DRY_FOLIAGE = 0b0000000000001000;
+    public static final short FLAG_GLASS = 0b0000000000010000;
+    public static final short FLAG_GRASS = 0b0000000000100000;
+    public static final short FLAG_WATER = 0b0000000001000000;
+    public static final short FLAG_FLUID = 0b0000000010000000;
 
     private final int index;
     private final String id;
@@ -119,18 +64,6 @@ public class Block {
      * @param vanilla Vanilla's map color
      */
     public Block(int index, @NotNull String id, int vanilla) {
-        this(index, id, vanilla, (short) 0);
-    }
-
-    /**
-     * Constructs a new instance of Block.
-     *
-     * @param index      Persistent unique identifying number
-     * @param id         String id
-     * @param vanilla    Vanilla's map color
-     * @param properties Properties flag(s) (marks which blocks have which properties)
-     */
-    public Block(int index, @NotNull String id, int vanilla, short properties) {
         this.index = index;
         this.id = id;
 
@@ -142,11 +75,12 @@ public class Block {
         int air = BlocksConfig.BLOCKS_AIR.contains(id) ? FLAG_AIR : 0;
         int foliage = BlocksConfig.BLOCKS_FOLIAGE.contains(id) ? FLAG_FOLIAGE : 0;
         int dryFoliage = BlocksConfig.BLOCKS_DRY_FOLIAGE.contains(id) ? FLAG_DRY_FOLIAGE : 0;
+        int glass = BlocksConfig.BLOCKS_GLASS.contains(id) ? FLAG_GLASS : 0;
         int grass = BlocksConfig.BLOCKS_GRASS.contains(id) ? FLAG_GRASS : 0;
         int water = BlocksConfig.BLOCKS_WATER.contains(id) ? FLAG_WATER : 0;
-        int fluid = water > 0 || "minecraft:lava".equals(id) ? FLAG_FLUID : 0;
+        int fluid = water | ("minecraft:lava".equals(id) ? FLAG_FLUID : 0);
 
-        this.flags = (short) (flat | air | foliage | dryFoliage | grass | water | fluid | properties);
+        this.flags = (short) (flat | air | foliage | dryFoliage | grass | water | fluid);
 
         this.defaultState = new BlockState(this);
 
@@ -280,33 +214,6 @@ public class Block {
      */
     public boolean isFluid() {
         return hasFlag(FLAG_FLUID);
-    }
-
-    /**
-     * Check if this block has age.
-     *
-     * @return True if block has age
-     */
-    public boolean hasAge() {
-        return hasFlag(FLAG_PROPERTY_AGE);
-    }
-
-    /**
-     * Check if this block has moisture.
-     *
-     * @return True if block has moisture
-     */
-    public boolean hasMoisture() {
-        return hasFlag(FLAG_PROPERTY_MOISTURE);
-    }
-
-    /**
-     * Check if this block has power.
-     *
-     * @return True if block has power
-     */
-    public boolean hasPower() {
-        return hasFlag(FLAG_PROPERTY_POWER);
     }
 
     /**

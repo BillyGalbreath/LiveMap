@@ -59,6 +59,14 @@ public interface LiveMap {
     }
 
     /**
+     * Get the version of LiveMap.
+     *
+     * @return LiveMap's version
+     */
+    @NotNull
+    String getVersion();
+
+    /**
      * Get the path that LiveMap data files are located in.
      *
      * @return Path to data directory

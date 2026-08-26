@@ -54,10 +54,10 @@ public class PaperWorld extends World {
         );
         this.level = level;
 
-        Logger.info(" &7&l-&r found &e%s&r (&3&o%s&r)".formatted(level.getTypeKey().identifier(), getName()));
+        Logger.info(" &7&l-&r Found &e%s&r (&3&o%s&r)".formatted(level.getTypeKey().identifier(), getName()));
 
         if (!isEnabled()) {
-            Logger.info("   &7&l-&r &9skipping &3(&r&odisabled in config&3)");
+            Logger.info("   &7&l-&r &9Skipping &3(&r&odisabled in config&3)");
             return;
         }
 

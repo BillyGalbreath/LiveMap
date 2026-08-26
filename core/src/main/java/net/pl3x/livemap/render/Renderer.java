@@ -145,7 +145,11 @@ public abstract class Renderer {
         }
 
         public static final Type BASIC = register("basic", BasicRenderer.class);
+        public static final Type BIOMES = register("biomes", BiomesRenderer.class);
         public static final Type FANCY = register("fancy", FancyRenderer.class);
+        public static final Type FLOWERMAP = register("flowermap", FlowerMapRenderer.class);
+        public static final Type INHABITED = register("inhabited", InhabitedRenderer.class);
+        public static final Type NETHER_ROOF = register("nether_roof", NetherRoofRenderer.class);
 
         /**
          * Get renderer type instance by name.

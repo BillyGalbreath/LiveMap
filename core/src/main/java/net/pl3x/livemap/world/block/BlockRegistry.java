@@ -58,31 +58,4 @@ public abstract class BlockRegistry extends Registry<Block> {
     public Block put(@NotNull Block block) {
         return super.put(block.getId(), block);
     }
-
-    /**
-     * Process the properties flag for this block.
-     *
-     * @param name Property name
-     * @param id   Block id
-     * @param flag Properties flag
-     * @return Properties flag
-     */
-    protected short processPropertyFlag(@NotNull String name, @NotNull String id, short flag) {
-        if (name.equals("age")) {
-            switch (id) {
-                case "minecraft:wheat":
-                case "minecraft:melon_stem":
-                case "minecraft:pumpkin_stem":
-                case "minecraft:cocoa":
-                    flag |= Block.FLAG_PROPERTY_AGE;
-            }
-        }
-        if (name.equals("moisture") && id.equals("minecraft:farmland")) {
-            flag |= Block.FLAG_PROPERTY_MOISTURE;
-        }
-        if (name.equals("power") && id.equals("minecraft:redstone_wire")) {
-            flag |= Block.FLAG_PROPERTY_POWER;
-        }
-        return flag;
-    }
 }

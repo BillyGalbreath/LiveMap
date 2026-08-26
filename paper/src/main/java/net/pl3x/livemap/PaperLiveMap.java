@@ -69,6 +69,13 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
 
     @Override
     public void onEnable() {
+        Logger.info("   &3╻  ╻╻ ╻┏━╸&9┏┳┓┏━┓┏━┓");
+        Logger.info("   &3┃  ┃┃┏┛┣╸ &9┃┃┃┣━┫┣━┛");
+        Logger.info("   &3┗━╸╹┗┛ ┗━╸&9╹ ╹╹ ╹╹  ");
+        Logger.info("&d%22s".formatted(getVersion()));
+
+        saveDefaultConfig();
+
         // main configs
         Config.reload();
         Lang.reload();
@@ -85,7 +92,9 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
         BlocksConfig.reload();
         ColorsConfig.reload();
 
-        // rebuild registries
+        Logger.info("Gathering information for registries...");
+
+        // build registries
         getBlockRegistry().rebuild();
         getWorldRegistry().rebuild();
 
@@ -126,6 +135,12 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
         // clear registries
         getBlockRegistry().clear();
         getWorldRegistry().clear();
+    }
+
+    @Override
+    @NotNull
+    public String getVersion() {
+        return "v%s".formatted(getPluginMeta().getVersion());
     }
 
     @Override

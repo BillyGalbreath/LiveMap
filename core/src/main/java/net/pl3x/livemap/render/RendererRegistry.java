@@ -55,14 +55,12 @@ public class RendererRegistry extends Registry<Renderer> {
     public void rebuild() {
         clear();
 
-        Logger.info("   &7&l-&r registering renderers...");
-
         List<Map<String, Object>> list = this.world.getConfig().RENDERERS;
         for (Map<String, Object> map : list) {
             String typeStr = Unsafe.cast(map.get("type"));
             Renderer.Type type = Renderer.Type.get(typeStr);
             if (type == null) {
-                Logger.warn("     &7&l-&r unknown renderer type&3: &f&o%s".formatted(typeStr));
+                Logger.warn("   &7&l-&r Unknown renderer type&3: &f&o%s".formatted(typeStr));
                 continue;
             }
             Renderer renderer;
@@ -76,12 +74,12 @@ public class RendererRegistry extends Registry<Renderer> {
                     Unsafe.cast(map.getOrDefault("translucent-fluids", false))
                 );
             } catch (RuntimeException e) {
-                Logger.error("     &7&l-&r unable to create renderer type %s".formatted(type.id()), e);
+                Logger.error("   &7&l-&r Unable to create renderer type %s".formatted(type.id()), e);
                 continue;
             }
             put(renderer.getType().id(), renderer);
         }
 
-        Logger.info("     &7&l-&r registered &3%d&r renderers".formatted(size()));
+        Logger.info("   &7&l-&r Registered &3%d&r renderers".formatted(size()));
     }
 }

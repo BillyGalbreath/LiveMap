@@ -190,31 +190,4 @@ public class BlockState {
     public boolean isFluid() {
         return getBlock().isFluid();
     }
-
-    /**
-     * Check if this state's block has age.
-     *
-     * @return True if state's block has age
-     */
-    public boolean hasAge() {
-        return getBlock().hasAge();
-    }
-
-    /**
-     * Check if this state's block has moisture.
-     *
-     * @return True if state's block has moisture
-     */
-    public boolean hasMoisture() {
-        return getBlock().hasMoisture();
-    }
-
-    /**
-     * Check if this state's block has power.
-     *
-     * @return True if state's block has power
-     */
-    public boolean hasPower() {
-        return getBlock().hasPower();
-    }
 }

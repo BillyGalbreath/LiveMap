@@ -22,37 +22,26 @@
  * SOFTWARE.
  */
 
-package net.pl3x.livemap.world.block;
+package net.pl3x.livemap.render;
 
-import net.minecraft.core.registries.Registries;
-import net.pl3x.livemap.Logger;
-import net.pl3x.livemap.configuration.ColorsConfig;
-import net.pl3x.livemap.render.image.Colors;
-import org.bukkit.Bukkit;
-import org.bukkit.craftbukkit.CraftWorld;
+import net.pl3x.livemap.render.heightmap.Heightmap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class PaperBlockRegistry extends BlockRegistry {
-    @Override
-    public void rebuild() {
-        clear();
-
-        // todo - load blocks from cache for persistent indexes (BlockInfo)
-        //Blocks.registerDefaults();
-
-        var entries = ((CraftWorld) Bukkit.getWorlds().getFirst()).getHandle()
-            .registryAccess().lookupOrThrow(Registries.BLOCK).entrySet();
-        for (var entry : entries) {
-            String id = entry.getKey().identifier().toString();
-            int color = entry.getValue().defaultMapColor().col;
-
-            if (!ColorsConfig.BLOCK_COLORS.containsKey(id)) {
-                Logger.warn(" &7&l-&r block not in colors.yml&3:&7&o %s &r&3(&r%s&3)".formatted(id, Colors.toHex(color)));
-            }
-
-            // todo - unique index for BlockInfo
-            put(id, new Block(0, id, color));
-        }
-
-        Logger.info(" &7&l-&r Registered &3%d&r blocks".formatted(size()));
+/**
+ * A basic renderer.
+ */
+public class NetherRoofRenderer extends Renderer {
+    /**
+     * Constructs a new instance of NetherRoofRenderer.
+     *
+     * @param name              Display name for renderer
+     * @param icon              Icon file for webmap
+     * @param heightmap         The heightmap to use
+     * @param biomeBlend        Number of blocks to blend biome tints
+     * @param translucentFluids True to render fluids as translucent
+     */
+    public NetherRoofRenderer(@NotNull String name, @NotNull String icon, @Nullable Heightmap heightmap, int biomeBlend, boolean translucentFluids) {
+        super(Type.NETHER_ROOF, name, icon, heightmap, biomeBlend, translucentFluids);
     }
 }
