@@ -279,6 +279,9 @@ public abstract class World {
             + "]";
     }
 
+    /**
+     * Discard objects in memory for this world.
+     */
     public void discard() {
         getBiomeRegistry().clear();
         getRendererRegistry().clear();
