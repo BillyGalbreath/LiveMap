@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package net.pl3x.livemap.world;
+package net.pl3x.livemap.world.region;
 
 import java.io.EOFException;
 import java.io.File;
@@ -33,6 +33,7 @@ import java.util.Objects;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.Logger;
 import net.pl3x.livemap.marker.Point;
+import net.pl3x.livemap.world.World;
 import net.pl3x.livemap.world.chunk.Chunk;
 import net.pl3x.livemap.world.chunk.EmptyChunk;
 import org.jetbrains.annotations.NotNull;
@@ -141,16 +142,17 @@ public class Region extends Point {
     public Chunk getChunk(int chunkX, int chunkZ) {
         int index = ((chunkZ & 0x1F) << 5) | (chunkX & 0x1F);
         Chunk chunk = this.chunks[index];
+        if (chunk != null) {
+            return chunk;
+        }
+        try (RandomAccessFile raf = new RandomAccessFile(getFile(), "r")) {
+            chunk = loadChunk(raf, index);
+        } catch (EOFException | FileNotFoundException ignore) {
+        } catch (IOException e) {
+            Logger.error("Failed to load chunk at region &3[&e%d&r, &e%d&3]".formatted(chunkX, chunkZ), e);
+        }
         if (chunk == null) {
-            try (RandomAccessFile raf = new RandomAccessFile(getFile(), "r")) {
-                chunk = loadChunk(raf, index);
-            } catch (EOFException | FileNotFoundException ignore) {
-            } catch (IOException e) {
-                Logger.error("Failed to load chunk at region &3[&e%d&r, &e%d&3]".formatted(chunkX, chunkZ), e);
-            }
-            if (chunk == null) {
-                return this.chunks[index] = new EmptyChunk(this);
-            }
+            return this.chunks[index] = new EmptyChunk(this);
         }
         return chunk;
     }

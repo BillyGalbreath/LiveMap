@@ -23,6 +23,7 @@ checkstyle {
 
 dependencies {
   // include into livemap jar
+  implementation(libs.bstats)
   implementation(libs.bundles.adventure)
   implementation(libs.caffeine)
   implementation(libs.bluenbt)
@@ -69,6 +70,7 @@ tasks {
       "io.smallrye",
       "io.undertow",
       "net.kyori.adventure",
+      "org.bstats",
       "org.checkerframework",
       "org.jboss",
       "org.jspecify",

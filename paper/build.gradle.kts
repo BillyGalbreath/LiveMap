@@ -6,7 +6,6 @@ plugins {
 dependencies {
   compileOnly(project(":core"))
 
-  implementation(libs.bstats)
   implementation(libs.simpleYaml)
 
   paperweight.paperDevBundle(libs.versions.paper)
@@ -29,7 +28,6 @@ tasks {
     )
 
     arrayOf(
-      "org.bstats",
       "org.simpleyaml",
       "org.yaml",
     ).forEach { relocate(it, "${rootProject.group}.libs.$it") }

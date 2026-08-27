@@ -24,16 +24,17 @@
 
 package net.pl3x.livemap;
 
-import com.mojang.brigadier.builder.ArgumentBuilder;
-import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import java.nio.file.Path;
+import java.util.concurrent.ExecutorService;
+import net.pl3x.livemap.command.argument.ArgumentParser;
 import net.pl3x.livemap.httpd.HttpdServer;
+import net.pl3x.livemap.player.PlayerRegistry;
 import net.pl3x.livemap.scheduler.Scheduler;
-import net.pl3x.livemap.world.World;
 import net.pl3x.livemap.world.WorldRegistry;
 import net.pl3x.livemap.world.block.BlockRegistry;
 import net.pl3x.livemap.world.chunk.ChunkLoader;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The LiveMap API.
@@ -60,12 +61,42 @@ public interface LiveMap {
     }
 
     /**
+     * Check if plugin is enabled.
+     *
+     * @return True if enabled
+     */
+    boolean isEnabled();
+
+    /**
      * Get the version of LiveMap.
      *
      * @return LiveMap's version
      */
     @NotNull
     String getVersion();
+
+    /**
+     * Get the name of the platform (Paper, Fabric, etc.).
+     *
+     * @return Name of platform
+     */
+    @NotNull
+    String getPlatformName();
+
+    /**
+     * Get the version of the platform (1.21.11, 26.2, etc.).
+     *
+     * @return Version of platform
+     */
+    @NotNull
+    String getPlatformVersion();
+
+    /**
+     * Get the server's online mode.
+     *
+     * @return Online mode
+     */
+    boolean getOnlineMode();
 
     /**
      * Get the path that LiveMap data files are located in.
@@ -96,7 +127,7 @@ public interface LiveMap {
      *
      * @return The internal web server
      */
-    @NotNull
+    @Nullable
     HttpdServer getHttpdServer();
 
     /**
@@ -106,6 +137,14 @@ public interface LiveMap {
      */
     @NotNull
     BlockRegistry getBlockRegistry();
+
+    /**
+     * Get the player registry.
+     *
+     * @return The player registry
+     */
+    @NotNull
+    PlayerRegistry getPlayerRegistry();
 
     /**
      * Get the world registry.
@@ -132,36 +171,18 @@ public interface LiveMap {
     Scheduler getScheduler();
 
     /**
-     * Convenience methods to make using custom command arguments a little less painful.
+     * Get the executor service (a.k.a., thread pool).
      *
-     * @return Instance of Args class
+     * @return The executor service
      */
-    @NotNull
-    Args args();
+    @Nullable
+    ExecutorService getExecutor();
 
     /**
-     * Convenience methods to make using custom command arguments a little less painful.
+     * Command custom argument parser.
+     *
+     * @return Custom argument parser
      */
-    interface Args {
-        /**
-         * Create a new world argument with the name "world".
-         *
-         * @param <S> Command source type
-         * @return World argument
-         */
-        @NotNull
-        default <S> ArgumentBuilder<S, RequiredArgumentBuilder<S, World>> world() {
-            return world("world");
-        }
-
-        /**
-         * Create a new world argument with the specified name.
-         *
-         * @param name Name of the argument
-         * @param <S>  Command source type
-         * @return World argument
-         */
-        @NotNull
-        <S> ArgumentBuilder<S, RequiredArgumentBuilder<S, World>> world(@NotNull String name);
-    }
+    @NotNull
+    ArgumentParser getArgumentParser();
 }

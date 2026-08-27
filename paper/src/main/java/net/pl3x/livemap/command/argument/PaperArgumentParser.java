@@ -22,26 +22,23 @@
  * SOFTWARE.
  */
 
-package net.pl3x.livemap.render;
+package net.pl3x.livemap.command.argument;
 
-import net.pl3x.livemap.render.heightmap.Heightmap;
+import com.mojang.brigadier.builder.ArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import net.pl3x.livemap.world.PaperWorld;
+import net.pl3x.livemap.world.World;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
- * A basic renderer.
+ * Paper will not let us use custom arguments without implementing
+ * their CustomArgumentType interface so we have to grab Paper
+ * specific versions from this stupid thing in order to use them.
  */
-public class InhabitedRenderer extends Renderer {
-    /**
-     * Constructs a new instance of InhabitedRenderer.
-     *
-     * @param name              Display name for renderer
-     * @param icon              Icon file for webmap
-     * @param heightmap         The heightmap to use
-     * @param biomeBlend        Number of blocks to blend biome tints
-     * @param translucentFluids True to render fluids as translucent
-     */
-    public InhabitedRenderer(@NotNull String name, @NotNull String icon, @Nullable Heightmap heightmap, int biomeBlend, boolean translucentFluids) {
-        super(Type.INHABITED, name, icon, heightmap, biomeBlend, translucentFluids);
+public class PaperArgumentParser implements ArgumentParser {
+    @Override
+    @NotNull
+    public <S> ArgumentBuilder<S, RequiredArgumentBuilder<S, World>> world(@NotNull String name) {
+        return RequiredArgumentBuilder.argument(name, new PaperWorld.Argument());
     }
 }

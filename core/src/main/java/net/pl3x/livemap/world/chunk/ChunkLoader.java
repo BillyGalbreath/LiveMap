@@ -33,9 +33,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.util.List;
-import net.pl3x.livemap.world.Region;
 import net.pl3x.livemap.world.block.BlockState;
 import net.pl3x.livemap.world.block.BlockStateDeserializer;
+import net.pl3x.livemap.world.region.Region;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

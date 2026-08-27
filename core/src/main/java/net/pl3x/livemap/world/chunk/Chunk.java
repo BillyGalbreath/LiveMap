@@ -26,10 +26,10 @@ package net.pl3x.livemap.world.chunk;
 
 import de.bluecolored.bluenbt.NBTName;
 import java.util.Objects;
-import net.pl3x.livemap.world.Region;
 import net.pl3x.livemap.world.World;
 import net.pl3x.livemap.world.biome.Biome;
 import net.pl3x.livemap.world.block.BlockState;
+import net.pl3x.livemap.world.region.Region;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

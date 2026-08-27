@@ -72,7 +72,7 @@ public final class Config extends AbstractConfig {
         The number of process-threads to use for loading and scanning chunks.
         Value of -1 will use half of the available logical cpu-cores. (recommended)
         Warning: Using all available cpu-threads may cause thread starvation and impact system performance.""")
-    public int RENDER_THREADS = -1;
+    public static int RENDER_THREADS = -1;
 
     private static final Config CONFIG = new Config();
 
@@ -93,6 +93,7 @@ public final class Config extends AbstractConfig {
     @Override
     protected void cleanup() {
         // setup comments on sections that have no fields
+        // @formatter:off - IntelliJ keeps adding whitespace to the empty lines
         setComment("settings", """
             -----------------------------------------------
                           ╻  ╻╻ ╻┏━╸┏┳┓┏━┓┏━┓
@@ -110,6 +111,7 @@ public final class Config extends AbstractConfig {
             https://pl3x.net/discord
 
             -----------------------------------------------""");
+        // @formatter:on
         setComment("settings.web-directory", """
             Settings for the directory all the web files sit in.""");
         setComment("settings.internal-webserver", """

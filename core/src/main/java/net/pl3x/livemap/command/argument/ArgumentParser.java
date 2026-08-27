@@ -22,26 +22,35 @@
  * SOFTWARE.
  */
 
-package net.pl3x.livemap.render;
+package net.pl3x.livemap.command.argument;
 
-import net.pl3x.livemap.render.heightmap.Heightmap;
+import com.mojang.brigadier.builder.ArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import net.pl3x.livemap.world.World;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
- * A basic renderer.
+ * Convenience methods to make using custom command arguments a little less painful.
  */
-public class BiomesRenderer extends Renderer {
+public interface ArgumentParser {
     /**
-     * Constructs a new instance of BiomesRenderer.
+     * Create a new world argument with the name "world".
      *
-     * @param name              Display name for renderer
-     * @param icon              Icon file for webmap
-     * @param heightmap         The heightmap to use
-     * @param biomeBlend        Number of blocks to blend biome tints
-     * @param translucentFluids True to render fluids as translucent
+     * @param <S> Command source type
+     * @return World argument
      */
-    public BiomesRenderer(@NotNull String name, @NotNull String icon, @Nullable Heightmap heightmap, int biomeBlend, boolean translucentFluids) {
-        super(Type.BIOMES, name, icon, heightmap, biomeBlend, translucentFluids);
+    @NotNull
+    default <S> ArgumentBuilder<S, RequiredArgumentBuilder<S, World>> world() {
+        return world("world");
     }
+
+    /**
+     * Create a new world argument with the specified name.
+     *
+     * @param name Name of the argument
+     * @param <S>  Command source type
+     * @return World argument
+     */
+    @NotNull
+    <S> ArgumentBuilder<S, RequiredArgumentBuilder<S, World>> world(@NotNull String name);
 }

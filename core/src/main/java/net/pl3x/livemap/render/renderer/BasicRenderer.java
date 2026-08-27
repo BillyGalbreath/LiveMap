@@ -22,43 +22,26 @@
  * SOFTWARE.
  */
 
-package net.pl3x.livemap.world;
+package net.pl3x.livemap.render.renderer;
 
-import java.util.Collections;
-import net.pl3x.livemap.util.Registry;
+import net.pl3x.livemap.render.heightmap.Heightmap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A registry of renderable worlds.
+ * A basic renderer.
  */
-public abstract class WorldRegistry extends Registry<World> {
+public class BasicRenderer extends Renderer {
     /**
-     * Constructs a new instance of WorldRegistry.
-     */
-    public WorldRegistry() {
-        // Explicit constructor to satisfy Javadoc and linter tools
-    }
-
-    /**
-     * Removes the mapping for the specified key from this registry if present.
+     * Constructs a new instance of BasicRenderer.
      *
-     * @param key key whose mapping is to be removed from the registry
-     * @return the previous value associated with {@code key}, or
-     *     {@code null} if there was no mapping for {@code key}.
+     * @param name              Display name for renderer
+     * @param icon              Icon file for webmap
+     * @param heightmap         The heightmap to use
+     * @param biomeBlend        Number of blocks to blend biome tints
+     * @param translucentFluids True to render fluids as translucent
      */
-    @Nullable
-    public World remove(@NotNull String key) {
-        World world = super.remove(key);
-        if (world != null) {
-            world.discard();
-        }
-        return world;
-    }
-
-    @Override
-    public void clear() {
-        // cleanup world data
-        Collections.unmodifiableCollection(values()).forEach(this::remove);
+    public BasicRenderer(@NotNull String name, @NotNull String icon, @Nullable Heightmap heightmap, int biomeBlend, boolean translucentFluids) {
+        super(Type.BASIC, name, icon, heightmap, biomeBlend, translucentFluids);
     }
 }

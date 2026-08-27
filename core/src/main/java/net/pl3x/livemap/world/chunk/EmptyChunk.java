@@ -24,10 +24,10 @@
 
 package net.pl3x.livemap.world.chunk;
 
-import net.pl3x.livemap.world.Region;
 import net.pl3x.livemap.world.biome.Biome;
 import net.pl3x.livemap.world.block.Block;
 import net.pl3x.livemap.world.block.BlockState;
+import net.pl3x.livemap.world.region.Region;
 import org.jetbrains.annotations.NotNull;
 
 /**

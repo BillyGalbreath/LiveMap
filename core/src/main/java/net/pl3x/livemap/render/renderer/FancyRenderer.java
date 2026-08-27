@@ -22,18 +22,18 @@
  * SOFTWARE.
  */
 
-package net.pl3x.livemap.render;
+package net.pl3x.livemap.render.renderer;
 
 import net.pl3x.livemap.render.heightmap.Heightmap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A basic renderer.
+ * A fancy renderer.
  */
-public class NetherRoofRenderer extends Renderer {
+public class FancyRenderer extends Renderer {
     /**
-     * Constructs a new instance of NetherRoofRenderer.
+     * Constructs a new instance of FancyRenderer.
      *
      * @param name              Display name for renderer
      * @param icon              Icon file for webmap
@@ -41,7 +41,7 @@ public class NetherRoofRenderer extends Renderer {
      * @param biomeBlend        Number of blocks to blend biome tints
      * @param translucentFluids True to render fluids as translucent
      */
-    public NetherRoofRenderer(@NotNull String name, @NotNull String icon, @Nullable Heightmap heightmap, int biomeBlend, boolean translucentFluids) {
-        super(Type.NETHER_ROOF, name, icon, heightmap, biomeBlend, translucentFluids);
+    public FancyRenderer(@NotNull String name, @NotNull String icon, @Nullable Heightmap heightmap, int biomeBlend, boolean translucentFluids) {
+        super(Type.FANCY, name, icon, heightmap, biomeBlend, translucentFluids);
     }
 }

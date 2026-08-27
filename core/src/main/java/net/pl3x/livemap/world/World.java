@@ -24,6 +24,8 @@
 
 package net.pl3x.livemap.world;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -36,12 +38,15 @@ import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.configuration.Lang;
 import net.pl3x.livemap.configuration.WorldConfig;
 import net.pl3x.livemap.marker.Point;
-import net.pl3x.livemap.render.RendererRegistry;
+import net.pl3x.livemap.render.renderer.RendererRegistry;
 import net.pl3x.livemap.world.biome.BiomeRegistry;
+import net.pl3x.livemap.world.region.Region;
+import net.pl3x.livemap.world.region.RegionQueue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,6 +63,9 @@ public abstract class World {
     private final Path tilesDir;
 
     private final WorldConfig config;
+
+    private final LoadingCache<Long, Region> regionCache;
+    private final RegionQueue regionQueue;
 
     /**
      * Constructs a new instance of World.
@@ -77,6 +85,12 @@ public abstract class World {
         this.tilesDir = LiveMap.api().getTilesDir().resolve(name.replace(":", "-"));
 
         this.config = new WorldConfig(this);
+
+        this.regionCache = Caffeine.newBuilder()
+            .expireAfterWrite(1, TimeUnit.MINUTES)
+            .maximumSize(100)
+            .build(index -> new Region(this, index));
+        this.regionQueue = new RegionQueue();
     }
 
     /**
@@ -144,6 +158,37 @@ public abstract class World {
     @NotNull
     public Type getType() {
         return this.type;
+    }
+
+    /**
+     * Get a region by index.
+     *
+     * <p>If region is not cached it will be loaded from disk.
+     *
+     * @param index Region index
+     * @return Requested region
+     */
+    @NotNull
+    public Region getRegion(long index) {
+        return this.regionCache.get(index);
+    }
+
+    /**
+     * Get a region by coordinates.
+     *
+     * <p>If the coordinates are in the supplied region, then the supplied region is returned.
+     *
+     * @param region  Cached region
+     * @param regionX X coordinate
+     * @param regionZ Z coordinate
+     * @return Requested region
+     */
+    @NotNull
+    public Region getRegionFast(@NotNull Region region, int regionX, int regionZ) {
+        if (region.getX() == regionX && region.getZ() == regionZ) {
+            return region;
+        }
+        return getRegion(Region.pack(regionX, regionZ));
     }
 
     /**

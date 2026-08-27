@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package net.pl3x.livemap.render;
+package net.pl3x.livemap.render.renderer;
 
 import net.pl3x.livemap.render.heightmap.Heightmap;
 import org.jetbrains.annotations.NotNull;
@@ -31,9 +31,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A basic renderer.
  */
-public class FlowerMapRenderer extends Renderer {
+public class InhabitedRenderer extends Renderer {
     /**
-     * Constructs a new instance of FlowerMapRenderer.
+     * Constructs a new instance of InhabitedRenderer.
      *
      * @param name              Display name for renderer
      * @param icon              Icon file for webmap
@@ -41,7 +41,7 @@ public class FlowerMapRenderer extends Renderer {
      * @param biomeBlend        Number of blocks to blend biome tints
      * @param translucentFluids True to render fluids as translucent
      */
-    public FlowerMapRenderer(@NotNull String name, @NotNull String icon, @Nullable Heightmap heightmap, int biomeBlend, boolean translucentFluids) {
-        super(Type.FLOWERMAP, name, icon, heightmap, biomeBlend, translucentFluids);
+    public InhabitedRenderer(@NotNull String name, @NotNull String icon, @Nullable Heightmap heightmap, int biomeBlend, boolean translucentFluids) {
+        super(Type.INHABITED, name, icon, heightmap, biomeBlend, translucentFluids);
     }
 }

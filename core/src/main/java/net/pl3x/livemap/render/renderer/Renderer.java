@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package net.pl3x.livemap.render;
+package net.pl3x.livemap.render.renderer;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;

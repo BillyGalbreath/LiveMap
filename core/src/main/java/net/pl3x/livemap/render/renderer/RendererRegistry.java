@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package net.pl3x.livemap.render;
+package net.pl3x.livemap.render.renderer;
 
 import java.util.List;
 import java.util.Map;

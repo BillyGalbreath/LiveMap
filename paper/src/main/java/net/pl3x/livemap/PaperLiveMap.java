@@ -24,42 +24,43 @@
 
 package net.pl3x.livemap;
 
-import com.mojang.brigadier.builder.ArgumentBuilder;
-import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import net.pl3x.livemap.command.LiveMapCommand;
 import net.pl3x.livemap.command.PaperSource;
+import net.pl3x.livemap.command.argument.PaperArgumentParser;
 import net.pl3x.livemap.configuration.BlocksConfig;
 import net.pl3x.livemap.configuration.ColorsConfig;
 import net.pl3x.livemap.configuration.Config;
 import net.pl3x.livemap.configuration.Lang;
 import net.pl3x.livemap.httpd.HttpdServer;
+import net.pl3x.livemap.player.PlayerRegistry;
 import net.pl3x.livemap.scheduler.Scheduler;
+import net.pl3x.livemap.thread.WorkerThreadFactory;
 import net.pl3x.livemap.util.FileUtil;
-import net.pl3x.livemap.world.PaperWorld;
 import net.pl3x.livemap.world.PaperWorldRegistry;
-import net.pl3x.livemap.world.World;
 import net.pl3x.livemap.world.block.PaperBlockRegistry;
 import net.pl3x.livemap.world.chunk.ChunkLoader;
-import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PaperLiveMap extends JavaPlugin implements LiveMap {
     private Path webDir;
     private Path tilesDir;
 
     private final PaperBlockRegistry blockRegistry;
+    private final PlayerRegistry playerRegistry;
     private final PaperWorldRegistry worldRegistry;
 
     private final ChunkLoader chunkLoader;
     private final Scheduler scheduler;
+    private final PaperArgumentParser argumentParser;
 
-    private final PaperArgs args;
-
+    private ExecutorService executor;
     private HttpdServer httpdServer;
     private Metrics metrics;
 
@@ -69,12 +70,12 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
         Logger.logger = getLogger();
 
         this.blockRegistry = new PaperBlockRegistry();
+        this.playerRegistry = new PlayerRegistry();
         this.worldRegistry = new PaperWorldRegistry();
 
         this.chunkLoader = new ChunkLoader();
         this.scheduler = new Scheduler();
-
-        this.args = new PaperArgs();
+        this.argumentParser = new PaperArgumentParser();
     }
 
     @Override
@@ -110,7 +111,7 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
 
         // internal webserver
         this.httpdServer = new HttpdServer();
-        getHttpdServer().start();
+        this.httpdServer.start();
 
         // register commands
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event ->
@@ -121,28 +122,33 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
             )
         );
 
-        // scheduler
-        // todo
-
-        // bstats metrics
-        this.metrics = new Metrics(this, 26542);
-
-        // tick our scheduler with paper's
+        // tick our scheduler with the server
         Bukkit.getScheduler().runTaskTimer(this,
             () -> getScheduler().tick(), 1, 1);
+
+        // thread pool executor service
+        this.executor = WorkerThreadFactory.createService("Renderer", Config.RENDER_THREADS);
+
+        // bStats metrics
+        this.metrics = new Metrics();
     }
 
     @Override
     public void onDisable() {
-        Bukkit.getScheduler().cancelTasks(this);
-
         if (this.metrics != null) {
             this.metrics.shutdown();
             this.metrics = null;
         }
 
-        if (this.httpdServer != null) {
-            getHttpdServer().stop();
+        if (getExecutor() != null) {
+            this.executor.shutdownNow();
+            this.executor = null;
+        }
+
+        Bukkit.getScheduler().cancelTasks(this);
+
+        if (getHttpdServer() != null) {
+            this.httpdServer.stop();
             this.httpdServer = null;
         }
 
@@ -155,6 +161,23 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
     @NotNull
     public String getVersion() {
         return "v%s".formatted(getPluginMeta().getVersion());
+    }
+
+    @Override
+    @NotNull
+    public String getPlatformName() {
+        return getServer().getName();
+    }
+
+    @Override
+    @NotNull
+    public String getPlatformVersion() {
+        return getServer().getVersion();
+    }
+
+    @Override
+    public boolean getOnlineMode() {
+        return getServer().getOnlineMode();
     }
 
     @Override
@@ -176,7 +199,7 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
     }
 
     @Override
-    @NotNull
+    @Nullable
     public HttpdServer getHttpdServer() {
         return this.httpdServer;
     }
@@ -185,6 +208,12 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
     @NotNull
     public PaperBlockRegistry getBlockRegistry() {
         return this.blockRegistry;
+    }
+
+    @Override
+    @NotNull
+    public PlayerRegistry getPlayerRegistry() {
+        return this.playerRegistry;
     }
 
     @Override
@@ -206,19 +235,14 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
     }
 
     @Override
-    @NotNull
-    public PaperArgs args() {
-        return this.args;
+    @Nullable
+    public ExecutorService getExecutor() {
+        return this.executor;
     }
 
-    // Paper will not let us use custom arguments without implementing
-    // their CustomArgumentType interface so we have to grab Paper
-    // specific versions from this stupid thing in order to use them.
-    public static class PaperArgs implements Args {
-        @Override
-        @NotNull
-        public <S> ArgumentBuilder<S, RequiredArgumentBuilder<S, World>> world(@NotNull String name) {
-            return RequiredArgumentBuilder.argument(name, new PaperWorld.Argument());
-        }
+    @Override
+    @NotNull
+    public PaperArgumentParser getArgumentParser() {
+        return this.argumentParser;
     }
 }

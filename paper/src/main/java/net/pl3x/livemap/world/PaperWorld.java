@@ -28,7 +28,7 @@ import io.papermc.paper.command.brigadier.argument.CustomArgumentType;
 import net.minecraft.server.level.ServerLevel;
 import net.pl3x.livemap.Logger;
 import net.pl3x.livemap.marker.Point;
-import net.pl3x.livemap.render.RendererRegistry;
+import net.pl3x.livemap.render.renderer.RendererRegistry;
 import net.pl3x.livemap.util.Unsafe;
 import net.pl3x.livemap.world.biome.PaperBiomeRegistry;
 import org.bukkit.craftbukkit.CraftWorld;

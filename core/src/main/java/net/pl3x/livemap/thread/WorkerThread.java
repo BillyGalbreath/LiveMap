@@ -22,43 +22,33 @@
  * SOFTWARE.
  */
 
-package net.pl3x.livemap.world;
+package net.pl3x.livemap.thread;
 
-import java.util.Collections;
-import net.pl3x.livemap.util.Registry;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.ForkJoinWorkerThread;
+import java.util.concurrent.atomic.AtomicInteger;
+import net.pl3x.livemap.LiveMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
- * A registry of renderable worlds.
+ * A thread managed by a {@link ForkJoinPool}, which executes {@link ForkJoinTask}.
  */
-public abstract class WorldRegistry extends Registry<World> {
-    /**
-     * Constructs a new instance of WorldRegistry.
-     */
-    public WorldRegistry() {
-        // Explicit constructor to satisfy Javadoc and linter tools
-    }
+public class WorkerThread extends ForkJoinWorkerThread {
+    private static final AtomicInteger COUNTER = new AtomicInteger(0);
 
     /**
-     * Removes the mapping for the specified key from this registry if present.
+     * Constructs a new instance of WorkerThread.
      *
-     * @param key key whose mapping is to be removed from the registry
-     * @return the previous value associated with {@code key}, or
-     *     {@code null} if there was no mapping for {@code key}.
+     * @param pool Executor pool creating this thread
+     * @param name Name to give thread
      */
-    @Nullable
-    public World remove(@NotNull String key) {
-        World world = super.remove(key);
-        if (world != null) {
-            world.discard();
-        }
-        return world;
-    }
-
-    @Override
-    public void clear() {
-        // cleanup world data
-        Collections.unmodifiableCollection(values()).forEach(this::remove);
+    protected WorkerThread(@NotNull ForkJoinPool pool, @NotNull String name) {
+        super(pool);
+        setContextClassLoader(LiveMap.class.getClassLoader());
+        setName(name.formatted(COUNTER.incrementAndGet()));
+        setName((pool.getParallelism() > 1 ? "LiveMap-%s-%d" : "LiveMap-%s")
+            .formatted(name, COUNTER.incrementAndGet())
+        );
     }
 }

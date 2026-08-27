@@ -44,7 +44,7 @@ apache = { group = "org.apache.commons", name = "commons-lang3", version.ref = "
 asm = { group = "org.ow2.asm", name = "asm-tree", version.ref = "asm" }
 bluenbt = { module = "de.bluecolored:bluenbt", version.ref = "bluenbt" }
 brigadier = { group = "com.mojang", name = "brigadier", version.ref = "brigadier" }
-bstats = { group = "org.bstats", name = "bstats-bukkit", version.ref = "bstats" }
+bstats = { group = "org.bstats", name = "bstats-base", version.ref = "bstats" }
 caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version.ref = "caffeine" }
 fastutil = { group = "it.unimi.dsi", name = "fastutil", version.ref = "fastutil" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }

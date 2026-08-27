@@ -49,7 +49,7 @@ public class FullRenderCommand<S> extends BaseCommand<S> {
      */
     public FullRenderCommand(@NotNull Source.Converter<S> sourceConverter) {
         super("fullrender", sourceConverter);
-        then(LiveMap.api().args().<S>world().executes(ctx -> {
+        then(LiveMap.api().getArgumentParser().<S>world().executes(ctx -> {
             executeWorld(ctx);
             return Command.SINGLE_SUCCESS;
         }));

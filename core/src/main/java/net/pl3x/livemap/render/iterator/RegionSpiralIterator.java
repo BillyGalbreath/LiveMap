@@ -22,26 +22,39 @@
  * SOFTWARE.
  */
 
-package net.pl3x.livemap.render;
+package net.pl3x.livemap.render.iterator;
 
-import net.pl3x.livemap.render.heightmap.Heightmap;
+import java.util.function.Supplier;
+import net.pl3x.livemap.world.region.Region;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
- * A fancy renderer.
+ * An iterator that spirals around a center point in a clockwise pattern.
+ * <pre>
+ *   30 31 32 33 34 35 36
+ *   29 12 13 14 15 16 37
+ *   28 11 02 03 04 17 38
+ *   27 10 01 00 05 18 39
+ *   26 09 08 07 06 19 40
+ *   25 24 23 22 21 20 41
+ *   48 47 46 45 44 43 42
+ * </pre>
  */
-public class FancyRenderer extends Renderer {
+public class RegionSpiralIterator extends SpiralIterator {
     /**
-     * Constructs a new instance of FancyRenderer.
+     * Constructs a new SpiralIterator for regions at the given center.
      *
-     * @param name              Display name for renderer
-     * @param icon              Icon file for webmap
-     * @param heightmap         The heightmap to use
-     * @param biomeBlend        Number of blocks to blend biome tints
-     * @param translucentFluids True to render fluids as translucent
+     * @param regionX Center x coordinate
+     * @param regionZ Center z coordinate
+     * @param hasNext Supplier to determine if there is a next element
      */
-    public FancyRenderer(@NotNull String name, @NotNull String icon, @Nullable Heightmap heightmap, int biomeBlend, boolean translucentFluids) {
-        super(Type.FANCY, name, icon, heightmap, biomeBlend, translucentFluids);
+    public RegionSpiralIterator(int regionX, int regionZ, @NotNull Supplier<Boolean> hasNext) {
+        super(regionX, regionZ, hasNext);
+    }
+
+    @Override
+    @NotNull
+    protected Long getCurrentIndex() {
+        return Region.pack(getCurrentX(), getCurrentZ());
     }
 }
