@@ -36,6 +36,7 @@ import net.pl3x.livemap.configuration.ColorsConfig;
 import net.pl3x.livemap.configuration.Config;
 import net.pl3x.livemap.configuration.Lang;
 import net.pl3x.livemap.httpd.HttpdServer;
+import net.pl3x.livemap.scheduler.Scheduler;
 import net.pl3x.livemap.util.FileUtil;
 import net.pl3x.livemap.world.PaperWorld;
 import net.pl3x.livemap.world.PaperWorldRegistry;
@@ -55,6 +56,7 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
     private final PaperWorldRegistry worldRegistry;
 
     private final ChunkLoader chunkLoader;
+    private final Scheduler scheduler;
 
     private final PaperArgs args;
 
@@ -70,6 +72,7 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
         this.worldRegistry = new PaperWorldRegistry();
 
         this.chunkLoader = new ChunkLoader();
+        this.scheduler = new Scheduler();
 
         this.args = new PaperArgs();
     }
@@ -123,6 +126,10 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
 
         // bstats metrics
         this.metrics = new Metrics(this, 26542);
+
+        // tick our scheduler with paper's
+        Bukkit.getScheduler().runTaskTimer(this,
+            () -> getScheduler().tick(), 1, 1);
     }
 
     @Override
@@ -190,6 +197,12 @@ public class PaperLiveMap extends JavaPlugin implements LiveMap {
     @NotNull
     public ChunkLoader getChunkLoader() {
         return this.chunkLoader;
+    }
+
+    @Override
+    @NotNull
+    public Scheduler getScheduler() {
+        return this.scheduler;
     }
 
     @Override

@@ -1,0 +1,145 @@
+/*
+ * This file is part of LiveMap, licensed under the MIT License (MIT).
+ *
+ * Copyright (c) 2020-2026 William Blake Galbreath
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+package net.pl3x.livemap.scheduler;
+
+import java.util.Iterator;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import net.pl3x.livemap.Logger;
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * LiveMap's task scheduler.
+ */
+public class Scheduler {
+    private final Queue<Task> tasks = new ConcurrentLinkedQueue<>();
+
+    private boolean ticking;
+
+    /**
+     * Constructs a new instance of Scheduler.
+     */
+    public Scheduler() {
+        // Explicit constructor to satisfy Javadoc and linter tools
+    }
+
+    /**
+     * Tick the scheduler.
+     */
+    public void tick() {
+        // do not tick scheduler again until previous tick is finished
+        if (this.ticking) {
+            return;
+        }
+
+        // tick has started
+        this.ticking = true;
+
+        try {
+            // check every task
+            Iterator<Task> iter = this.tasks.iterator();
+            while (iter.hasNext()) {
+                // tick every task
+                Task task = iter.next();
+                if (task.tick++ < task.delay) {
+                    // task is still waiting to run
+                    continue;
+                }
+
+                // check if task is cancelled
+                if (task.isCancelled()) {
+                    // it is. unschedule it
+                    iter.remove();
+                    continue;
+                }
+
+                // run the task
+                task.run();
+
+                // check if task needs to repeat
+                if (task.repeat) {
+                    // reset tick to 0 to start the delay over
+                    task.tick = 0;
+                    continue;
+                }
+
+                // non-repeating task is complete. unschedule it
+                iter.remove();
+            }
+        } catch (Throwable t) {
+            // catch everything possible
+            Logger.error("Failed to tick a task", t);
+        }
+
+        // tick has ended
+        this.ticking = false;
+    }
+
+    /**
+     * Cancel all scheduled tasks.
+     */
+    public void cancelAll() {
+        Iterator<Task> iter = this.tasks.iterator();
+        while (iter.hasNext()) {
+            iter.next().cancel();
+            iter.remove();
+        }
+    }
+
+    /**
+     * Add task to the scheduler.
+     *
+     * @param task Task to add
+     */
+    public void addTask(@NotNull Task task) {
+        this.tasks.add(task);
+    }
+
+    /**
+     * Add task to the scheduler.
+     *
+     * @param delay    Delay (in ticks) before task runs
+     * @param runnable Task to add
+     */
+    public void addTask(int delay, @NotNull Runnable runnable) {
+        addTask(delay, false, runnable);
+    }
+
+    /**
+     * Add task to the scheduler.
+     *
+     * @param delay    Delay (in ticks) before task runs and between runs if repeating
+     * @param repeat   Whether this task should repeat
+     * @param runnable Task to add
+     */
+    public void addTask(int delay, boolean repeat, @NotNull Runnable runnable) {
+        addTask(new Task(delay, repeat) {
+            @Override
+            public void run() {
+                runnable.run();
+            }
+        });
+    }
+}

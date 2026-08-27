@@ -28,6 +28,7 @@ import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import java.nio.file.Path;
 import net.pl3x.livemap.httpd.HttpdServer;
+import net.pl3x.livemap.scheduler.Scheduler;
 import net.pl3x.livemap.world.World;
 import net.pl3x.livemap.world.WorldRegistry;
 import net.pl3x.livemap.world.block.BlockRegistry;
@@ -123,7 +124,15 @@ public interface LiveMap {
     ChunkLoader getChunkLoader();
 
     /**
-     * Convenience methods to make using custom command arguments a little less painful
+     * Get the task scheduler.
+     *
+     * @return The task scheduler
+     */
+    @NotNull
+    Scheduler getScheduler();
+
+    /**
+     * Convenience methods to make using custom command arguments a little less painful.
      *
      * @return Instance of Args class
      */
