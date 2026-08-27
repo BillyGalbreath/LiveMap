@@ -95,22 +95,20 @@ public final class Config extends AbstractConfig {
         // setup comments on sections that have no fields
         setComment("settings", """
             -----------------------------------------------
-            
                           ╻  ╻╻ ╻┏━╸┏┳┓┏━┓┏━┓
                           ┃  ┃┃┏┛┣╸ ┃┃┃┣━┫┣━┛
                           ┗━╸╹┗┛ ┗━╸╹ ╹╹ ╹╹
                              Configuration
-            
+
             More information can be found on the wiki:
             https://pl3x.net/livemap/wiki
-            
+
             Report bugs to the issue tracker
             https://pl3x.net/livemap/issues
-            
+
             Support is offered on Discord:
             https://pl3x.net/discord
-            
-            
+
             -----------------------------------------------""");
         setComment("settings.web-directory", """
             Settings for the directory all the web files sit in.""");

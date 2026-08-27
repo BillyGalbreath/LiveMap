@@ -39,14 +39,14 @@ public interface Source {
     Sender getSender();
 
     /**
-     * Converts CommandSourceStack to Source
+     * Converts CommandSourceStack to Source.
      *
      * @param <S> CommandSourceStack
      */
     @FunctionalInterface
     interface Converter<S> {
         /**
-         * Convert the CommandSourceStack to a Source
+         * Convert the CommandSourceStack to a Source.
          *
          * @param stack CommandSourceStack to convert
          * @return Source of CommandSourceStack

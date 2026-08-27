@@ -130,8 +130,8 @@ public class Region extends Point {
 
     /**
      * Get chunk at specified chunk coordinates.
-     * <p>
-     * If no chunk exists there, an EmptyChunk will be returned.
+     *
+     * <p>If no chunk exists there, an EmptyChunk will be returned.
      *
      * @param chunkX X chunk coordinate
      * @param chunkZ Z chunk Coordinate
@@ -166,7 +166,7 @@ public class Region extends Point {
         }
         try (RandomAccessFile raf = new RandomAccessFile(getFile(), "r")) {
             for (int index = 0; index < this.chunks.length; index++) {
-                //LiveMap.api().getRegionProcessor().checkPaused(); // todo
+                // LiveMap.api().getRegionProcessor().checkPaused(); // todo
                 loadChunk(raf, index);
             }
         } catch (EOFException ignore) {
@@ -194,7 +194,9 @@ public class Region extends Point {
         offset <<= 12;
         int size = (header[3] & 0xFF) * 4096;
 
-        if (size <= 0) return this.chunks[index] = new EmptyChunk(this);
+        if (size <= 0) {
+            return this.chunks[index] = new EmptyChunk(this);
+        }
         return this.chunks[index] = LiveMap.api().getChunkLoader().load(raf, offset, this);
     }
 

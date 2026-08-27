@@ -37,8 +37,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a wrapped {@link JsonObject} with extra '<code>addProperty</code>' methods,
  * because Google made it a final class for some weird reason.
- * <p>
- * Null values cannot be added to this JsonObject, they will simply be ignored when added.
+ *
+ * <p>Null values cannot be added to this JsonObject, they will simply be ignored when added.
  */
 @SuppressWarnings("unused")
 public class JsonObjectWrapper {
@@ -283,7 +283,7 @@ public class JsonObjectWrapper {
     }
 
     /**
-     * Creates a deep copy of this element and all its children
+     * Creates a deep copy of this element and all its children.
      *
      * @return JsonObject
      */

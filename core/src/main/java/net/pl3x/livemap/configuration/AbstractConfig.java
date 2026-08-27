@@ -142,8 +142,8 @@ public abstract class AbstractConfig {
 
     /**
      * Gets the requested Object by path.
-     * <p>
-     * If the Object does not exist, this will set and return the default value.
+     *
+     * <p>If the Object does not exist, this will set and return the default value.
      *
      * @param path Path of the Object to get
      * @param def  The default value to return if the path is not found
@@ -159,8 +159,8 @@ public abstract class AbstractConfig {
 
     /**
      * Sets the specified path to the given value.
-     * <p>
-     * If value is null, the entry will be removed. Any existing entry will be
+     *
+     * <p>If value is null, the entry will be removed. Any existing entry will be
      * replaced, regardless of what the new value is.
      *
      * @param path  Path of the object to set
@@ -172,8 +172,8 @@ public abstract class AbstractConfig {
 
     /**
      * Gets the requested Object by path.
-     * <p>
-     * If the Object does not exist but a default value has been specified, this will return the default value. If the Object does not exist and no default value was specified, this will return null.
+     *
+     * <p>If the Object does not exist but a default value has been specified, this will return the default value. If the Object does not exist and no default value was specified, this will return null.
      *
      * @param path Path of the Object to get
      * @param def  The default value to return if the path is not found
@@ -221,12 +221,12 @@ public abstract class AbstractConfig {
 
     /**
      * Sets the comment at the specified path.
-     * <p>
-     * If value is null, the comment will be removed. If the path does
+     *
+     * <p>If value is null, the comment will be removed. If the path does
      * not exist, no comment will be set. Any existing comment will be
      * replaced, regardless of what the new comment is.
-     * <p>
-     * Use \n for newline.
+     *
+     * <p>Use \n for newline.
      *
      * @param path    Path of the comment to set
      * @param comment New comment to set at the path

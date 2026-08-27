@@ -50,8 +50,8 @@ public class Pool<T extends Pool.Reusable> {
 
     /**
      * Get a reusable object from the pool.
-     * <p>
-     * Will allocate and instantiate a new object if none are available in the pool.
+     *
+     * <p>Will allocate and instantiate a new object if none are available in the pool.
      *
      * @return Requested reusable object
      */

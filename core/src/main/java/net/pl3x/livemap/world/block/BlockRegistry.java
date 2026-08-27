@@ -52,7 +52,7 @@ public abstract class BlockRegistry extends Registry<Block> {
      *
      * @param block Block to add to the registry.
      * @return the previous entry associated with this block's id, or
-     * {@code null} if there was no mapping for this block.
+     *     {@code null} if there was no mapping for this block.
      */
     @Nullable
     public Block put(@NotNull Block block) {

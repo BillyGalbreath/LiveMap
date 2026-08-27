@@ -147,8 +147,8 @@ public class Biome {
 
     /**
      * Get grass tint color modifier.
-     * <p>
-     * This is used for things like the swamp and dark forest biomes.
+     *
+     * <p>This is used for things like the swamp and dark forest biomes.
      *
      * @return Modifier for grass tint color
      */
@@ -169,13 +169,13 @@ public class Biome {
             return false;
         }
         Biome other = (Biome) o;
-        return this.index == other.index &&
-            this.id.equals(other.id) &&
-            this.color == other.color &&
-            this.dryFoliage == other.dryFoliage &&
-            this.foliage == other.foliage &&
-            this.grass == other.grass &&
-            this.water == other.water;
+        return this.index == other.index
+            && this.id.equals(other.id)
+            && this.color == other.color
+            && this.dryFoliage == other.dryFoliage
+            && this.foliage == other.foliage
+            && this.grass == other.grass
+            && this.water == other.water;
     }
 
     @Override
@@ -186,21 +186,21 @@ public class Biome {
     @Override
     @NotNull
     public String toString() {
-        return "Biome[" +
-            "index=" + index +
-            ",key=" + this.id +
-            ",color=" + color +
-            ",dryFoliage=" + dryFoliage +
-            ",foliage=" + foliage +
-            ",grass=" + grass +
-            ",water=" + water +
-            "]";
+        return "Biome["
+            + "index=" + index
+            + ",key=" + this.id
+            + ",color=" + color
+            + ",dryFoliage=" + dryFoliage
+            + ",foliage=" + foliage
+            + ",grass=" + grass
+            + ",water=" + water
+            + "]";
     }
 
     /**
      * Represents the grass tint color modifier.
-     * <p>
-     * This is used for things like the swamp and dark forest biomes.
+     *
+     * <p>This is used for things like the swamp and dark forest biomes.
      */
     @FunctionalInterface
     public interface GrassModifier {

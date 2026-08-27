@@ -1358,10 +1358,10 @@ public final class ColorsConfig extends AbstractConfig {
     @Key("colors.water")
     @Comment("""
         Override water colors per biome.""")
-    public static Map<String, Integer> OVERRIDES_WATER = new LinkedHashMap<>() {{
+    public static Map<String, Integer> OVERRIDES_WATER = new LinkedHashMap<>() /*{{
         // todo pale_garden?
         // todo sulfur_caves?
-    }};
+    }}*/;
 
     private static final ColorsConfig CONFIG = new ColorsConfig();
 

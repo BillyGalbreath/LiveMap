@@ -68,7 +68,7 @@ public final class Logger {
         put('m', uni(9));  // strikethrough
         put('n', uni(4));  // underline
         put('o', uni(3));  // italic
-        //put('r', uni(0));  // reset (handled manually)
+        // put('r', uni(0));  // reset (handled manually)
     }};
     private static final String RESET = uni(0);
     private static final String RESET_INFO = uni(0);
@@ -194,9 +194,6 @@ public final class Logger {
     public static class LogFilter implements Filter {
         private final List<String> filters = new ArrayList<>();
 
-        /**
-         * Flag to let filter know when to hide logger output
-         */
         public static boolean HIDE_UNDERTOW_LOGS = false;
 
         /**

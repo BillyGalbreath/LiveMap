@@ -22,6 +22,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package net.pl3x.livemap.util;
 
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
  * Packed integer array.
  */
 public class PackedIntArrayAccess {
-    private static final int[] INDEX_PARAMETERS = new int[]{
+    private static final int[] INDEX_PARAMETERS = new int[] {
         -1, -1, 0,
         Integer.MIN_VALUE, 0, 0,
         1431655765, 1431655765, 0,

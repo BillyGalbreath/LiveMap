@@ -37,9 +37,6 @@ import org.jetbrains.annotations.NotNull;
  * A registry of all map renderers.
  */
 public class RendererRegistry extends Registry<Renderer> {
-    // I'm not sure why this keeps giving "no
-    // comment" warning. but here we are...
-    @SuppressWarnings("doclint")
     private final World world;
 
     /**

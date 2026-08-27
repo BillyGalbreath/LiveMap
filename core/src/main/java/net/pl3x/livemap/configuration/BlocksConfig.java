@@ -60,12 +60,12 @@ public final class BlocksConfig extends AbstractConfig {
         Note: Birch and Spruce are intentionally absent by default.""")
     public static List<String> BLOCKS_FOLIAGE = new ArrayList<>() {{
         add("minecraft:acacia_leaves");
-        //add("minecraft:birch_leaves"); // birch 0x80A755
+        // add("minecraft:birch_leaves"); // birch 0x80A755
         add("minecraft:dark_oak_leaves");
         add("minecraft:jungle_leaves");
         add("minecraft:mangrove_leaves"); // mangrove? 0x92C648
         add("minecraft:oak_leaves");
-        //add("minecraft:spruce_leaves"); // evergreen 0x619961
+        // add("minecraft:spruce_leaves"); // evergreen 0x619961
         add("minecraft:vine");
     }};
 

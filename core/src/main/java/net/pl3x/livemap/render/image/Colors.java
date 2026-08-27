@@ -184,9 +184,15 @@ public final class Colors {
      * @return The lerped color
      */
     public static int lerpRGB(int color0, int color1, float delta) {
-        if (color0 == color1) return color0;
-        if (delta >= 1F) return color1;
-        if (delta <= 0F) return color0;
+        if (color0 == color1) {
+            return color0;
+        }
+        if (delta >= 1F) {
+            return color1;
+        }
+        if (delta <= 0F) {
+            return color0;
+        }
         return rgb(
             (int) Mathf.lerp(red(color0), red(color1), delta),
             (int) Mathf.lerp(green(color0), green(color1), delta),
@@ -203,9 +209,15 @@ public final class Colors {
      * @return The lerped color
      */
     public static int lerpARGB(int color0, int color1, float delta) {
-        if (color0 == color1) return color0;
-        if (delta >= 1F) return color1;
-        if (delta <= 0F) return color0;
+        if (color0 == color1) {
+            return color0;
+        }
+        if (delta >= 1F) {
+            return color1;
+        }
+        if (delta <= 0F) {
+            return color0;
+        }
         return argb(
             (int) Mathf.lerp(alpha(color0), alpha(color1), delta),
             (int) Mathf.lerp(red(color0), red(color1), delta),
@@ -241,9 +253,9 @@ public final class Colors {
         return alpha(
             (int) Mathf.lerp(alpha(color0), alpha(color1), delta),
             Color.HSBtoRGB(
-                useShortestAngle ?
-                    lerpShortestAngle(hsb0[0], hsb1[0], delta) :
-                    Mathf.lerp(hsb0[0], hsb1[0], delta),
+                useShortestAngle
+                    ? lerpShortestAngle(hsb0[0], hsb1[0], delta)
+                    : Mathf.lerp(hsb0[0], hsb1[0], delta),
                 Mathf.lerp(hsb0[1], hsb1[1], delta),
                 Mathf.lerp(hsb0[2], hsb1[2], delta)
             )
@@ -259,9 +271,15 @@ public final class Colors {
      * @return The inverse lerped color
      */
     public static int inverseLerpRGB(int color0, int color1, float delta) {
-        if (color0 == color1) return color0;
-        if (delta >= 1F) return color1;
-        if (delta <= 0F) return color0;
+        if (color0 == color1) {
+            return color0;
+        }
+        if (delta >= 1F) {
+            return color1;
+        }
+        if (delta <= 0F) {
+            return color0;
+        }
         return rgb(
             (int) Mathf.inverseLerp(red(color0), red(color1), delta),
             (int) Mathf.inverseLerp(green(color0), green(color1), delta),
@@ -278,9 +296,15 @@ public final class Colors {
      * @return The inverse lerped color
      */
     public static int inverseLerpARGB(int color0, int color1, float delta) {
-        if (color0 == color1) return color0;
-        if (delta >= 1F) return color1;
-        if (delta <= 0F) return color0;
+        if (color0 == color1) {
+            return color0;
+        }
+        if (delta >= 1F) {
+            return color1;
+        }
+        if (delta <= 0F) {
+            return color0;
+        }
         return argb(
             (int) Mathf.inverseLerp(alpha(color0), alpha(color1), delta),
             (int) Mathf.inverseLerp(red(color0), red(color1), delta),
@@ -316,9 +340,9 @@ public final class Colors {
         return alpha(
             (int) Mathf.inverseLerp(alpha(color0), alpha(color1), delta),
             Color.HSBtoRGB(
-                useShortestAngle ?
-                    lerpShortestAngle(hsb0[0], hsb1[0], delta) :
-                    Mathf.inverseLerp(hsb0[0], hsb1[0], delta),
+                useShortestAngle
+                    ? lerpShortestAngle(hsb0[0], hsb1[0], delta)
+                    : Mathf.inverseLerp(hsb0[0], hsb1[0], delta),
                 Mathf.inverseLerp(hsb0[1], hsb1[1], delta),
                 Mathf.inverseLerp(hsb0[2], hsb1[2], delta)
             )
@@ -362,7 +386,7 @@ public final class Colors {
     }
 
     /**
-     * Offset color slightly to make it look "sprinkled" on the map
+     * Offset color slightly to make it look "sprinkled" on the map.
      *
      * @param color  Base color
      * @param amount Max offset amount

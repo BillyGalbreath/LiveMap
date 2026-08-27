@@ -32,10 +32,10 @@ import net.pl3x.livemap.util.FileUtil;
  * LiveMap's language config.
  */
 public final class Lang extends AbstractConfig {
-    @Key("error-invalid-world")
-    public static String ERROR_INVALID_WORLD = "Invalid world name or id";
+    @Key("error-world-not-found")
+    public static String ERROR_WORLD_NOT_FOUND = "World not found";
     @Key("error-missing-world")
-    public static String ERROR_MISSING_WORLD = "You must enter a world name or id!";
+    public static String ERROR_MISSING_WORLD = "You must enter a world name or id";
 
     @Key("command-fullrender-started")
     public static String FULLRENDER_STARTED = "Starting fullrender on <grey><world>";

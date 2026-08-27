@@ -1,4 +1,5 @@
 plugins {
+  checkstyle
   alias(libs.plugins.fix.javadoc)
   alias(libs.plugins.shadow)
 }
@@ -6,6 +7,18 @@ plugins {
 java {
   withJavadocJar()
   withSourcesJar()
+}
+
+checkstyle {
+  toolVersion = "14.0.0"
+
+  // Explicitly point to the root project's layout so 'core' can find the ruleset
+  configDirectory.set(rootProject.file("config/checkstyle"))
+  configFile = rootProject.file("config/checkstyle/checkstyle.xml")
+
+  configProperties = mapOf(
+    "rootDir" to rootProject.rootDir
+  )
 }
 
 dependencies {
@@ -65,6 +78,10 @@ tasks {
     ).forEach { relocate(it, "${rootProject.group}.libs.$it") }
   }
 
+  checkstyleTest {
+    isEnabled = false
+  }
+
   javadoc {
     val name = rootProject.name.replaceFirstChar { it.uppercase() }
     val stdopts = options as StandardJavadocDocletOptions
@@ -78,6 +95,7 @@ tasks {
     stdopts.bottom = "Copyright © 2020-2026 William Blake Galbreath"
     stdopts.linkSource(true)
     stdopts.addBooleanOption("html5", true)
+    stdopts.addStringOption("Xdoclint:all,-missing", "-quiet")
     stdopts.links(
       "https://javadoc.io/doc/org.jetbrains/annotations/${libs.versions.annotations.get()}/",
       "https://javadoc.io/doc/org.apache.commons/commons-lang3/${libs.versions.apache.get()}/",
@@ -92,14 +110,6 @@ tasks {
       //"https://javadoc.io/doc/at.yawk.lz4/lz4-java/${libs.versions.lz4.get()}/", // causes warning: The code being documented uses packages in the unnamed module, but the packages defined in %s are in named modules
       "https://javadoc.io/doc/io.undertow/undertow-core/${libs.versions.undertow.get()}/",
       "https://carleslc.me/Simple-YAML/doc/"
-    )
-    exclude(
-      "net/pl3x/livemap/configuration/BlocksConfig.java",
-      "net/pl3x/livemap/configuration/ColorsConfig.java",
-      "net/pl3x/livemap/configuration/Config.java",
-      "net/pl3x/livemap/configuration/Lang.java",
-      "net/pl3x/livemap/configuration/WorldConfig.java",
-      "net/pl3x/livemap/world/block/Blocks.java"
     )
   }
 

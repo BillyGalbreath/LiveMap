@@ -37,14 +37,16 @@ import org.jetbrains.annotations.Nullable;
 public class Block {
     public static final Block AIR = new Block(0, "minecraft:air", 0x000000);
 
-    public static final short FLAG_AIR = 0b0000000000000001;
-    public static final short FLAG_FLAT = 0b0000000000000010;
-    public static final short FLAG_FOLIAGE = 0b0000000000000100;
-    public static final short FLAG_DRY_FOLIAGE = 0b0000000000001000;
-    public static final short FLAG_GLASS = 0b0000000000010000;
-    public static final short FLAG_GRASS = 0b0000000000100000;
-    public static final short FLAG_WATER = 0b0000000001000000;
-    public static final short FLAG_FLUID = 0b0000000010000000;
+    // @formatter:off: SingleSpaceSeparator
+    public static final int FLAG_AIR         = 0b0000000000000001;
+    public static final int FLAG_FLAT        = 0b0000000000000010;
+    public static final int FLAG_DRY_FOLIAGE = 0b0000000000000100;
+    public static final int FLAG_FOLIAGE     = 0b0000000000001000;
+    public static final int FLAG_GLASS       = 0b0000000000010000;
+    public static final int FLAG_GRASS       = 0b0000000000100000;
+    public static final int FLAG_WATER       = 0b0000000001000000;
+    public static final int FLAG_FLUID       = 0b0000000010000000;
+    // @formatter:on: SingleSpaceSeparator
 
     private final int index;
     private final String id;
@@ -52,7 +54,7 @@ public class Block {
     private final int vanilla;
     private final int hash;
 
-    private short flags;
+    private int flags;
 
     private final BlockState defaultState;
 
@@ -73,14 +75,14 @@ public class Block {
 
         int flat = BlocksConfig.BLOCKS_FLAT.contains(id) ? FLAG_FLAT : 0;
         int air = BlocksConfig.BLOCKS_AIR.contains(id) ? FLAG_AIR : 0;
-        int foliage = BlocksConfig.BLOCKS_FOLIAGE.contains(id) ? FLAG_FOLIAGE : 0;
         int dryFoliage = BlocksConfig.BLOCKS_DRY_FOLIAGE.contains(id) ? FLAG_DRY_FOLIAGE : 0;
+        int foliage = BlocksConfig.BLOCKS_FOLIAGE.contains(id) ? FLAG_FOLIAGE : 0;
         int glass = BlocksConfig.BLOCKS_GLASS.contains(id) ? FLAG_GLASS : 0;
         int grass = BlocksConfig.BLOCKS_GRASS.contains(id) ? FLAG_GRASS : 0;
         int water = BlocksConfig.BLOCKS_WATER.contains(id) ? FLAG_WATER : 0;
         int fluid = water | ("minecraft:lava".equals(id) ? FLAG_FLUID : 0);
 
-        this.flags = (short) (flat | air | foliage | dryFoliage | grass | water | fluid);
+        this.flags = flat | air | dryFoliage | foliage | glass | grass | water | fluid;
 
         this.defaultState = new BlockState(this);
 
@@ -129,7 +131,7 @@ public class Block {
      *
      * @param mask Property flag(s)
      * @return {@code true} is block contains at least one specified
-     * property flag, otherwise {@code false} if block has none
+     *     property flag, otherwise {@code false} if block has none
      */
     public boolean hasFlag(int mask) {
         return (this.flags & mask) > 0;
@@ -140,7 +142,7 @@ public class Block {
      *
      * @return Short flag bits
      */
-    public short getFlags() {
+    public int getFlags() {
         return this.flags;
     }
 
@@ -149,7 +151,7 @@ public class Block {
      *
      * @param flags Short flag bits
      */
-    public void setFlags(short flags) {
+    public void setFlags(int flags) {
         this.flags = flags;
     }
 
@@ -172,6 +174,15 @@ public class Block {
     }
 
     /**
+     * Check if this block is dry foliage.
+     *
+     * @return True if block is dry foliage
+     */
+    public boolean isDryFoliage() {
+        return hasFlag(FLAG_DRY_FOLIAGE);
+    }
+
+    /**
      * Check if this block is foliage.
      *
      * @return True if block is foliage
@@ -181,12 +192,12 @@ public class Block {
     }
 
     /**
-     * Check if this block is dry foliage.
+     * Check if this block is glass.
      *
-     * @return True if block is dry foliage
+     * @return True if block is glass
      */
-    public boolean isDryFoliage() {
-        return hasFlag(FLAG_DRY_FOLIAGE);
+    public boolean isGlass() {
+        return hasFlag(FLAG_GLASS);
     }
 
     /**

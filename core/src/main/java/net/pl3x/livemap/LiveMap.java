@@ -131,11 +131,11 @@ public interface LiveMap {
     Args args();
 
     /**
-     * Convenience methods to make using custom command arguments a little less painful
+     * Convenience methods to make using custom command arguments a little less painful.
      */
     interface Args {
         /**
-         * Create a new world argument with the name "world"
+         * Create a new world argument with the name "world".
          *
          * @param <S> Command source type
          * @return World argument

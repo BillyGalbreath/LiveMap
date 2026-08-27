@@ -175,8 +175,8 @@ public abstract class World {
 
     /**
      * Get the lowest buildable Y position.
-     * <p>
-     * i.e. <code>-64</code> for vanilla overworld
+     *
+     * <p>i.e. <code>-64</code> for vanilla overworld
      *
      * @return Lowest Y position
      */
@@ -184,8 +184,8 @@ public abstract class World {
 
     /**
      * Get the highest buildable Y position.
-     * <p>
-     * i.e. <code>319</code> for vanilla overworld
+     *
+     * <p>i.e. <code>319</code> for vanilla overworld
      *
      * @return Highest Y position
      */
@@ -193,11 +193,11 @@ public abstract class World {
 
     /**
      * Get the total world height.
-     * <p>
-     * Note: This is <em>not</em> the same as max Y. This includes the full
+     *
+     * <p>Note: This is <em>not</em> the same as max Y. This includes the full
      * distance from minY to maxY (<code>maxY - minY + 1</code>)
-     * <p>
-     * i.e. <code>384</code> for vanilla overworld<br>
+     *
+     * <p>i.e. <code>384</code> for vanilla overworld<br>
      * &emsp;<sub>(<code>319 - -64 + 1 = 384</code>)</sub>
      *
      * @return Full height of the world
@@ -291,13 +291,7 @@ public abstract class World {
      * Represents a custom command argument for our world type.
      */
     public static class Argument implements ArgumentType<World> {
-        /**
-         * Error for when a specified world name/id is invalid.
-         */
-        public static final SimpleCommandExceptionType ERROR_INVALID_WORLD = new SimpleCommandExceptionType(() -> Lang.ERROR_INVALID_WORLD);
-        /**
-         * Error for when a specified world is not found.
-         */
+        public static final SimpleCommandExceptionType ERROR_WORLD_NOT_FOUND = new SimpleCommandExceptionType(() -> Lang.ERROR_WORLD_NOT_FOUND);
         public static final SimpleCommandExceptionType ERROR_MISSING_WORLD = new SimpleCommandExceptionType(() -> Lang.ERROR_MISSING_WORLD);
 
         /**
@@ -313,7 +307,7 @@ public abstract class World {
             String input = StringArgumentType.greedyString().parse(reader);
             World world = LiveMap.api().getWorldRegistry().get(input);
             if (world == null) {
-                throw ERROR_INVALID_WORLD.create();
+                throw ERROR_WORLD_NOT_FOUND.create();
             }
             return world;
         }

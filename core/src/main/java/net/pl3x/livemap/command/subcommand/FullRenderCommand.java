@@ -55,18 +55,19 @@ public class FullRenderCommand<S> extends BaseCommand<S> {
         }));
     }
 
-    @Override
-    protected void execute(@NotNull CommandContext<S> context) throws CommandSyntaxException {
-        if (!(getSource(context).getSender() instanceof Player player)) {
-            throw World.Argument.ERROR_MISSING_WORLD.create();
-        }
-        execute(player, player.getWorld());
-    }
-
     private void executeWorld(@NotNull CommandContext<S> context) throws CommandSyntaxException {
         Sender sender = getSource(context).getSender();
         World world = context.getArgument("world", World.class);
         execute(sender, world);
+    }
+
+    @Override
+    protected void execute(@NotNull CommandContext<S> context) throws CommandSyntaxException {
+        if (!(getSource(context).getSender() instanceof Player player)) {
+            // console must specify world
+            throw World.Argument.ERROR_MISSING_WORLD.create();
+        }
+        execute(player, player.getWorld());
     }
 
     private void execute(@NotNull Sender sender, @NotNull World world) throws CommandSyntaxException {

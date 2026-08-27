@@ -217,7 +217,7 @@ public final class WorldConfig extends AbstractConfig {
                 value = new int[0];
             } else {
                 Point center = Unsafe.cast(value);
-                value = new int[]{center.getX(), center.getZ()};
+                value = new int[] {center.getX(), center.getZ()};
             }
         }
         getConfig().set(path, value);

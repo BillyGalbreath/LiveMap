@@ -33,8 +33,8 @@ import org.jetbrains.annotations.NotNull;
 public class BlockState {
     /**
      * Parse property from string to byte without the overhead of try/catch NumberFormatException.
-     * <p>
-     * Note: This is oversimplified by not processing negative values.
+     *
+     * <p>Note: This is oversimplified by not processing negative values.
      *
      * @param property String value to parse
      * @return Property value as byte

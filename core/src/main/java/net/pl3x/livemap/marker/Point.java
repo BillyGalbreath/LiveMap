@@ -33,40 +33,18 @@ import org.jetbrains.annotations.Nullable;
  * Represents a two-dimensional point.
  */
 public class Point implements JsonSerializable {
-    // @formatter:off
-    /**
-     * Point to the north and west.
-     */
+    // @formatter:off: ParenPad
+    // @formatter:off: SingleSpaceSeparator
     public static final Point NORTHWEST = Point.of(-1, -1);
-    /**
-     * Point to the north.
-     */
     public static final Point NORTH     = Point.of( 0, -1);
-    /**
-     * Point to the north and east.
-     */
     public static final Point NORTHEAST = Point.of( 1, -1);
-    /**
-     * Point to the east.
-     */
     public static final Point EAST      = Point.of( 1,  0);
-    /**
-     * Point to the south and east.
-     */
     public static final Point SOUTHEAST = Point.of( 1,  1);
-    /**
-     * Point to the south.
-     */
     public static final Point SOUTH     = Point.of( 0,  1);
-    /**
-     * Point to the south and west.
-     */
     public static final Point SOUTHWEST = Point.of(-1,  1);
-    /**
-     * Point to the west.
-     */
     public static final Point WEST      = Point.of(-1,  0);
-    // @formatter:on
+    // @formatter:on: SingleSpaceSeparator
+    // @formatter:on: ParenPad
 
     /**
      * Point representing 0,0.
@@ -209,8 +187,8 @@ public class Point implements JsonSerializable {
             return false;
         }
         Point other = (Point) o;
-        return getX() == other.getX() &&
-            getZ() == other.getZ();
+        return getX() == other.getX()
+            && getZ() == other.getZ();
     }
 
     @Override

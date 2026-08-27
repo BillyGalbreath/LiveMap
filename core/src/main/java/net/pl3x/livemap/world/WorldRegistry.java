@@ -44,7 +44,7 @@ public abstract class WorldRegistry extends Registry<World> {
      *
      * @param key key whose mapping is to be removed from the registry
      * @return the previous value associated with {@code key}, or
-     * {@code null} if there was no mapping for {@code key}.
+     *     {@code null} if there was no mapping for {@code key}.
      */
     @Nullable
     public World remove(@NotNull String key) {

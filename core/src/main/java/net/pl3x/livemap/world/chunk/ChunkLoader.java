@@ -53,7 +53,7 @@ public class ChunkLoader {
         CHUNK_COMPRESSION[4] = CompressionType.LZ4;
     }
 
-    private final static BlueNBT BLUENBT = new BlueNBT();
+    private static final BlueNBT BLUENBT = new BlueNBT();
 
     static {
         BLUENBT.setNamingStrategy(NamingStrategy.lowerCaseWithDelimiter("_"));
@@ -69,10 +69,10 @@ public class ChunkLoader {
 
     // sorted list of chunk-versions, loaders at the start of the list are preferred over loaders at the end
     private static final List<ChunkVersionLoader<?>> CHUNK_VERSION_LOADERS = List.of(
-        new ChunkVersionLoader<>(Chunk_1_18.NBT.class, Chunk_1_18::new, 2844)//,
-        //new ChunkVersionLoader<>(Chunk_1_16.NBT.class, Chunk_1_16::new, 2500),
-        //new ChunkVersionLoader<>(Chunk_1_15.NBT.class, Chunk_1_15::new, 2200),
-        //new ChunkVersionLoader<>(Chunk_1_13.NBT.class, Chunk_1_13::new, 1519)
+        new ChunkVersionLoader<>(Chunk_1_18.NBT.class, Chunk_1_18::new, 2844)// ,
+        // new ChunkVersionLoader<>(Chunk_1_16.NBT.class, Chunk_1_16::new, 2500),
+        // new ChunkVersionLoader<>(Chunk_1_15.NBT.class, Chunk_1_15::new, 2200),
+        // new ChunkVersionLoader<>(Chunk_1_13.NBT.class, Chunk_1_13::new, 1519)
     );
 
     private ChunkVersionLoader<?> lastUsedLoader = CHUNK_VERSION_LOADERS.getFirst();

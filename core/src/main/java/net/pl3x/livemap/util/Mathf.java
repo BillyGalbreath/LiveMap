@@ -33,10 +33,10 @@ public final class Mathf {
 
     /**
      * Linearly interpolates between {@code a} and {@code b} by {@code t}.
-     * <p>
-     * The parameter {@code t} is clamped to the range [0, 1].
-     * <p>
-     * When {@code t} = 0 returns {@code a}.<br>
+     *
+     * <p>The parameter {@code t} is clamped to the range [0, 1].
+     *
+     * <p>When {@code t} = 0 returns {@code a}.<br>
      * When {@code t} = 1 return {@code b}.<br>
      * When {@code t} = 0.5 returns the midpoint of {@code a} and {@code b}.
      *
@@ -51,20 +51,20 @@ public final class Mathf {
 
     /**
      * Determines where a {@code value} lies between two points.
-     * <p>
-     * The {@code a} and {@code b} values define the start and end of a linear numeric range.
+     *
+     * <p>The {@code a} and {@code b} values define the start and end of a linear numeric range.
      * The {@code value} parameter you supply represents a value which might lie
      * somewhere within that range. This method calculates where, within the
      * specified range, the {@code value} parameter falls.
-     * <p>
-     * If the {@code value} parameter is within the range, returns a value between
+     *
+     * <p>If the {@code value} parameter is within the range, returns a value between
      * zero and one, proportional to the value's position within the range.
      *
      * @param a The start of the range
      * @param b The end of the range
      * @param t The point within the range you want to calculate
      * @return The value between zero and one, resenting where the {@code value}
-     * parameter falls within the range defined by {@code a} and {@code b}
+     *     parameter falls within the range defined by {@code a} and {@code b}
      */
     public static float inverseLerp(float a, float b, float t) {
         return (t - a) / (b - a);

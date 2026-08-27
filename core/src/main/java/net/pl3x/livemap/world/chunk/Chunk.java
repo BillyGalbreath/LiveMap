@@ -81,7 +81,7 @@ public abstract class Chunk {
     }
 
     /**
-     * Get the version of the chunk NBT structure
+     * Get the version of the chunk NBT structure.
      *
      * @return NBT structure version
      */
@@ -99,7 +99,7 @@ public abstract class Chunk {
     }
 
     /**
-     * Get the lowest Y section position
+     * Get the lowest Y section position.
      *
      * @return Lowest Y section position
      */

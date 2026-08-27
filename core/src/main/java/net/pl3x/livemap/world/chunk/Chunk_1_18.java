@@ -136,7 +136,9 @@ public final class Chunk_1_18 extends Chunk {
     @Nullable
     public Section getSection(int y) {
         y -= this.sections[0].getY();
-        if (y < 0 || y >= this.sections.length) return null;
+        if (y < 0 || y >= this.sections.length) {
+            return null;
+        }
         return this.sections[y];
     }
 
