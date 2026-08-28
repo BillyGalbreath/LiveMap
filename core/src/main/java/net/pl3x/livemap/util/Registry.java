@@ -24,14 +24,14 @@
 
 package net.pl3x.livemap.util;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Represents a registry of key-value pairs.
  *
  * @param <T> Type of registry
  */
-public abstract class Registry<T> extends HashMap<String, T> {
+public abstract class Registry<T> extends ConcurrentHashMap<String, T> {
     /**
      * Constructs a new instance of Registry.
      */
