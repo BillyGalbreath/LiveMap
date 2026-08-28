@@ -105,7 +105,7 @@ tasks {
       "https://docs.oracle.com/en/java/javase/25/docs/api/", // doesnt seem to do anything
       "https://javadoc.io/doc/org.jetbrains/annotations/${libs.versions.annotations.get()}/",
       "https://javadoc.io/doc/org.apache.commons/commons-lang3/${libs.versions.apache.get()}/",
-      "https://docs.pl3x.net/bluenbt/",
+      "https://repo.bluecolored.de/javadoc/releases/de/bluecolored/bluenbt/${libs.versions.bluenbt.get()}/raw/",
       "https://docs.pl3x.net/brigadier",
       "https://javadoc.io/doc/org.bstats/bstats-bukkit/${libs.versions.bstats.get()}/",
       "https://javadoc.io/doc/com.github.ben-manes.caffeine/caffeine/${libs.versions.caffeine.get()}/", // named modules
