@@ -97,19 +97,21 @@ tasks {
     stdopts.bottom = "Copyright © 2020-2026 William Blake Galbreath"
     stdopts.linkSource(true)
     stdopts.addBooleanOption("html5", true)
-    stdopts.addStringOption("Xdoclint:all,-missing", "-quiet")
+    stdopts.addStringOption("Xdoclint:all,-missing", "-quiet") // hides all lint warnings (checkstyle handles reporting better)
+    stdopts.addStringOption("-link-modularity-mismatch", "info") // hides named modules warning
     stdopts.links(
+      "https://docs.oracle.com/en/java/javase/25/docs/api/", // doesnt seem to do anything
       "https://javadoc.io/doc/org.jetbrains/annotations/${libs.versions.annotations.get()}/",
       "https://javadoc.io/doc/org.apache.commons/commons-lang3/${libs.versions.apache.get()}/",
-      //"https://repo.bluecolored.de/javadoc/releases/de/bluecolored/bluenbt/${libs.versions.bluenbt.get()}", // reposilite site in wrong format
-      //"https://javadoc.io/doc/com.mojang/brigadier/${libs.versions.brigadier.get()}/", // brigadier doesn't have any public Javadoc
+      "https://docs.pl3x.net/bluenbt/",
+      "https://docs.pl3x.net/brigadier",
       "https://javadoc.io/doc/org.bstats/bstats-bukkit/${libs.versions.bstats.get()}/",
-      //"https://javadoc.io/doc/com.github.ben-manes.caffeine/caffeine/${libs.versions.caffeine.get()}/", // causes warning: The code being documented uses packages in the unnamed module, but the packages defined in %s are in named modules
-      //"https://javadoc.io/doc/it.unimi.dsi/fastutil/${libs.versions.fastutil.get()}/", // cannot find package-list at url
-      //"https://javadoc.io/doc/com.google.code.gson/gson/${libs.versions.gson.get()}/", // causes warning: The code being documented uses packages in the unnamed module, but the packages defined in %s are in named modules
+      "https://javadoc.io/doc/com.github.ben-manes.caffeine/caffeine/${libs.versions.caffeine.get()}/", // named modules
+      "https://javadoc.io/doc/it.unimi.dsi/fastutil/${libs.versions.fastutil.get()}/",
+      "https://javadoc.io/doc/com.google.code.gson/gson/${libs.versions.gson.get()}/", // named modules
       "https://javadoc.io/doc/com.google.guava/guava/${libs.versions.guava.get()}/",
-      //"https://javadoc.io/doc/org.apache.logging.log4j/log4j-api/${libs.versions.log4j.get()}/", // missing Javadoc
-      //"https://javadoc.io/doc/at.yawk.lz4/lz4-java/${libs.versions.lz4.get()}/", // causes warning: The code being documented uses packages in the unnamed module, but the packages defined in %s are in named modules
+      "https://logging.apache.org/log4j/2.x/javadoc/log4j-core/",
+      "https://javadoc.io/doc/at.yawk.lz4/lz4-java/${libs.versions.lz4.get()}/", // named modules
       "https://javadoc.io/doc/io.undertow/undertow-core/${libs.versions.undertow.get()}/",
       "https://carleslc.me/Simple-YAML/doc/"
     )
