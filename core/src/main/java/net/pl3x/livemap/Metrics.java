@@ -25,7 +25,7 @@
 package net.pl3x.livemap;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import net.pl3x.livemap.configuration.Config;
@@ -81,7 +81,16 @@ class Metrics {
         addCustomChart(new SimplePie("unfiltered_server_software", () -> LiveMap.api().getPlatformName()));
         addCustomChart(new SimplePie("language_used", () -> Config.LANGUAGE_FILE.replace(".yml", "")));
         addCustomChart(new SimplePie("internal_web_server", () -> Boolean.toString(Config.HTTPD_ENABLED)));
-        addCustomChart(new AdvancedPie("renderers_used", Collections::emptyMap)); // todo
+        addCustomChart(new AdvancedPie("renderers_used", () -> new HashMap<>() {{
+            // loop over worlds
+            LiveMap.api().getWorldRegistry().forEach((_, world) ->
+                // loop over renderers
+                world.getRendererRegistry().forEach((renderer, _) ->
+                    // increment count for renderer
+                    put(renderer, getOrDefault(renderer, 0) + 1)
+                )
+            );
+        }}));
         addCustomChart(new DrilldownPie("plugin_version", () -> {
             // split version and build for drilldown
             String[] version = LiveMap.api().getVersion().split("-");
