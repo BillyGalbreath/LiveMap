@@ -24,7 +24,6 @@
 
 package net.pl3x.livemap.world;
 
-import java.util.Collections;
 import net.pl3x.livemap.util.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,6 +58,8 @@ public abstract class WorldRegistry extends Registry<World> {
     @Override
     public void clear() {
         // cleanup world data
-        Collections.unmodifiableCollection(values()).forEach(this::remove);
+        values().forEach(World::discard);
+        // clear out worlds
+        super.clear();
     }
 }
