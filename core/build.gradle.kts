@@ -87,11 +87,13 @@ tasks {
   javadoc {
     val name = rootProject.name.replaceFirstChar { it.uppercase() }
     val stdopts = options as StandardJavadocDocletOptions
-    stdopts.encoding = Charsets.UTF_8.name()
-    stdopts.overview = "src/main/javadoc/overview.html"
+    stdopts.encoding = "UTF-8"
+    stdopts.docEncoding = "UTF-8"
+    stdopts.charSet = "UTF-8"
+    //stdopts.overview = "src/main/javadoc/overview.html" // why did I put this?
     stdopts.use()
     stdopts.isDocFilesSubDirs = true
-    stdopts.windowTitle = "$name ${rootProject.version} API Documentation"
+    stdopts.windowTitle = "$name ${rootProject.version} API"
     stdopts.docTitle = "<h1>$name ${rootProject.version} API</h1>"
     stdopts.header = """<img src="https://raw.githubusercontent.com/billygalbreath/livemap/v4/webmap/public/images/livemap-white.png" style="height:32px">"""
     stdopts.bottom = "Copyright © 2020-2026 William Blake Galbreath"
