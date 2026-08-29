@@ -3,12 +3,13 @@ plugins {
   `maven-publish`
 }
 
-var buildNum = System.getenv("BUILD_NUMBER") ?: "SNAPSHOT"
+var buildNum: String? = System.getenv("BUILD_NUMBER")
 val authors = providers.gradleProperty("authors").get()
 val website = providers.gradleProperty("website").get()
 
-group = "net.pl3x.livemap"
-version = "${libs.versions.livemap.get()}-$buildNum"
+group = "net.pl3x"
+val artifact = rootProject.name.lowercase()
+version = libs.versions.livemap.get() + "-SNAPSHOT".takeIf { buildNum.isNullOrBlank() }.orEmpty()
 description = providers.gradleProperty("description").get()
 
 allprojects {
@@ -72,6 +73,7 @@ subprojects {
           expand(
             "name" to rootProject.name,
             "group" to rootProject.group,
+            "artifact" to artifact,
             "version" to rootProject.version,
             "minecraft" to libs.versions.minecraft.get(),
             "description" to "${rootProject.description}",
@@ -134,9 +136,9 @@ publishing {
   }
   publications {
     create<MavenPublication>("maven") {
-      groupId = "net.pl3x"
-      artifactId = "livemap"
-      version = "${rootProject.version}"
+      groupId = rootProject.group.toString()
+      artifactId = artifact
+      version = rootProject.version.toString()
       from(components["java"])
     }
   }

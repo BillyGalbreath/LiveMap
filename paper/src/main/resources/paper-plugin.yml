@@ -1,5 +1,5 @@
 name: "${name}"
-main: "${group}.PaperLiveMap"
+main: "${group}.${artifact}.PaperLiveMap"
 version: "${version}"
 api-version: "${minecraft}"
 description: "${description}"
