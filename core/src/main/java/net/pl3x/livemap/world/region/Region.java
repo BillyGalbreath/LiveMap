@@ -238,7 +238,7 @@ public class Region extends Point {
 
         // we need the chunk version to find correct loader
         int version = Chunk.getChunkDataVersion(raf, compression);
-        Loader<Chunk.NBT> loader = Loader.getLoader(version);
+        Loader<Chunk.NBT> loader = Loader.getForVersion(version);
 
         // put cursor back to after compression type byte
         raf.seek(offset + 5);

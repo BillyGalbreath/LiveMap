@@ -42,11 +42,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class Loader<NBT extends Chunk.NBT> {
     public static final Loader<?>[] LOADERS = new Loader[] {
-        new Loader<>(Chunk.NBT.class, EmptyChunk::new),
-        new Loader<>(Chunk_1_13.NBT.class, Chunk_1_13::new),
-        new Loader<>(Chunk_1_15.NBT.class, Chunk_1_15::new),
-        new Loader<>(Chunk_1_16.NBT.class, Chunk_1_16::new),
-        new Loader<>(Chunk_1_18.NBT.class, Chunk_1_18::new)
+        new Loader<>(EmptyChunk::new), // don't worry about pre 1.13 chunks
+        new Loader<>(Chunk_1_13::new),
+        new Loader<>(Chunk_1_15::new),
+        new Loader<>(Chunk_1_16::new),
+        new Loader<>(Chunk_1_18::new)
     };
 
     public static final BlueNBT BLUENBT = new BlueNBT();
@@ -64,25 +64,26 @@ public final class Loader<NBT extends Chunk.NBT> {
      * @return Chunk loader
      */
     @NotNull
-    public static <NBT extends Chunk.NBT> Loader<NBT> getLoader(int chunkVersion) {
+    public static <NBT extends Chunk.NBT> Loader<NBT> getForVersion(int chunkVersion) {
         // @formatter:off
         // get correct loader
         // https://minecraft.wiki/w/Data_version#List_of_data_versions
         return Unsafe.cast(Loader.LOADERS[
-            (chunkVersion < 1519) ? 0 // wtf, older than 1.13
-                : (chunkVersion < 2200) ? 1 // 1.13 - 1.14
-                : (chunkVersion < 2500) ? 2 // 1.15
-                : (chunkVersion < 2844) ? 3 // 1.16 - 1.18 (21w42a)
-                :                    4 // 1.18+ (21w43a+)
-            ]);
+              (chunkVersion < 1519) ? 0 // wtf, older than 1.13
+            : (chunkVersion < 2200) ? 1 // 1.13 - 1.14
+            : (chunkVersion < 2500) ? 2 // 1.15
+            : (chunkVersion < 2844) ? 3 // 1.16 - 1.18 (21w42a)
+            :                         4 // 1.18+ (21w43a+)
+        ]);
         // @formatter:on
     }
 
-    private final Class<NBT> type;
+    private final TypeToken<NBT> type;
     private final Ctor<NBT> ctor;
 
-    private Loader(@NotNull Class<NBT> type, @NotNull Ctor<NBT> ctor) {
-        this.type = type;
+    private Loader(@NotNull Ctor<NBT> ctor) {
+        this.type = new TypeToken<>() {
+        };
         this.ctor = ctor;
     }
 
@@ -97,11 +98,10 @@ public final class Loader<NBT extends Chunk.NBT> {
     @NotNull
     public Chunk load(@NotNull Region region, @NotNull InputStream in) throws IOException {
         try {
-            NBT nbt = BLUENBT.read(in, this.type);
-            Chunk chunk = this.ctor.create(region, nbt);
-            return chunk.isFull() ? chunk : new EmptyChunk(region);
+            return this.ctor.create(region, BLUENBT.read(in, this.type));
         } catch (Exception e) {
-            throw new IOException("Failed to parse chunk-data (%s): %s".formatted(this.type.getSimpleName(), e), e);
+            throw new IOException("Failed to parse chunk-data (%s): %s"
+                .formatted(this.type.getRawType().getSimpleName(), e), e);
         }
     }
 
