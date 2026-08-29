@@ -25,14 +25,13 @@
 package net.pl3x.livemap.thread;
 
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.pl3x.livemap.LiveMap;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * A thread managed by a {@link ForkJoinPool}, which executes {@link ForkJoinTask}.
+ * A thread managed by a {@link WorkerThreadFactory}.
  */
 public class WorkerThread extends ForkJoinWorkerThread {
     private static final AtomicInteger COUNTER = new AtomicInteger(0);

@@ -268,7 +268,7 @@ public final class Chunk_1_18 extends Chunk {
         SectionNBT[] sections = EMPTY_SECTION_NBT_ARRAY;
 
         /**
-         * Constructs a new instance of Chunk_1_18.NBT.
+         * Constructs a new instance of NBT.
          */
         public NBT() {
             // Explicit constructor to satisfy Javadoc and linter tools
@@ -303,7 +303,7 @@ public final class Chunk_1_18 extends Chunk {
         BiomesNBT biomes = EMPTY_BIOMES_NBT;
 
         /**
-         * Constructs a new instance of Chunk_1_18.Section.NBT.
+         * Constructs a new instance of SectionNBT.
          */
         public SectionNBT() {
             // Explicit constructor to satisfy Javadoc and linter tools

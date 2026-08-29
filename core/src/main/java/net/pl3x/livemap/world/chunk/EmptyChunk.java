@@ -34,13 +34,25 @@ import org.jetbrains.annotations.NotNull;
  * Represents an empty or (non-existent) chunk.
  */
 public class EmptyChunk extends Chunk {
+    private static final NBT EMPTY_NBT = new NBT();
+
     /**
      * Constructs a new instance of EmptyChunk.
      *
      * @param region Region chunk belongs to
      */
     public EmptyChunk(@NotNull Region region) {
-        super(region, new NBT());
+        this(region, EMPTY_NBT);
+    }
+
+    /**
+     * Constructs a new instance of EmptyChunk.
+     *
+     * @param region Region chunk belongs to
+     * @param nbt    The chunk's raw nbt data
+     */
+    public EmptyChunk(@NotNull Region region, @NotNull NBT nbt) {
+        super(region, nbt);
     }
 
     @Override

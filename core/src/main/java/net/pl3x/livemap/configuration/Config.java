@@ -24,7 +24,9 @@
 
 package net.pl3x.livemap.configuration;
 
+import java.nio.file.Path;
 import net.pl3x.livemap.LiveMap;
+import net.pl3x.livemap.util.FileUtil;
 
 /**
  * LiveMap's main config.
@@ -38,6 +40,11 @@ public final class Config extends AbstractConfig {
     @Comment("""
         The language file to use from the locale folder.""")
     public static String LANGUAGE_FILE = "en_us.yml";
+    @Key("settings.startup-banner")
+    @Comment("""
+        Shows a little banner when the plugin enables.
+        You can turn it off here if you dont like it.""")
+    public static boolean STARTUP_BANNER = true;
 
     @Key("settings.web-directory.path")
     @Comment("""
@@ -87,6 +94,12 @@ public final class Config extends AbstractConfig {
      * Reloads configuration from YAML file.
      */
     public static void reload() {
+        Path file = CONFIG.getPath().getFileName();
+        Path dir = CONFIG.getPath().getParent();
+
+        // extract default config from jar
+        FileUtil.extractFile("%s".formatted(file), dir, false);
+
         CONFIG.reload0();
     }
 

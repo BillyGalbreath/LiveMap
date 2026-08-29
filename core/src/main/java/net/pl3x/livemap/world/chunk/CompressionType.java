@@ -38,22 +38,32 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a compression type for in/output streams.
+ *
+ * @see <a href="https://minecraft.wiki/w/Region_file_format#Payload">Region_file_format#Payload</a>
  */
 public enum CompressionType {
     /**
-     * No compression type.
+     * No compression.
+     *
+     * <p>Exists to satisfy ordinals starting at `0`
      */
     NONE(out -> out, in -> in),
     /**
-     * Gzip compression type.
+     * Gzip compression.
      */
     GZIP(GZIPOutputStream::new, GZIPInputStream::new),
     /**
-     * Zip compression type.
+     * Zip compression.
      */
     ZIP(DeflaterOutputStream::new, InflaterInputStream::new),
     /**
-     * LZ4 compression type.
+     * No compression.
+     *
+     * <p>Mojang uses `3` for uncompressed instead of `0` for some reason
+     */
+    UNCOMPRESSED(out -> out, in -> in),
+    /**
+     * LZ4 compression.
      */
     LZ4(LZ4BlockOutputStream::new,
         // le sigh. rip constructor reference.
@@ -63,10 +73,29 @@ public enum CompressionType {
             .build(in)
     );
 
-    private final StreamTransformer<OutputStream> compressor;
-    private final StreamTransformer<InputStream> decompressor;
+    private static final CompressionType[] VALUES = values();
 
-    CompressionType(@NotNull StreamTransformer<OutputStream> compressor, @NotNull StreamTransformer<InputStream> decompressor) {
+    /**
+     * Get compression type by id.
+     *
+     * @param id The id of the compression type
+     * @return Compression type
+     * @throws IndexOutOfBoundsException if id is not a supported type
+     * @see <a href="https://minecraft.wiki/w/Region_file_format#Payload">Region_file_format#Payload</a>
+     */
+    @NotNull
+    public static CompressionType byId(byte id) {
+        // use cached values() for efficiency
+        return VALUES[id];
+    }
+
+    private final ThrowingUnaryOperator<OutputStream> compressor;
+    private final ThrowingUnaryOperator<InputStream> decompressor;
+
+    CompressionType(
+        @NotNull ThrowingUnaryOperator<OutputStream> compressor,
+        @NotNull ThrowingUnaryOperator<InputStream> decompressor
+    ) {
         this.compressor = compressor;
         this.decompressor = decompressor;
     }
@@ -96,7 +125,7 @@ public enum CompressionType {
     }
 
     @FunctionalInterface
-    private interface StreamTransformer<T> {
+    private interface ThrowingUnaryOperator<T> {
         @NotNull
         T apply(@NotNull T original) throws IOException;
     }

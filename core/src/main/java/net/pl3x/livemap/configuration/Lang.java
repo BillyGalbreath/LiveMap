@@ -52,7 +52,7 @@ public final class Lang extends AbstractConfig {
     private Lang() {
         Path dir = LiveMap.api().getDataPath().resolve("lang");
 
-        // extract locale dir from jar
+        // extract lang dir from jar
         FileUtil.extractDir("/lang/", dir, false);
 
         super(dir.resolve(Config.LANGUAGE_FILE));

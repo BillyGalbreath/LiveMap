@@ -33,11 +33,13 @@ import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.Logger;
+import net.pl3x.livemap.configuration.Config;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -64,6 +66,28 @@ public final class FileUtil {
             }
         }
         return jarPath;
+    }
+
+    /**
+     * Extract file from LiveMap jar to disk.
+     *
+     * @param filename File to extract (in jar path)
+     * @param outDir   Directory of destination (on disk path)
+     * @param replace  True to relace existing file on disk
+     */
+    public static void extractFile(@NotNull String filename, @NotNull Path outDir, boolean replace) {
+        try (InputStream in = Config.class.getResourceAsStream("/%s".formatted(filename))) {
+            if (in == null) {
+                throw new RuntimeException("Could not read file from jar! (" + filename + ")");
+            }
+            Path path = outDir.resolve(filename);
+            if (!Files.exists(path) || replace) {
+                Files.createDirectories(path.getParent());
+                Files.copy(in, path, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**

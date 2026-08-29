@@ -92,6 +92,18 @@ public class RegionQueue {
     }
 
     /**
+     * Removes all the region indexes from this queue (optional operation).
+     * The queue will be empty after this method returns.
+     *
+     * @throws UnsupportedOperationException if the {@code clear} operation
+     *                                       is not supported by this queue
+     */
+    public synchronized void clear() {
+        this.sorted.clear();
+        this.unsorted.clear();
+    }
+
+    /**
      * Retrieves and removes the head of the queue (in other words,
      * the first world in queue), or returns {@code null} if this
      * queue is empty.

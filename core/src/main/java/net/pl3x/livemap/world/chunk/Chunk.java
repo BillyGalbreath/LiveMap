@@ -25,6 +25,10 @@
 package net.pl3x.livemap.world.chunk;
 
 import de.bluecolored.bluenbt.NBTName;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.Objects;
 import net.pl3x.livemap.world.World;
 import net.pl3x.livemap.world.biome.Biome;
@@ -45,6 +49,65 @@ public abstract class Chunk {
     static final long[] EMPTY_LONG_ARRAY = new long[0];
     static final String[] EMPTY_STRING_ARRAY = new String[0];
     static final BlockState[] EMPTY_BLOCKSTATE_ARRAY = new BlockState[0];
+
+    // target sequence: TAG_Int (0x03) + Name Length (0x00 0x0B) + "DataVersion"
+    private static final byte[] DATA_VERSION_SEQ = {0x03, 0x00, 0x0B, 'D', 'a', 't', 'a', 'V', 'e', 'r', 's', 'i', 'o', 'n'};
+
+    /**
+     * Get chunk's data version early without loading the end nbt.
+     *
+     * @param raf         The region file
+     * @param compression The compression type
+     * @return The chunk's data version, or -1 if was unable to determine
+     * @throws IOException if an I/O error occurs
+     */
+    public static int getChunkDataVersion(@NotNull RandomAccessFile raf, @NotNull CompressionType compression) throws IOException {
+        // grab a tiny chunk of compressed data (1024 bytes is plenty for headers)
+        byte[] compressedBuffer = new byte[1024];
+        int bytesRead = raf.read(compressedBuffer);
+        if (bytesRead <= 0) {
+            return -1;
+        }
+
+        // create an uncompression stream
+        try (ByteArrayInputStream bais = new ByteArrayInputStream(compressedBuffer, 0, bytesRead);
+             BufferedInputStream bis = new BufferedInputStream(compression.decompress(bais))
+        ) {
+            // decompress just enough to scan the early NBT headers
+            byte[] raw = bis.readNBytes(2048);
+
+            int i = jumpToSequence(raw, DATA_VERSION_SEQ);
+            if (i != -1 && i + 4 <= raw.length) {
+                // the next 4 bytes contain the integer value
+                // @formatter:off
+                return ((raw[i    ] & 0xFF) << 24)
+                    | ((raw[i + 1] & 0xFF) << 16)
+                    | ((raw[i + 2] & 0xFF) << 8)
+                    |  (raw[i + 3] & 0xFF);
+                // @formatter:on
+            }
+        }
+        // `DataVersion` tag not found
+        return -1;
+    }
+
+    private static int jumpToSequence(byte @NotNull [] src, @SuppressWarnings("SameParameterValue") byte @NotNull [] seq) {
+        int i, j;
+        boolean match;
+        for (i = 0; i <= src.length - seq.length; i++) {
+            match = true;
+            for (j = 0; j < seq.length; j++) {
+                if (src[i + j] != seq[j]) {
+                    match = false;
+                    break;
+                }
+            }
+            if (match) {
+                return i + seq.length;
+            }
+        }
+        return -1;
+    }
 
     private final NBT nbt;
     private final Region region;

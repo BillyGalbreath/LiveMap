@@ -223,9 +223,8 @@
         <module name="SummaryJavadoc"/>
 
         <module name="SuppressionCommentFilter">
-            <property name="offCommentFormat" value="@formatter:off: ([\w|]+)"/>
-            <property name="onCommentFormat" value="@formatter:on: ([\w|]+)"/>
-            <property name="checkFormat" value="$1"/>
+            <property name="offCommentFormat" value="@formatter:off"/>
+            <property name="onCommentFormat" value="@formatter:on"/>
         </module>
     </module>
 </module>

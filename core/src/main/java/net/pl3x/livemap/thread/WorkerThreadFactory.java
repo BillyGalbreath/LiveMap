@@ -24,9 +24,7 @@
 
 package net.pl3x.livemap.thread;
 
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -40,8 +38,8 @@ public class WorkerThreadFactory implements ForkJoinPool.ForkJoinWorkerThreadFac
      * @return New executor service
      */
     @NotNull
-    public static ExecutorService createService(@NotNull String name) {
-        return createService(new WorkerThreadFactory(name, 1));
+    public static ForkJoinPool createExecutor(@NotNull String name) {
+        return createExecutor(new WorkerThreadFactory(name, 1));
     }
 
     /**
@@ -52,22 +50,20 @@ public class WorkerThreadFactory implements ForkJoinPool.ForkJoinWorkerThreadFac
      * @return New executor service
      */
     @NotNull
-    public static ExecutorService createService(@NotNull String name, int threads) {
+    public static ForkJoinPool createExecutor(@NotNull String name, int threads) {
         int max = Runtime.getRuntime().availableProcessors();
         int half = Math.max(1, max / 2);
         int actual = Math.clamp(threads < 1 ? half : threads, 1, max);
-        return createService(new WorkerThreadFactory(name, actual));
+        return createExecutor(new WorkerThreadFactory(name, actual));
     }
 
     @NotNull
-    private static ExecutorService createService(@NotNull WorkerThreadFactory factory) {
+    private static ForkJoinPool createExecutor(@NotNull WorkerThreadFactory factory) {
         return new ForkJoinPool(factory.threads, factory, null, false);
     }
 
     private final String name;
     private final int threads;
-
-    private final AtomicInteger counter = new AtomicInteger();
 
     /**
      * Constructs a new instance of WorkerThreadFactory.

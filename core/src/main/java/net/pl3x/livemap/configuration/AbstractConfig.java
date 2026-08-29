@@ -60,6 +60,16 @@ public abstract class AbstractConfig {
     }
 
     /**
+     * Get the path to this config file.
+     *
+     * @return File path
+     */
+    @NotNull
+    protected Path getPath() {
+        return this.path;
+    }
+
+    /**
      * Gets the direct YAML configuration for this config.
      *
      * @return YAML configuration

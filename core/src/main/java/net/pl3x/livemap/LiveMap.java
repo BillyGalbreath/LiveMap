@@ -25,16 +25,21 @@
 package net.pl3x.livemap;
 
 import java.nio.file.Path;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ForkJoinPool;
 import net.pl3x.livemap.command.argument.ArgumentParser;
+import net.pl3x.livemap.configuration.BlocksConfig;
+import net.pl3x.livemap.configuration.ColorsConfig;
+import net.pl3x.livemap.configuration.Config;
+import net.pl3x.livemap.configuration.Lang;
 import net.pl3x.livemap.httpd.HttpdServer;
 import net.pl3x.livemap.player.PlayerRegistry;
+import net.pl3x.livemap.render.RenderManager;
 import net.pl3x.livemap.scheduler.Scheduler;
+import net.pl3x.livemap.thread.WorkerThreadFactory;
+import net.pl3x.livemap.util.FileUtil;
 import net.pl3x.livemap.world.WorldRegistry;
 import net.pl3x.livemap.world.block.BlockRegistry;
-import net.pl3x.livemap.world.chunk.ChunkLoader;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * The LiveMap API.
@@ -45,6 +50,17 @@ public interface LiveMap {
      */
     final class Provider {
         static LiveMap api;
+
+        private static Path webDir;
+        private static Path tilesDir;
+
+        private static HttpdServer httpdServer;
+        private static RenderManager renderManager;
+
+        private static Scheduler scheduler;
+        private static ForkJoinPool executor;
+
+        private static Metrics metrics;
 
         private Provider() {
         }
@@ -66,6 +82,21 @@ public interface LiveMap {
      * @return True if enabled
      */
     boolean isEnabled();
+
+    /**
+     * Register brigadier commands with the server platform.
+     */
+    void registerCommands();
+
+    /**
+     * Register tick scheduler with server platform.
+     */
+    void registerScheduler();
+
+    /**
+     * Unregister tick scheduler with server platform.
+     */
+    void unregisterScheduler();
 
     /**
      * Get the version of LiveMap.
@@ -112,7 +143,9 @@ public interface LiveMap {
      * @return Path to web directory
      */
     @NotNull
-    Path getWebDir();
+    default Path getWebDir() {
+        return Provider.webDir;
+    }
 
     /**
      * Get the path to the tiles directory.
@@ -120,15 +153,61 @@ public interface LiveMap {
      * @return Path to tiles directory
      */
     @NotNull
-    Path getTilesDir();
+    default Path getTilesDir() {
+        return Provider.tilesDir;
+    }
 
     /**
      * Get the internal web server.
      *
      * @return The internal web server
      */
-    @Nullable
-    HttpdServer getHttpdServer();
+    @NotNull
+    default HttpdServer getHttpdServer() {
+        if (Provider.httpdServer == null) {
+            Provider.httpdServer = new HttpdServer();
+        }
+        return Provider.httpdServer;
+    }
+
+    /**
+     * Get the render manager.
+     *
+     * @return The render manager
+     */
+    @NotNull
+    default RenderManager getRenderManager() {
+        if (Provider.renderManager == null) {
+            Provider.renderManager = new RenderManager();
+        }
+        return Provider.renderManager;
+    }
+
+    /**
+     * Get the task scheduler.
+     *
+     * @return The task scheduler
+     */
+    @NotNull
+    default Scheduler getScheduler() {
+        if (Provider.scheduler == null) {
+            Provider.scheduler = new Scheduler();
+        }
+        return Provider.scheduler;
+    }
+
+    /**
+     * Get the executor service (a.k.a., thread pool).
+     *
+     * @return The executor service
+     */
+    @NotNull
+    default ForkJoinPool getExecutor() {
+        if (Provider.executor == null) {
+            Provider.executor = WorkerThreadFactory.createExecutor("Renderer", Config.RENDER_THREADS);
+        }
+        return Provider.executor;
+    }
 
     /**
      * Get the block registry.
@@ -155,34 +234,95 @@ public interface LiveMap {
     WorldRegistry getWorldRegistry();
 
     /**
-     * Get the chunk loader.
-     *
-     * @return The chunk loader
-     */
-    @NotNull
-    ChunkLoader getChunkLoader();
-
-    /**
-     * Get the task scheduler.
-     *
-     * @return The task scheduler
-     */
-    @NotNull
-    Scheduler getScheduler();
-
-    /**
-     * Get the executor service (a.k.a., thread pool).
-     *
-     * @return The executor service
-     */
-    @Nullable
-    ExecutorService getExecutor();
-
-    /**
      * Command custom argument parser.
      *
      * @return Custom argument parser
      */
     @NotNull
     ArgumentParser getArgumentParser();
+
+    /**
+     * Enables LiveMap.
+     */
+    default void enable() {
+        // main configs
+        Config.reload();
+        Lang.reload();
+
+        if (Config.STARTUP_BANNER) {
+            Logger.info("   &3╻  ╻╻ ╻┏━╸&9┏┳┓┏━┓┏━┓");
+            Logger.info("   &3┃  ┃┃┏┛┣╸ &9┃┃┃┣━┫┣━┛");
+            Logger.info("   &3┗━╸╹┗┛ ┗━╸&9╹ ╹╹ ╹╹  ");
+            // 22 spaces to line up with right side of above
+            Logger.info("&a%22s".formatted(getVersion()));
+            Logger.info("&b%22s".formatted("Running %s".formatted(getPlatformName())));
+            Logger.info("&c%22s".formatted("v%s".formatted(getPlatformVersion())));
+        }
+
+        // calculate directories
+        Path dir = Path.of(Config.WEB_DIR);
+        Provider.webDir = dir.isAbsolute() ? dir : getDataPath().resolve(dir);
+        Provider.tilesDir = getWebDir().resolve("tiles");
+
+        // web dir has to extract before colors config to load biome colors correctly
+        FileUtil.extractDir("/web/", getWebDir(), !Config.WEB_DIR_READONLY);
+
+        // other configs
+        BlocksConfig.reload();
+        ColorsConfig.reload();
+
+        Logger.info("Gathering information...");
+
+        // build registries
+        getBlockRegistry().rebuild();
+        getWorldRegistry().rebuild();
+
+        // internal webserver
+        getHttpdServer().start();
+        getRenderManager().start();
+
+        // register commands
+        registerCommands();
+
+        // tick our scheduler with the server
+        registerScheduler();
+
+        // bStats metrics
+        Provider.metrics = new Metrics();
+
+        Logger.info("Finished loading");
+    }
+
+    /**
+     * Disables LiveMap.
+     */
+    default void disable() {
+        if (Provider.metrics != null) {
+            Provider.metrics.shutdown();
+            Provider.metrics = null;
+        }
+
+        unregisterScheduler();
+
+        if (Provider.executor != null) {
+            Provider.executor.shutdownNow();
+            Provider.executor = null;
+        }
+
+        if (Provider.httpdServer != null) {
+            Provider.httpdServer.stop();
+            Provider.httpdServer = null;
+        }
+
+        // clear registries
+        getBlockRegistry().clear();
+        getWorldRegistry().clear();
+
+        // clear remaining provider instances
+        Provider.webDir = null;
+        Provider.tilesDir = null;
+        Provider.scheduler = null;
+
+        Logger.info("Finished unloading");
+    }
 }

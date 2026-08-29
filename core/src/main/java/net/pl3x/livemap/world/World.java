@@ -86,10 +86,13 @@ public abstract class World {
 
         this.config = new WorldConfig(this);
 
+        // try to hold loaded regions in memory for up to 1 minute
         this.regionCache = Caffeine.newBuilder()
             .expireAfterWrite(1, TimeUnit.MINUTES)
             .maximumSize(100)
             .build(index -> new Region(this, index));
+
+        // region indexes waiting to be rendered
         this.regionQueue = new RegionQueue();
     }
 
@@ -158,6 +161,16 @@ public abstract class World {
     @NotNull
     public Type getType() {
         return this.type;
+    }
+
+    /**
+     * Get this world's region queue.
+     *
+     * @return The region queue
+     */
+    @NotNull
+    public RegionQueue getRegionQueue() {
+        return this.regionQueue;
     }
 
     /**
@@ -328,6 +341,7 @@ public abstract class World {
      * Discard objects in memory for this world.
      */
     public void discard() {
+        getRegionQueue().clear();
         getBiomeRegistry().clear();
         getRendererRegistry().clear();
     }

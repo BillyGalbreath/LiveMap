@@ -37,16 +37,16 @@ import org.jetbrains.annotations.Nullable;
 public class Block {
     public static final Block AIR = new Block(0, "minecraft:air", 0x000000);
 
-    // @formatter:off: SingleSpaceSeparator
-    public static final int FLAG_AIR         = 0b0000000000000001;
-    public static final int FLAG_FLAT        = 0b0000000000000010;
-    public static final int FLAG_DRY_FOLIAGE = 0b0000000000000100;
-    public static final int FLAG_FOLIAGE     = 0b0000000000001000;
-    public static final int FLAG_GLASS       = 0b0000000000010000;
-    public static final int FLAG_GRASS       = 0b0000000000100000;
-    public static final int FLAG_WATER       = 0b0000000001000000;
-    public static final int FLAG_FLUID       = 0b0000000010000000;
-    // @formatter:on: SingleSpaceSeparator
+    // @formatter:off
+    public static final int FLAG_AIR         = 0b0000000000000001; // 0x01 // 1
+    public static final int FLAG_FLAT        = 0b0000000000000010; // 0x02 // 2
+    public static final int FLAG_DRY_FOLIAGE = 0b0000000000000100; // 0x04 // 4
+    public static final int FLAG_FOLIAGE     = 0b0000000000001000; // 0x08 // 8
+    public static final int FLAG_GLASS       = 0b0000000000010000; // 0x10 // 16
+    public static final int FLAG_GRASS       = 0b0000000000100000; // 0x20 // 32
+    public static final int FLAG_WATER       = 0b0000000001000000; // 0x40 // 64
+    public static final int FLAG_FLUID       = 0b0000000010000000; // 0x80 // 128
+    // @formatter:on
 
     private final int index;
     private final String id;

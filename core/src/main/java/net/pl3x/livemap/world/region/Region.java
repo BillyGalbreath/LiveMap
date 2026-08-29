@@ -24,18 +24,27 @@
 
 package net.pl3x.livemap.world.region;
 
+import de.bluecolored.bluenbt.BlueNBT;
+import de.bluecolored.bluenbt.NamingStrategy;
+import de.bluecolored.bluenbt.TypeToken;
+import java.io.BufferedInputStream;
 import java.io.EOFException;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.util.Objects;
-import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.Logger;
 import net.pl3x.livemap.marker.Point;
 import net.pl3x.livemap.world.World;
+import net.pl3x.livemap.world.block.BlockState;
+import net.pl3x.livemap.world.block.BlockStateDeserializer;
 import net.pl3x.livemap.world.chunk.Chunk;
+import net.pl3x.livemap.world.chunk.CompressionType;
 import net.pl3x.livemap.world.chunk.EmptyChunk;
+import net.pl3x.livemap.world.chunk.Loader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +52,13 @@ import org.jetbrains.annotations.Nullable;
  * Represents a region in a world.
  */
 public class Region extends Point {
+    private static final BlueNBT BLUENBT = new BlueNBT();
+
+    static {
+        BLUENBT.setNamingStrategy(NamingStrategy.lowerCaseWithDelimiter("_"));
+        BLUENBT.register(TypeToken.of(BlockState.class), new BlockStateDeserializer());
+    }
+
     /**
      * Packs a region's coordinates.
      *
@@ -158,7 +174,7 @@ public class Region extends Point {
     }
 
     /**
-     * Load all chunks in the world (that exist).
+     * Load all chunks (that exist) in the region from disk.
      *
      * @throws IOException if an I/O error occurs
      */
@@ -182,24 +198,62 @@ public class Region extends Point {
      * @param index Index of chunk position inside region (0-1023)
      * @return Requested chunk (may return EmptyChunk if none exists)
      * @throws IOException if an I/O error occurs
+     * @see <a href="https://minecraft.wiki/w/Region_file_format#Header">Region_file_format#Header</a>
      */
     @NotNull
     public Chunk loadChunk(@NotNull RandomAccessFile raf, int index) throws IOException {
+        // jump to the chunk's 4kib sector and read its header
         raf.seek(index * 4L);
-
         byte[] header = new byte[4];
-        raf.readFully(header, 0, 4);
+        raf.readFully(header);
 
-        long offset = (header[0] & 0xFF) << 16;
-        offset |= (header[1] & 0xFF) << 8;
-        offset |= header[2] & 0xFF;
-        offset <<= 12;
-        int size = (header[3] & 0xFF) * 4096;
-
-        if (size <= 0) {
+        // check reported size (technically should check all 4 bytes are 0, but whatever)
+        if (header[3] == 0) {
             return this.chunks[index] = new EmptyChunk(this);
         }
-        return this.chunks[index] = LiveMap.api().getChunkLoader().load(raf, offset, this);
+
+        // extract the 3-byte sector offset
+        // @formatter:off
+        return this.chunks[index] = loadChunk(raf,
+            ((header[0] & 0xFFL) << 28)
+                | ((header[1] & 0xFFL) << 20)
+                | ((header[2] & 0xFFL) << 12));
+        // @formatter:on
+    }
+
+    /**
+     * Load chunk from disk for specified region.
+     *
+     * @param raf    The region file
+     * @param offset Sector offset for chunk data in the payload
+     * @return Loaded chunk (may return EmptyChunk if none exists)
+     * @throws IOException if an I/O error occurs
+     */
+    @NotNull
+    public Chunk loadChunk(@NotNull RandomAccessFile raf, long offset) throws IOException {
+        // seek to chunk data location and skip the 4-byte payload length
+        raf.seek(offset + 4);
+        byte compressionTypeId = raf.readByte();
+        CompressionType compression = CompressionType.byId(compressionTypeId);
+
+        // we need the chunk version to find correct loader
+        int version = Chunk.getChunkDataVersion(raf, compression);
+        Loader<Chunk.NBT> loader = Loader.getLoader(version);
+
+        // put cursor back to after compression type byte
+        raf.seek(offset + 5);
+
+        try (
+            InputStream fis = new FileInputStream(raf.getFD());
+            InputStream cis = compression.decompress(fis);
+            InputStream bis = new BufferedInputStream(cis)
+        ) {
+            // load the chunk
+            Chunk chunk = loader.load(this, bis);
+
+            // we only want full chunks
+            return chunk.isFull() ? chunk : new EmptyChunk(this);
+        }
     }
 
     @Override
