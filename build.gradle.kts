@@ -9,7 +9,7 @@ val website = providers.gradleProperty("website").get()
 
 group = "net.pl3x"
 val artifact = rootProject.name.lowercase()
-version = libs.versions.livemap.get() + "-SNAPSHOT".takeIf { buildNum.isNullOrBlank() }.orEmpty()
+version = libs.versions.livemap.get() + if (buildNum.isNullOrBlank()) "-SNAPSHOT" else "+$buildNum"
 description = providers.gradleProperty("description").get()
 
 allprojects {
