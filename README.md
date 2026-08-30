@@ -18,43 +18,83 @@
 [![][Forks Badge]][Forks Url]
 [![][Watchers Badge]][Watchers Url]
 
-##
+#
+
 <br/>
 
-<big><b>LiveMap</b> is a high-performance, minimalistic world map viewer for Minecraft  
+<b>LiveMap</b> is a high-performance, minimalistic world map viewer for Minecraft  
 servers. Built as the official evolution of Pl3xMap, it delivers crisp, vanilla-style 2D  
-rendering with a fraction of the resource overhead found in traditional map plugins.</big>
+rendering with a fraction of the resource overhead found in traditional map plugins.
 
 </div>
 
+<br/>
+
 <!-- @formatter:off -->
 
-## 🚀 Features
+# 🚀 Features
 
-* **⚡ Near-instant generation:** Renders complete in minutes rather than days, minimizing initial setup, update times, and server CPU overhead.
-* **🗺️ Vanilla-inspired 2D UI:** Features a lightweight, top-down perspective optimized for clear world navigation without the performance tax of 3D rendering.
-* **👥 Real-time player tracking:** Displays player markers with precise yaw rotation, health, and armor statuses.
-* **🎨 Extensible render types:** Includes multiple built-in map styles out of the box, including Fancy, Basic, Biomes, Inhabited, and Flowermap.
-* **🌐 Modern Leaflet frontend:** Built on a highly responsive, up-to-date Leaflet.js framework for a fast, modern browser experience.
-* **🔌 Robust developer API:** Provides a powerful API interface to build custom addons or seamless third-party plugin integrations with ease.
+* **⚡ Near-instant generation:**  
+  &emsp;&nbsp; Renders complete in minutes rather than days, minimizing initial setup, update times, and server CPU overhead.
 
-## ⬇️ Downloads
+* **🗺️ Vanilla-inspired 2D UI:**  
+  &emsp;&nbsp; Features a lightweight, top-down perspective optimized for clear world navigation without the performance tax of 3D rendering.
 
-Downloads are available on Modrinth.
+* **👥 Real-time player tracking:**  
+  &emsp;&nbsp; Displays player markers with precise yaw rotation, health, and armor statuses.
 
-[![Download on Modrinth](https://i.imgur.com/5C4fVJC.png)](https://modrinth.com/plugin/livemap)
+* **🎨 Extensible render types:**  
+  &emsp;&nbsp; Includes multiple built-in map styles out of the box, including Fancy, Basic, Biomes, Inhabited, and Flowermap.
 
-## 🌐 Live Demo
+* **🌐 Modern Leaflet frontend:**  
+  &emsp;&nbsp; Built on a highly responsive, up-to-date Leaflet.js framework for a fast, modern browser experience.
+
+* **🔌 Robust developer API:**  
+  &emsp;&nbsp; Provides a powerful API interface to build custom addons or seamless third-party plugin integrations with ease.
+
+<br/>
+
+# Contact
+
+[![][Discord Badge]][Discord Url]
+
+Join me on [Discord][Discord Url]!
+
+<br/>
+
+# ⬇️ Downloads
+
+[![Download on Modrinth](https://i.imgur.com/5C4fVJC.png)][Modrinth Url]
+
+Downloads are available on [Modrinth][Modrinth Url].
+
+<br/>
+
+# 🌐 Live Demo
 
 See LiveMap in action and compare its performance side-by-side with alternative map viewers:
 
-🔗 [Live Demo Framework](https://roanv.nl)
+🔗 [Live Demo](https://roanv.nl) hosted by [@Roan-V](https://github.com/Roan-V)
 
-## 📈 bStats
+<br/>
+
+# 📈 bStats
 
 [![bStats Graph Data][bStats Graph]][bStats Url]
 
-## 👨‍💻 Developers
+<br/>
+
+# License
+
+[![][MIT Badge]][License Url]
+
+All code is licensed under MIT license, unless otherwise noted.
+
+<br/>
+
+# 👨‍💻 Developers
+
+To use LiveMap in your own project, 
 
 <details>
 <summary>🪶 Maven</summary>
@@ -99,7 +139,11 @@ dependencies {
 ```
 </details>
 
-## 🛠️ Building from source
+<br/>
+
+# 🛠️ Building from source
+
+Requires JDK 25.
 
 Just run the following command:
 
