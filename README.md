@@ -176,15 +176,15 @@ The compiled jars will be in `/build/libs/`
 <!-- Images -->
 [Jenkins Badge]: https://img.shields.io/jenkins/build?jobUrl=https%3A%2F%2Fci.pl3x.net%2Fjob%2FLiveMap%2F&logo=Jenkins
 [Version Badge]: https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fci.pl3x.net%2Fjob%2FLiveMap%2FlastSuccessfulBuild%2FinjectedEnvVars%2Fapi%2Fjson&query=$.envMap.livemap&label=v&color=green
-[Modrinth Badge]: https://pl3x.net/badge/modrinth/dt/livemap?logo=modrinth
+[Modrinth Badge]: https://pl3x.net/badge/modrinth/dt/livemap?logo=modrinth&
 [Discord Badge]: https://img.shields.io/discord/171810209197457408.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2
 
 [MIT Badge]: https://img.shields.io/github/license/BillyGalbreath/LiveMap?&logo=github
-[CodeFactor Badge]: https://pl3x.net/badge/codefactor/grade/github/billygalbreath/livemap?label=codefactor&logo=codefactor
+[CodeFactor Badge]: https://pl3x.net/badge/codefactor/grade/github/billygalbreath/livemap?label=codefactor&logo=codefactor&
 
-[bStats Badge]: https://pl3x.net/badge/bstats/servers/26542?logo=bstats
-[Stars Badge]: https://pl3x.net/badge/github/stars/BillyGalbreath/LiveMap?label=stars&logo=stars
-[Forks Badge]: https://pl3x.net/badge/github/forks/BillyGalbreath/LiveMap?label=forks&logo=forks
-[Watchers Badge]: https://pl3x.net/badge/github/watchers/BillyGalbreath/LiveMap?label=watchers&logo=watchers
+[bStats Badge]: https://pl3x.net/badge/bstats/servers/26542?logo=bstats&
+[Stars Badge]: https://pl3x.net/badge/github/stars/BillyGalbreath/LiveMap?label=stars&logo=stars&
+[Forks Badge]: https://pl3x.net/badge/github/forks/BillyGalbreath/LiveMap?label=forks&logo=forks&
+[Watchers Badge]: https://pl3x.net/badge/github/watchers/BillyGalbreath/LiveMap?label=watchers&logo=watchers&
 
 [bStats Graph]: https://bstats.org/signatures/bukkit/LiveMapMC.svg
