@@ -78,7 +78,17 @@ See LiveMap in action and compare its performance side-by-side with alternative 
 
 <br/>
 
-# 📈 bStats
+# 📊 Data Collection & Telemetry
+
+This plugin uses [**bStats**][bStats Url] to anonymously collect usage data. This data helps me understand how the plugin is being used and what features to focus on in future updates.
+
+* **📈 What is collected:** General server information such as server software version, system architecture, core count, Java version, online mode, player count, and plugin-specific metrics (e.g., config settings).
+
+* **❌ What is NOT collected:** Strictly no personally identifiable information (PII) is ever tracked. bStats explicitly prohibits and strips IP addresses, player names, chat logs, or UUIDs.
+
+* **🚫 How to opt out:** You can easily disable telemetry globally by navigating to your server's `/plugins/bStats/config.yml` file and setting `enabled: false`.
+
+<br/>
 
 [![bStats Graph Data][bStats Graph]][bStats Url]
 
