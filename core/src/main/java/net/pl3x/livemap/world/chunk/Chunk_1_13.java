@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a chunk in the 1.13 - 1.14 format.
  */
-public final class Chunk_1_13 extends Chunk {
+public class Chunk_1_13 extends Chunk {
     /**
      * Constructs a new instance of Chunk_1_13.
      *
