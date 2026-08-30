@@ -177,7 +177,7 @@ The compiled jars will be in `/build/libs/`
 
 [bStats Badge]: https://img.shields.io/bstats/servers/26542
 [Stars Badge]: https://pl3x.net/badge/github/stars/BillyGalbreath/LiveMap?label=stars&logo=stars
-[Forks Badge]: https://pl3x.net/badge/github/stars/BillyGalbreath/LiveMap?label=stars&logo=forks
-[Watchers Badge]: https://pl3x.net/badge/github/stars/BillyGalbreath/LiveMap?label=stars&logo=watchers
+[Forks Badge]: https://pl3x.net/badge/github/stars/BillyGalbreath/LiveMap?label=forks&logo=forks
+[Watchers Badge]: https://pl3x.net/badge/github/stars/BillyGalbreath/LiveMap?label=watchers&logo=watchers
 
 [bStats Graph]: https://bstats.org/signatures/bukkit/LiveMapMC.svg
