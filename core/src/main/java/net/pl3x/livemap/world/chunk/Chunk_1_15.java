@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents a chunk in the 1.15 format.
  */
-public class Chunk_1_15 extends Chunk_1_13 {
+public final class Chunk_1_15 extends Chunk_1_13 {
     /**
      * Constructs a new instance of Chunk_1_15.
      *
