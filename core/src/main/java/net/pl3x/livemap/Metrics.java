@@ -68,7 +68,7 @@ class Metrics {
             this::appendPlatformData,
             this::appendServiceData,
             // See https://github.com/Bastian/bstats-metrics/pull/126
-            isFolia ? null : submitDataTask -> LiveMap.api().getScheduler().addTask(0, false, submitDataTask),
+            isFolia ? null : submitDataTask -> LiveMap.api().getTickScheduler().addTask(0, false, submitDataTask),
             () -> LiveMap.api().isEnabled(),
             Logger::warn,
             Logger::info,

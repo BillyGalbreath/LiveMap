@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * LiveMap's task scheduler.
  */
-public class Scheduler {
+public class TickScheduler {
     private final Queue<Task> tasks = new ConcurrentLinkedQueue<>();
 
     private boolean ticking;
@@ -41,7 +41,7 @@ public class Scheduler {
     /**
      * Constructs a new instance of Scheduler.
      */
-    public Scheduler() {
+    public TickScheduler() {
         // Explicit constructor to satisfy Javadoc and linter tools
     }
 

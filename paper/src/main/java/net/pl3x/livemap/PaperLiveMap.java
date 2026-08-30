@@ -85,14 +85,14 @@ public final class PaperLiveMap extends JavaPlugin implements LiveMap {
     }
 
     @Override
-    public void registerScheduler() {
+    public void registerTickScheduler() {
         Bukkit.getScheduler().cancelTasks(this);
         Bukkit.getScheduler().runTaskTimer(this,
-            () -> getScheduler().tick(), 1, 1);
+            () -> getTickScheduler().tick(), 1, 1);
     }
 
     @Override
-    public void unregisterScheduler() {
+    public void unregisterTickScheduler() {
         Bukkit.getScheduler().cancelTasks(this);
     }
 

@@ -26,20 +26,37 @@ package net.pl3x.livemap.render;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.Logger;
+import net.pl3x.livemap.thread.WorkerThreadFactory;
 import net.pl3x.livemap.world.World;
 import net.pl3x.livemap.world.region.RegionQueue;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents an executor to loop over the worlds and render them one at a time.
+ * Represents the main task to loop over the worlds and render them one at a time.
  */
-public class RenderManager {
+public class RenderScheduler {
+    private final ForkJoinPool executor;
     private ScheduledFuture<?> future;
+
+    private volatile Thread runningThread;
+    private volatile boolean manualRunning;
+
+    private long nextRun;
+
+    /**
+     * Constructs a new instance of RenderManager.
+     */
+    public RenderScheduler() {
+        this.executor = WorkerThreadFactory.createExecutor("RendererScheduler");
+    }
 
     /**
      * Start the render manager loop when the plugin loads.
@@ -51,22 +68,22 @@ public class RenderManager {
             return;
         }
 
-        // start task to run every 60 seconds
-        this.future = LiveMap.api().getExecutor().scheduleAtFixedRate(() -> {
-            // snapshot to prevent possible CME
-            List<World> worlds = new ArrayList<>(LiveMap.api().getWorldRegistry().values());
-            // check each world on by one
-            worlds.forEach(this::checkWorld);
-        }, 0, 60, TimeUnit.SECONDS);
+        // start task to run every second
+        this.future = this.executor.scheduleWithFixedDelay(
+            () -> run(false), 1, 1, TimeUnit.SECONDS);
 
         Future.State state = this.future.state();
-        Logger.debug("Started render manager: %b".formatted(state));
+        Logger.debug("Started render manager: %s".formatted(state.name()));
     }
 
     /**
      * Stop the render manager loop when the plugin unloads.
      */
     public void stop() {
+        if (this.runningThread != null) {
+            this.runningThread.interrupt();
+        }
+
         if (this.future != null) {
             boolean result = this.future.cancel(true);
             Future.State state = this.future.state();
@@ -80,6 +97,71 @@ public class RenderManager {
     }
 
     /**
+     * Trigger the run task right now.
+     *
+     * <p>If a scheduled run is already running, it will be
+     * interrupted before starting this manual trigger.
+     *
+     * <p>If a manual run is already running, this method
+     * will return null without interrupting the run.
+     *
+     * @return Future scheduled to manually run now, or null
+     */
+    @Nullable
+    public ForkJoinTask<?> trigger() {
+        if (this.manualRunning) {
+            // render is already manually running
+            return null;
+        }
+
+        if (this.runningThread != null) {
+            // stop current scheduled run
+            this.runningThread.interrupt();
+        }
+
+        // manually run
+        return this.executor.submit(() -> run(true));
+    }
+
+    private void run(boolean manual) {
+        if (this.manualRunning || this.runningThread != null) {
+            // skip this run, wait for next
+            return;
+        }
+
+        if (manual) {
+            // mark as manually running
+            this.manualRunning = true;
+        } else {
+            // check if we need to wait
+            long now = System.currentTimeMillis();
+            if (this.nextRun > now) {
+                return;
+            }
+
+            // save thread
+            this.runningThread = Thread.currentThread();
+
+            // schedule next run
+            this.nextRun = now + TimeUnit.SECONDS.toMillis(5);
+        }
+
+        // start
+        try {
+            // snapshot to prevent possible CME
+            List<World> worlds = new ArrayList<>(LiveMap.api().getWorldRegistry().values());
+
+            // check each world on by one
+            worlds.forEach(this::checkWorld);
+        } catch (Throwable ignore) {
+        }
+
+        // finished - cleanup
+        this.manualRunning = false;
+        this.runningThread = null;
+    }
+
+    /**
      * Check if world has any queued regions waiting to render.
      *
      * @param world World to check
@@ -90,6 +172,7 @@ public class RenderManager {
             Long index = queue.poll();
             //
             // todo
+            //
         }
     }
 }

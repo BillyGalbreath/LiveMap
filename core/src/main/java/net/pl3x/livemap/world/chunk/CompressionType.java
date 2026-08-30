@@ -127,6 +127,6 @@ public enum CompressionType {
     @FunctionalInterface
     private interface ThrowingUnaryOperator<T> {
         @NotNull
-        T apply(@NotNull T original) throws IOException;
+        T apply(@NotNull T t) throws IOException;
     }
 }

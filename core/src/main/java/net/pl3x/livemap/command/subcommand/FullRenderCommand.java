@@ -27,6 +27,7 @@ package net.pl3x.livemap.command.subcommand;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import java.util.concurrent.ForkJoinTask;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.command.BaseCommand;
 import net.pl3x.livemap.command.Player;
@@ -76,5 +77,17 @@ public class FullRenderCommand<S> extends BaseCommand<S> {
 
         sender.sendMessage("// todo (fullrender)");
         // todo - add all regions to render queue
+
+        // add all regions to queue
+        //
+
+        // trigger render manager _now_
+        ForkJoinTask<?> future = LiveMap.api().getRenderScheduler().trigger();
+        if (future == null) {
+            sender.sendMessage("<red>Fullrender is already running");
+            return;
+        }
+
+        sender.sendMessage("<green>Fullrender started");
     }
 }

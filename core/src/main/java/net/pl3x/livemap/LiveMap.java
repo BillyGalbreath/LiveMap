@@ -25,7 +25,6 @@
 package net.pl3x.livemap;
 
 import java.nio.file.Path;
-import java.util.concurrent.ForkJoinPool;
 import net.pl3x.livemap.command.argument.ArgumentParser;
 import net.pl3x.livemap.configuration.BlocksConfig;
 import net.pl3x.livemap.configuration.ColorsConfig;
@@ -33,9 +32,8 @@ import net.pl3x.livemap.configuration.Config;
 import net.pl3x.livemap.configuration.Lang;
 import net.pl3x.livemap.httpd.HttpdServer;
 import net.pl3x.livemap.player.PlayerRegistry;
-import net.pl3x.livemap.render.RenderManager;
-import net.pl3x.livemap.scheduler.Scheduler;
-import net.pl3x.livemap.thread.WorkerThreadFactory;
+import net.pl3x.livemap.render.RenderScheduler;
+import net.pl3x.livemap.scheduler.TickScheduler;
 import net.pl3x.livemap.util.FileUtil;
 import net.pl3x.livemap.world.WorldRegistry;
 import net.pl3x.livemap.world.block.BlockRegistry;
@@ -55,10 +53,8 @@ public interface LiveMap {
         private static Path tilesDir;
 
         private static HttpdServer httpdServer;
-        private static RenderManager renderManager;
-
-        private static Scheduler scheduler;
-        private static ForkJoinPool executor;
+        private static RenderScheduler renderScheduler;
+        private static TickScheduler tickScheduler;
 
         private static Metrics metrics;
 
@@ -91,12 +87,12 @@ public interface LiveMap {
     /**
      * Register tick scheduler with server platform.
      */
-    void registerScheduler();
+    void registerTickScheduler();
 
     /**
      * Unregister tick scheduler with server platform.
      */
-    void unregisterScheduler();
+    void unregisterTickScheduler();
 
     /**
      * Get the version of LiveMap.
@@ -171,42 +167,29 @@ public interface LiveMap {
     }
 
     /**
-     * Get the render manager.
+     * Get the render scheduler.
      *
-     * @return The render manager
+     * @return The render scheduler
      */
     @NotNull
-    default RenderManager getRenderManager() {
-        if (Provider.renderManager == null) {
-            Provider.renderManager = new RenderManager();
+    default RenderScheduler getRenderScheduler() {
+        if (Provider.renderScheduler == null) {
+            Provider.renderScheduler = new RenderScheduler();
         }
-        return Provider.renderManager;
+        return Provider.renderScheduler;
     }
 
     /**
-     * Get the task scheduler.
+     * Get the tick scheduler.
      *
-     * @return The task scheduler
+     * @return The tick scheduler
      */
     @NotNull
-    default Scheduler getScheduler() {
-        if (Provider.scheduler == null) {
-            Provider.scheduler = new Scheduler();
+    default TickScheduler getTickScheduler() {
+        if (Provider.tickScheduler == null) {
+            Provider.tickScheduler = new TickScheduler();
         }
-        return Provider.scheduler;
-    }
-
-    /**
-     * Get the executor service (a.k.a., thread pool).
-     *
-     * @return The executor service
-     */
-    @NotNull
-    default ForkJoinPool getExecutor() {
-        if (Provider.executor == null) {
-            Provider.executor = WorkerThreadFactory.createExecutor("Renderer", Config.RENDER_THREADS);
-        }
-        return Provider.executor;
+        return Provider.tickScheduler;
     }
 
     /**
@@ -279,13 +262,15 @@ public interface LiveMap {
 
         // internal webserver
         getHttpdServer().start();
-        getRenderManager().start();
 
         // register commands
         registerCommands();
 
-        // tick our scheduler with the server
-        registerScheduler();
+        // tick scheduler with the server
+        registerTickScheduler();
+
+        // start tasks
+        getRenderScheduler().start();
 
         // bStats metrics
         Provider.metrics = new Metrics();
@@ -297,18 +282,23 @@ public interface LiveMap {
      * Disables LiveMap.
      */
     default void disable() {
+        // stop bStats
         if (Provider.metrics != null) {
             Provider.metrics.shutdown();
             Provider.metrics = null;
         }
 
-        unregisterScheduler();
-
-        if (Provider.executor != null) {
-            Provider.executor.shutdownNow();
-            Provider.executor = null;
+        // stop tasks
+        if (Provider.renderScheduler != null) {
+            Provider.renderScheduler.stop();
+            Provider.renderScheduler = null;
         }
 
+        // stop our tick scheduler
+        unregisterTickScheduler();
+        Provider.tickScheduler = null;
+
+        // stop http server
         if (Provider.httpdServer != null) {
             Provider.httpdServer.stop();
             Provider.httpdServer = null;
@@ -321,7 +311,6 @@ public interface LiveMap {
         // clear remaining provider instances
         Provider.webDir = null;
         Provider.tilesDir = null;
-        Provider.scheduler = null;
 
         Logger.info("Finished unloading");
     }
