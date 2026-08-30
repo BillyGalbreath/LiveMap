@@ -175,7 +175,7 @@ The compiled jars will be in `/build/libs/`
 [MIT Badge]: https://img.shields.io/github/license/BillyGalbreath/LiveMap?&logo=github
 [CodeFactor Badge]: https://pl3x.net/badge/codefactor/grade/github/billygalbreath/livemap?label=codefactor&logo=codefactor
 
-[bStats Badge]: https://img.shields.io/bstats/servers/26542
+[bStats Badge]: https://pl3x.net/badge/bstats/servers/26542?logo=bstats
 [Stars Badge]: https://pl3x.net/badge/github/stars/BillyGalbreath/LiveMap?label=stars&logo=stars
 [Forks Badge]: https://pl3x.net/badge/github/forks/BillyGalbreath/LiveMap?label=forks&logo=forks
 [Watchers Badge]: https://pl3x.net/badge/github/watchers/BillyGalbreath/LiveMap?label=watchers&logo=watchers
