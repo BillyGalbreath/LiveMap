@@ -101,13 +101,14 @@ To use LiveMap in your own project,
 
 ```xml
 <repository>
-  <id>pl3x-repo</id>
-  <url>https://repo.pl3x.net/releases/</url>
+  <id>pl3x-releases</id>
+  <name>Pl3x Repository</name>
+  <url>https://repo.pl3x.net/releases</url>
 </repository>
 <dependency>
   <groupId>net.pl3x</groupId>
   <artifactId>livemap</artifactId>
-  <version>4.0.0</version>
+  <version>[4.0.0,)</version>
   <scope>provided</scope>
 </dependency>
 ```
@@ -118,10 +119,13 @@ To use LiveMap in your own project,
 
 ```groovy
 repositories {
-    maven { url = "https://repo.pl3x.net/releases/" }
+  maven {
+    name "pl3x-releases"
+    url "https://repo.pl3x.net/releases"
+  }
 }
 dependencies {
-    compileOnly 'net.pl3x:livemap:4.0.0'
+  compileOnly "net.pl3x:livemap:[4.0.0,)"
 }
 ```
 </details>
@@ -129,12 +133,15 @@ dependencies {
 <details open>
 <summary>⚙️ Gradle (Kotlin DSL)</summary>
 
-```groovy
+```kotlin
 repositories {
-    maven("https://repo.pl3x.net/releases/")
+  maven {
+    name = "pl3x-releases"
+    url = uri("https://repo.pl3x.net/releases")
+  }
 }
 dependencies {
-    compileOnly("net.pl3x:livemap:4.0.0")
+  compileOnly("net.pl3x:livemap:[4.0.0,)")
 }
 ```
 </details>
