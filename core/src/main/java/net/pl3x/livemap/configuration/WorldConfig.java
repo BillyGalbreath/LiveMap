@@ -30,11 +30,9 @@ import java.util.List;
 import java.util.Map;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.marker.Point;
-import net.pl3x.livemap.util.Unsafe;
 import net.pl3x.livemap.world.World;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.simpleyaml.configuration.ConfigurationSection;
 
 /**
  * Per-world configuration.
@@ -191,18 +189,14 @@ public final class WorldConfig extends AbstractConfig {
     @Nullable
     protected Object get(@NotNull String path) {
         if (path.contains("render.center")) {
-            ConfigurationSection section = getConfig().getConfigurationSection(path);
-            if (section == null) {
+            List<Integer> list = getConfig().getIntegerList(path);
+            if (list == null || list.size() < 2) {
                 return null;
             }
-            Map<String, Object> map = section.getMapValues(false);
-            if (map == null) {
+            if (!(list.getFirst() instanceof Number xNum)) {
                 return null;
             }
-            if (!(map.get("x") instanceof Number xNum)) {
-                return null;
-            }
-            if (!(map.get("z") instanceof Number zNum)) {
+            if (!(list.get(1) instanceof Number zNum)) {
                 return null;
             }
             return Point.of(xNum, zNum);
@@ -213,11 +207,10 @@ public final class WorldConfig extends AbstractConfig {
     @Override
     protected void set(@NotNull String path, @Nullable Object value) {
         if (path.contains("render.center")) {
-            if (value == null) {
-                value = new int[0];
-            } else {
-                Point center = Unsafe.cast(value);
+            if (value instanceof Point center) {
                 value = new int[] {center.getX(), center.getZ()};
+            } else {
+                value = new int[0];
             }
         }
         getConfig().set(path, value);

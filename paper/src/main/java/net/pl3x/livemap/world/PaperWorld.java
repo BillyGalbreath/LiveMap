@@ -25,6 +25,7 @@
 package net.pl3x.livemap.world;
 
 import io.papermc.paper.command.brigadier.argument.CustomArgumentType;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.pl3x.livemap.Logger;
 import net.pl3x.livemap.marker.Point;
@@ -35,6 +36,11 @@ import org.bukkit.craftbukkit.CraftWorld;
 import org.jetbrains.annotations.NotNull;
 
 public class PaperWorld extends World {
+    @NotNull
+    public static Point posToPoint(@NotNull BlockPos pos) {
+        return Point.of(pos.getX(), pos.getZ());
+    }
+
     private final ServerLevel level;
 
     private final PaperBiomeRegistry biomeRegistry = new PaperBiomeRegistry(this);
@@ -48,7 +54,7 @@ public class PaperWorld extends World {
         super(
             level.bukkitName,
             level.getSeed(),
-            Point.of(level.getLevelData().getRespawnData().pos().getX(), level.getLevelData().getRespawnData().pos().getZ()),
+            posToPoint(level.getLevelData().getRespawnData().pos()),
             Type.get(level.dimension().identifier().toString()),
             level.getServer().storageSource.getDimensionPath(level.dimension()).resolve("region")
         );

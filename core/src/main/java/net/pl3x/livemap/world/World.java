@@ -154,6 +154,18 @@ public abstract class World {
     }
 
     /**
+     * Get the center point of the map for this world.
+     *
+     * <p>If no center point is set, the world's spawn will be used.
+     *
+     * @return Center point
+     */
+    @NotNull
+    public Point getCenter() {
+        return getConfig().CENTER == null ? getSpawn() : getConfig().CENTER;
+    }
+
+    /**
      * Get this world's type.
      *
      * @return Type of world

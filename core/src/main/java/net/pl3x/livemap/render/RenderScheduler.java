@@ -26,7 +26,6 @@ package net.pl3x.livemap.render;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
@@ -34,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.Logger;
 import net.pl3x.livemap.thread.WorkerThreadFactory;
+import net.pl3x.livemap.thread.WorkerThreadPool;
 import net.pl3x.livemap.world.World;
 import net.pl3x.livemap.world.region.RegionQueue;
 import org.jetbrains.annotations.NotNull;
@@ -43,13 +43,15 @@ import org.jetbrains.annotations.Nullable;
  * Represents the main task to loop over the worlds and render them one at a time.
  */
 public class RenderScheduler {
-    private final ForkJoinPool executor;
+    private final WorkerThreadPool executor;
     private ScheduledFuture<?> future;
 
     private volatile Thread runningThread;
     private volatile boolean manualRunning;
 
     private long nextRun;
+
+    private int tmpVar;
 
     /**
      * Constructs a new instance of RenderManager.
@@ -69,8 +71,19 @@ public class RenderScheduler {
         }
 
         // start task to run every second
-        this.future = this.executor.scheduleWithFixedDelay(
-            () -> run(false), 1, 1, TimeUnit.SECONDS);
+        this.future = this.executor.scheduleAtFixedRateAsync(
+            () -> {
+                // task
+                Logger.debug("########## Tick Start");
+                run(false);
+            },
+            (e) -> {
+                // callback
+                if (e != null) {
+                    Logger.error("Error running scheduled render task", e);
+                }
+            }
+        );
 
         Future.State state = this.future.state();
         Logger.debug("Started render manager: %s".formatted(state.name()));
@@ -96,6 +109,10 @@ public class RenderScheduler {
         }
     }
 
+    private void loop() {
+
+    }
+
     /**
      * Trigger the run task right now.
      *
@@ -111,31 +128,38 @@ public class RenderScheduler {
     public ForkJoinTask<?> trigger() {
         if (this.manualRunning) {
             // render is already manually running
+            Logger.debug("Already manually running");
             return null;
         }
 
         if (this.runningThread != null) {
             // stop current scheduled run
+            Logger.debug("Interrupt");
             this.runningThread.interrupt();
         }
 
         // manually run
+        Logger.debug("--- Trigger ---");
         return this.executor.submit(() -> run(true));
     }
 
     private void run(boolean manual) {
+        Logger.debug("Run");
         if (this.manualRunning || this.runningThread != null) {
+            Logger.debug("Skip " + this.manualRunning + " " + (this.runningThread != null));
             // skip this run, wait for next
             return;
         }
 
         if (manual) {
             // mark as manually running
+            Logger.debug("Manual");
             this.manualRunning = true;
         } else {
             // check if we need to wait
             long now = System.currentTimeMillis();
             if (this.nextRun > now) {
+                Logger.debug("Wait");
                 return;
             }
 
@@ -147,6 +171,7 @@ public class RenderScheduler {
         }
 
         // start
+        Logger.debug("Start !!! " + ++tmpVar);
         try {
             // snapshot to prevent possible CME
             List<World> worlds = new ArrayList<>(LiveMap.api().getWorldRegistry().values());
@@ -155,6 +180,7 @@ public class RenderScheduler {
             worlds.forEach(this::checkWorld);
         } catch (Throwable ignore) {
         }
+        Logger.debug("Done @@@ " + tmpVar);
 
         // finished - cleanup
         this.manualRunning = false;
@@ -169,6 +195,9 @@ public class RenderScheduler {
     public void checkWorld(@NotNull World world) {
         RegionQueue queue = world.getRegionQueue();
         while (!queue.isEmpty()) {
+            // sort queue around center point
+            queue.sort(world.getCenter());
+
             Long index = queue.poll();
             //
             // todo

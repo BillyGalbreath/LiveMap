@@ -38,7 +38,7 @@ public class WorkerThreadFactory implements ForkJoinPool.ForkJoinWorkerThreadFac
      * @return New executor service
      */
     @NotNull
-    public static ForkJoinPool createExecutor(@NotNull String name) {
+    public static WorkerThreadPool createExecutor(@NotNull String name) {
         return createExecutor(new WorkerThreadFactory(name, 1));
     }
 
@@ -50,7 +50,7 @@ public class WorkerThreadFactory implements ForkJoinPool.ForkJoinWorkerThreadFac
      * @return New executor service
      */
     @NotNull
-    public static ForkJoinPool createExecutor(@NotNull String name, int threads) {
+    public static WorkerThreadPool createExecutor(@NotNull String name, int threads) {
         int max = Runtime.getRuntime().availableProcessors();
         int half = Math.max(1, max / 2);
         int actual = Math.clamp(threads < 1 ? half : threads, 1, max);
@@ -58,22 +58,31 @@ public class WorkerThreadFactory implements ForkJoinPool.ForkJoinWorkerThreadFac
     }
 
     @NotNull
-    private static ForkJoinPool createExecutor(@NotNull WorkerThreadFactory factory) {
-        return new ForkJoinPool(factory.threads, factory, null, false);
+    private static WorkerThreadPool createExecutor(@NotNull WorkerThreadFactory factory) {
+        return new WorkerThreadPool(factory);
     }
 
     private final String name;
-    private final int threads;
+    private final int parallelism;
 
     /**
      * Constructs a new instance of WorkerThreadFactory.
      *
-     * @param name    Name to use when creating threads
-     * @param threads Max number of threads to use
+     * @param name        Name to use when creating threads
+     * @param parallelism The parallelism level
      */
-    public WorkerThreadFactory(@NotNull String name, int threads) {
+    public WorkerThreadFactory(@NotNull String name, int parallelism) {
         this.name = name;
-        this.threads = threads;
+        this.parallelism = parallelism;
+    }
+
+    /**
+     * Get the parallelism level (corresponds to pool size).
+     *
+     * @return Parallelism level
+     */
+    public int getParallelism() {
+        return this.parallelism;
     }
 
     @Override
