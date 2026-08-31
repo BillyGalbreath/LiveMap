@@ -46,8 +46,8 @@ public abstract class SpiralIterator implements Iterator<Long> {
     private int x;
     private int z;
 
-    private long totalStepsInLeg;
-    private long currentStepInLeg;
+    private long totalStepsInLeg = 1;
+    private long currentStepInLeg = 0;
     private long legAxis;
 
     private Direction direction = Direction.WEST;

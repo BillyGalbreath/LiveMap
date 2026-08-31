@@ -60,9 +60,6 @@ public class RenderScheduler {
     private final AtomicReference<Thread> runningThread = new AtomicReference<>(null);
     private final Object renderMutex = new Object();
 
-    private long nextRun;
-    private int tmpVar;
-
     /**
      * Constructs a new instance of RenderScheduler.
      */
@@ -85,7 +82,6 @@ public class RenderScheduler {
         this.future = this.worldExecutor.scheduleAtFixedRateAsync(
             () -> {
                 // task
-                Logger.debug("########## Tick Start");
                 run(false);
             },
             (e) -> {
@@ -93,7 +89,10 @@ public class RenderScheduler {
                 if (e != null) {
                     Logger.error("Error running scheduled render task", e);
                 }
-            }
+            },
+            10, // wait 10 seconds before starting
+            60, // check every 60 seconds
+            TimeUnit.SECONDS
         );
 
         Future.State state = this.future.state();
@@ -125,7 +124,7 @@ public class RenderScheduler {
     private void interruptRunningThread() {
         Thread activeThread = this.runningThread.get();
         if (activeThread != null) {
-            Logger.debug("Interrupting active scheduled thread");
+            Logger.debug("Interrupting active scheduled render thread");
             activeThread.interrupt();
         }
     }
@@ -145,7 +144,6 @@ public class RenderScheduler {
     public ForkJoinTask<?> trigger() {
         // atomically set manualRunning to true ONLY if it was false
         if (!this.manualRunning.compareAndSet(false, true)) {
-            Logger.debug("Already manually running");
             return null;
         }
 
@@ -153,7 +151,6 @@ public class RenderScheduler {
         interruptRunningThread();
 
         // manually run
-        Logger.debug("--- Trigger ---");
         return this.worldExecutor.submit(() -> run(true));
     }
 
@@ -163,40 +160,28 @@ public class RenderScheduler {
      * @param manual True if manually triggered instead of scheduled
      */
     private void run(boolean manual) {
-        Logger.debug("Run");
-
         if (!manual) {
-            long now = System.currentTimeMillis();
-            if (this.nextRun > now || this.manualRunning.get() || this.runningThread.get() != null) {
-                Logger.debug("Wait or Skip");
-                return;
-            }
-
             // set runningThread safely if no other thread beat us to it
-            if (!this.runningThread.compareAndSet(null, Thread.currentThread())) {
+            if (this.manualRunning.get() || !this.runningThread.compareAndSet(null, Thread.currentThread())) {
                 return;
             }
-
-            this.nextRun = now + TimeUnit.SECONDS.toMillis(5);
         }
 
         // lock strictly the execution context, keeping trigger() unblocked
         synchronized (this.renderMutex) {
-            Logger.debug("Start !!! " + ++tmpVar);
+            Logger.debug("Checking worlds for pending regions");
             try {
                 // snapshot to prevent possible CME
                 List<World> worlds = List.copyOf(LiveMap.api().getWorldRegistry().values());
 
                 for (World world : worlds) {
-                    // check if current thread was interrupted by trigger() before processing next world
+                    // check if current thread was interrupted by trigger()
                     if (Thread.currentThread().isInterrupted()) {
-                        Logger.debug("Render execution stopped via manual interrupt request");
                         break;
                     }
 
                     // protect against a world that was discarded midway through the loop
                     if (world.isDiscarded()) {
-                        Logger.debug("Skipping world - it was discarded prior to processing.");
                         continue;
                     }
 
@@ -206,14 +191,16 @@ public class RenderScheduler {
             } catch (Exception e) {
                 Logger.error("Error during render task", e);
             } finally {
-                Logger.debug("Done @@@ " + tmpVar);
-
                 // finished - cleanup
                 if (manual) {
                     this.manualRunning.set(false);
                 } else {
                     this.runningThread.compareAndSet(Thread.currentThread(), null);
                 }
+
+                // clear interrupted status flag to prevent thread-reuse state pollution in the pool
+                // noinspection ResultOfMethodCallIgnored
+                Thread.interrupted();
             }
         }
     }
@@ -228,6 +215,8 @@ public class RenderScheduler {
         if (pending.isEmpty()) {
             return;
         }
+
+        Logger.debug("Begin rendering %d pending region(s) for %s".formatted(pending.size(), world.getName()));
 
         // track active jobs so we can wait for this world to finish all queued regions
         List<CompletableFuture<Void>> runningRenders = new ArrayList<>();
@@ -271,6 +260,8 @@ public class RenderScheduler {
         } catch (Exception e) {
             Logger.error("Error awaiting regional worker tasks in " + world.getName(), e);
         }
+
+        Logger.debug("Finished rendering for %s".formatted(world.getName()));
     }
 
     /**
@@ -284,7 +275,6 @@ public class RenderScheduler {
             for (int chunkZ = 0; chunkZ < 32; chunkZ++) {
                 // check world state and interruptions, for instant responsiveness
                 if (region.getWorld().isDiscarded() || parentThread.isInterrupted()) {
-                    Logger.debug("Region render loop aborted mid-processing");
                     return;
                 }
 
