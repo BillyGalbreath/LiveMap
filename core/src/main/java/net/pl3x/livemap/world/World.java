@@ -37,16 +37,19 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import net.pl3x.livemap.LiveMap;
+import net.pl3x.livemap.Logger;
 import net.pl3x.livemap.configuration.Lang;
 import net.pl3x.livemap.configuration.WorldConfig;
 import net.pl3x.livemap.marker.Point;
 import net.pl3x.livemap.render.renderer.RendererRegistry;
 import net.pl3x.livemap.world.biome.BiomeRegistry;
 import net.pl3x.livemap.world.region.Region;
-import net.pl3x.livemap.world.region.RegionQueue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +68,9 @@ public abstract class World {
     private final WorldConfig config;
 
     private final LoadingCache<Long, Region> regionCache;
-    private final RegionQueue regionQueue;
+    private final Set<Long> pendingRegions;
+
+    private final AtomicBoolean discarded = new AtomicBoolean(false);
 
     /**
      * Constructs a new instance of World.
@@ -93,7 +98,7 @@ public abstract class World {
             .build(index -> new Region(this, index));
 
         // region indexes waiting to be rendered
-        this.regionQueue = new RegionQueue();
+        this.pendingRegions = ConcurrentHashMap.newKeySet();
     }
 
     /**
@@ -176,13 +181,13 @@ public abstract class World {
     }
 
     /**
-     * Get this world's region queue.
+     * Get this world's pending regions.
      *
-     * @return The region queue
+     * @return The pending regions
      */
     @NotNull
-    public RegionQueue getRegionQueue() {
-        return this.regionQueue;
+    public Set<Long> getPendingRegions() {
+        return this.pendingRegions;
     }
 
     /**
@@ -350,10 +355,25 @@ public abstract class World {
     }
 
     /**
+     * Atomically check if world has been unloaded and discarded.
+     *
+     * @return True if discarded
+     */
+    public boolean isDiscarded() {
+        return this.discarded.get();
+    }
+
+    /**
      * Discard objects in memory for this world.
      */
     public void discard() {
-        getRegionQueue().clear();
+        if (!this.discarded.compareAndSet(false, true)) {
+            return; // already discarded
+        }
+
+        Logger.debug("World discarded, clearing data structures.");
+
+        getPendingRegions().clear();
         getBiomeRegistry().clear();
         getRendererRegistry().clear();
     }

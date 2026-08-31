@@ -26,18 +26,23 @@ package net.pl3x.livemap.render;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.Logger;
+import net.pl3x.livemap.configuration.Config;
+import net.pl3x.livemap.render.iterator.RegionSpiralIterator;
+import net.pl3x.livemap.render.iterator.SpiralIterator;
 import net.pl3x.livemap.thread.WorkerThreadFactory;
 import net.pl3x.livemap.thread.WorkerThreadPool;
 import net.pl3x.livemap.world.World;
 import net.pl3x.livemap.world.region.Region;
-import net.pl3x.livemap.world.region.RegionQueue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,22 +50,25 @@ import org.jetbrains.annotations.Nullable;
  * Represents the main task to loop over the worlds and render them one at a time.
  */
 public class RenderScheduler {
-    private final WorkerThreadPool executor;
+    public static final CompletableFuture<?>[] EMPTY_FUTURE_ARRAY = new CompletableFuture[0];
+
+    private final WorkerThreadPool worldExecutor;
+    private final WorkerThreadPool regionExecutor;
     private ScheduledFuture<?> future;
 
-    private volatile Thread runningThread;
     private final AtomicBoolean manualRunning = new AtomicBoolean(false);
-    private final Object runLock = new Object();
+    private final AtomicReference<Thread> runningThread = new AtomicReference<>(null);
+    private final Object renderMutex = new Object();
 
     private long nextRun;
-
     private int tmpVar;
 
     /**
      * Constructs a new instance of RenderScheduler.
      */
     public RenderScheduler() {
-        this.executor = WorkerThreadFactory.createExecutor("RendererScheduler");
+        this.worldExecutor = WorkerThreadFactory.createExecutor("RendererScheduler");
+        this.regionExecutor = WorkerThreadFactory.createExecutor("RenderRegion", Config.RENDER_THREADS);
     }
 
     /**
@@ -74,7 +82,7 @@ public class RenderScheduler {
         }
 
         // start task to run every second
-        this.future = this.executor.scheduleAtFixedRateAsync(
+        this.future = this.worldExecutor.scheduleAtFixedRateAsync(
             () -> {
                 // task
                 Logger.debug("########## Tick Start");
@@ -96,9 +104,8 @@ public class RenderScheduler {
      * Stop the render scheduler loop when the plugin unloads.
      */
     public void stop() {
-        if (this.runningThread != null) {
-            this.runningThread.interrupt();
-        }
+        // safely stop current running thread
+        interruptRunningThread();
 
         if (this.future != null) {
             boolean result = this.future.cancel(true);
@@ -109,6 +116,17 @@ public class RenderScheduler {
                 Logger.debug("Could not stop render scheduler: %b".formatted(state));
             }
             this.future = null;
+        }
+    }
+
+    /**
+     * Capture and interrupt the thread safely without blocking execution.
+     */
+    private void interruptRunningThread() {
+        Thread activeThread = this.runningThread.get();
+        if (activeThread != null) {
+            Logger.debug("Interrupting active scheduled thread");
+            activeThread.interrupt();
         }
     }
 
@@ -125,83 +143,155 @@ public class RenderScheduler {
      */
     @Nullable
     public ForkJoinTask<?> trigger() {
+        // atomically set manualRunning to true ONLY if it was false
         if (!this.manualRunning.compareAndSet(false, true)) {
-            // render is already manually running
             Logger.debug("Already manually running");
             return null;
         }
 
-        //
-        Thread thread = this.runningThread;
-        if (thread != null) {
-            // stop current scheduled run
-            Logger.debug("Interrupt");
-            thread.interrupt();
-        }
+        // safely stop current running thread
+        interruptRunningThread();
 
         // manually run
         Logger.debug("--- Trigger ---");
-        return this.executor.submit(() -> run(true));
+        return this.worldExecutor.submit(() -> run(true));
     }
 
+    /**
+     * The loop.
+     *
+     * @param manual True if manually triggered instead of scheduled
+     */
     private void run(boolean manual) {
         Logger.debug("Run");
+
         if (!manual) {
-            synchronized (this.runLock) {
-                long now = System.currentTimeMillis();
-
-                if (this.manualRunning.get() || this.runningThread != null || this.nextRun > now) {
-                    Logger.debug("Skip or Wait");
-                    return;
-                }
-
-                this.runningThread = Thread.currentThread();
-                this.nextRun = now + TimeUnit.SECONDS.toMillis(5);
+            long now = System.currentTimeMillis();
+            if (this.nextRun > now || this.manualRunning.get() || this.runningThread.get() != null) {
+                Logger.debug("Wait or Skip");
+                return;
             }
+
+            // set runningThread safely if no other thread beat us to it
+            if (!this.runningThread.compareAndSet(null, Thread.currentThread())) {
+                return;
+            }
+
+            this.nextRun = now + TimeUnit.SECONDS.toMillis(5);
         }
 
-        // start
-        Logger.debug("Start !!! " + ++tmpVar);
-        try {
-            // snapshot to prevent possible CME
-            List<World> worlds = new ArrayList<>(LiveMap.api().getWorldRegistry().values());
+        // lock strictly the execution context, keeping trigger() unblocked
+        synchronized (this.renderMutex) {
+            Logger.debug("Start !!! " + ++tmpVar);
+            try {
+                // snapshot to prevent possible CME
+                List<World> worlds = List.copyOf(LiveMap.api().getWorldRegistry().values());
 
-            // check each world on by one
-            worlds.forEach(this::checkWorld);
-        } catch (Exception e) {
-            Logger.error("Error during render loop", e);
-        } finally {
-            Logger.debug("Done @@@ " + tmpVar);
+                for (World world : worlds) {
+                    // check if current thread was interrupted by trigger() before processing next world
+                    if (Thread.currentThread().isInterrupted()) {
+                        Logger.debug("Render execution stopped via manual interrupt request");
+                        break;
+                    }
 
-            // finished - cleanup
-            this.runningThread = null;
-            if (manual) {
-                this.manualRunning.set(false);
+                    // protect against a world that was discarded midway through the loop
+                    if (world.isDiscarded()) {
+                        Logger.debug("Skipping world - it was discarded prior to processing.");
+                        continue;
+                    }
+
+                    // safely process world
+                    this.renderWorld(world);
+                }
+            } catch (Exception e) {
+                Logger.error("Error during render task", e);
+            } finally {
+                Logger.debug("Done @@@ " + tmpVar);
+
+                // finished - cleanup
+                if (manual) {
+                    this.manualRunning.set(false);
+                } else {
+                    this.runningThread.compareAndSet(Thread.currentThread(), null);
+                }
             }
         }
     }
 
     /**
-     * Check if world has any queued regions waiting to render.
+     * Render world if there are any queued regions waiting to render.
      *
-     * @param world World to check
+     * @param world World to render
      */
-    public void checkWorld(@NotNull World world) {
-        RegionQueue queue = world.getRegionQueue();
-        while (!queue.isEmpty()) {
-            // sort queue around center point
-            queue.sort(world.getCenter());
+    private void renderWorld(@NotNull World world) {
+        Set<Long> pending = world.getPendingRegions();
+        if (pending.isEmpty()) {
+            return;
+        }
 
-            Long index = queue.pop();
-            if (index == null) {
-                // sanity check; should not happen
+        // track active jobs so we can wait for this world to finish all queued regions
+        List<CompletableFuture<Void>> runningRenders = new ArrayList<>();
+        final Thread worldThread = Thread.currentThread();
+
+        // the hasNext supplier keeps the iterator bounded by active queue allocations and live states
+        SpiralIterator spiral = new RegionSpiralIterator(world.getCenter(), () ->
+            !pending.isEmpty() && !world.isDiscarded() && !worldThread.isInterrupted()
+        );
+
+        // drive the spiral loop sequentially on the world thread
+        while (spiral.hasNext()) {
+            long index = spiral.next();
+
+            // atomically remove index from queue or skip if it was not queued
+            if (!pending.remove(index)) {
                 continue;
             }
 
-            Region region = world.getRegion(index);
-            //
-            // todo
-            //
+            // Offload the validated region task onto the multithreaded worker pool
+            CompletableFuture<Void> task = CompletableFuture.runAsync(() -> {
+                try {
+                    // double check world state and interruptions
+                    if (world.isDiscarded() || worldThread.isInterrupted()) {
+                        return;
+                    }
+
+                    // render the region
+                    this.renderRegion(world.getRegion(index), worldThread);
+                } catch (Exception e) {
+                    Logger.error("Failed executing parallel render task for region index: " + index, e);
+                }
+            }, this.regionExecutor);
+
+            runningRenders.add(task);
+        }
+
+        // block until all render threads are finished
+        try {
+            CompletableFuture.allOf(runningRenders.toArray(EMPTY_FUTURE_ARRAY)).join();
+        } catch (Exception e) {
+            Logger.error("Error awaiting regional worker tasks in " + world.getName(), e);
+        }
+    }
+
+    /**
+     * Render specified region.
+     *
+     * @param region       Region to render
+     * @param parentThread The parent thread that spawned this render
+     */
+    private void renderRegion(@NotNull Region region, @NotNull Thread parentThread) {
+        for (int chunkX = 0; chunkX < 32; chunkX++) {
+            for (int chunkZ = 0; chunkZ < 32; chunkZ++) {
+                // check world state and interruptions, for instant responsiveness
+                if (region.getWorld().isDiscarded() || parentThread.isInterrupted()) {
+                    Logger.debug("Region render loop aborted mid-processing");
+                    return;
+                }
+
+                //
+                // todo
+                //
+            }
         }
     }
 }

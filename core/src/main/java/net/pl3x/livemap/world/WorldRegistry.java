@@ -24,6 +24,9 @@
 
 package net.pl3x.livemap.world;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import net.pl3x.livemap.util.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,9 +60,17 @@ public abstract class WorldRegistry extends Registry<World> {
 
     @Override
     public void clear() {
-        // cleanup world data
-        values().forEach(World::discard);
-        // clear out worlds
-        super.clear();
+        // thread safe accumulator
+        List<World> removed = Collections.synchronizedList(new ArrayList<>());
+
+        // safely extract elements atomically from the ConcurrentHashMap
+        this.forEach((key, world) -> {
+            if (super.remove(key, world)) {
+                removed.add(world);
+            }
+        });
+
+        // cleanup world data safely
+        removed.forEach(World::discard);
     }
 }

@@ -45,7 +45,6 @@ public class WorkerThread extends ForkJoinWorkerThread {
     protected WorkerThread(@NotNull ForkJoinPool pool, @NotNull String name) {
         super(pool);
         setContextClassLoader(LiveMap.class.getClassLoader());
-        setName(name.formatted(COUNTER.incrementAndGet()));
         setName((pool.getParallelism() > 1 ? "LiveMap-%s-%d" : "LiveMap-%s")
             .formatted(name, COUNTER.incrementAndGet())
         );

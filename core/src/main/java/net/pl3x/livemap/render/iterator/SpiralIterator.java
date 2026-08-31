@@ -112,7 +112,7 @@ public abstract class SpiralIterator implements Iterator<Long> {
 
         // calculate where we are in the spiral
         ++this.currentStepInLeg;
-        if (this.currentStepInLeg > this.totalStepsInLeg) {
+        if (this.currentStepInLeg >= this.totalStepsInLeg) {
             this.currentStepInLeg = 0;
             this.direction = this.direction.next();
             if (++this.legAxis > 1) {
@@ -121,6 +121,7 @@ public abstract class SpiralIterator implements Iterator<Long> {
             }
         }
 
+        // return current index
         return index;
     }
 
@@ -130,6 +131,7 @@ public abstract class SpiralIterator implements Iterator<Long> {
     protected enum Direction {
         EAST, SOUTH, WEST, NORTH;
 
+        // cache values for efficiency
         protected static final Direction[] VALUES = values();
 
         /**
@@ -141,6 +143,7 @@ public abstract class SpiralIterator implements Iterator<Long> {
          */
         @NotNull
         protected Direction next() {
+            // increment and overflow if needed
             return VALUES[(ordinal() + 1) & 3];
         }
     }

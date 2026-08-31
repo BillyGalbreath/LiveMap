@@ -25,6 +25,7 @@
 package net.pl3x.livemap.render.iterator;
 
 import java.util.function.Supplier;
+import net.pl3x.livemap.marker.Point;
 import net.pl3x.livemap.world.region.Region;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,6 +42,16 @@ import org.jetbrains.annotations.NotNull;
  * </pre>
  */
 public class RegionSpiralIterator extends SpiralIterator {
+    /**
+     * Constructs a new SpiralIterator for regions at the given center.
+     *
+     * @param center  Center point
+     * @param hasNext Supplier to determine if there is a next element
+     */
+    public RegionSpiralIterator(@NotNull Point center, @NotNull Supplier<Boolean> hasNext) {
+        this(center.getX(), center.getZ(), hasNext);
+    }
+
     /**
      * Constructs a new SpiralIterator for regions at the given center.
      *
