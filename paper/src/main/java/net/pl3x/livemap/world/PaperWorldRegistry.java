@@ -82,7 +82,10 @@ public class PaperWorldRegistry extends WorldRegistry {
 
         for (org.bukkit.World bukkit : Bukkit.getWorlds()) {
             World world = new PaperWorld(bukkit);
-            put(obj2key(bukkit), world);
+            String key = obj2key(bukkit);
+            if (key != null) {
+                put(key, world);
+            }
         }
     }
 

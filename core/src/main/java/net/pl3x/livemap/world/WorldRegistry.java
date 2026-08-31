@@ -42,15 +42,9 @@ public abstract class WorldRegistry extends Registry<World> {
         // Explicit constructor to satisfy Javadoc and linter tools
     }
 
-    /**
-     * Removes the mapping for the specified key from this registry if present.
-     *
-     * @param key key whose mapping is to be removed from the registry
-     * @return the previous value associated with {@code key}, or
-     *     {@code null} if there was no mapping for {@code key}.
-     */
+    @Override
     @Nullable
-    public World remove(@NotNull String key) {
+    public World remove(@NotNull Object key) {
         World world = super.remove(key);
         if (world != null) {
             world.discard();
