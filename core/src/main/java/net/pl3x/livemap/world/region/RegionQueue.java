@@ -112,7 +112,7 @@ public class RegionQueue {
      *     this queue is empty
      */
     @Nullable
-    public synchronized Long poll() {
+    public synchronized Long pop() {
         return this.sorted.poll();
     }
 

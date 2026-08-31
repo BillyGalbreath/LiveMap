@@ -30,11 +30,13 @@ import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.Logger;
 import net.pl3x.livemap.thread.WorkerThreadFactory;
 import net.pl3x.livemap.thread.WorkerThreadPool;
 import net.pl3x.livemap.world.World;
+import net.pl3x.livemap.world.region.Region;
 import net.pl3x.livemap.world.region.RegionQueue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,26 +49,27 @@ public class RenderScheduler {
     private ScheduledFuture<?> future;
 
     private volatile Thread runningThread;
-    private volatile boolean manualRunning;
+    private final AtomicBoolean manualRunning = new AtomicBoolean(false);
+    private final Object runLock = new Object();
 
     private long nextRun;
 
     private int tmpVar;
 
     /**
-     * Constructs a new instance of RenderManager.
+     * Constructs a new instance of RenderScheduler.
      */
     public RenderScheduler() {
         this.executor = WorkerThreadFactory.createExecutor("RendererScheduler");
     }
 
     /**
-     * Start the render manager loop when the plugin loads.
+     * Start the render scheduler loop when the plugin loads.
      */
     public void start() {
         // check if already started
         if (this.future != null) {
-            Logger.warn("Render manager is already started. Cannot start again.");
+            Logger.warn("Render scheduler is already started. Cannot start again.");
             return;
         }
 
@@ -86,11 +89,11 @@ public class RenderScheduler {
         );
 
         Future.State state = this.future.state();
-        Logger.debug("Started render manager: %s".formatted(state.name()));
+        Logger.debug("Started render scheduler: %s".formatted(state.name()));
     }
 
     /**
-     * Stop the render manager loop when the plugin unloads.
+     * Stop the render scheduler loop when the plugin unloads.
      */
     public void stop() {
         if (this.runningThread != null) {
@@ -101,16 +104,12 @@ public class RenderScheduler {
             boolean result = this.future.cancel(true);
             Future.State state = this.future.state();
             if (result) {
-                Logger.debug("Successfully stopped render manager: %b".formatted(state));
+                Logger.debug("Successfully stopped render scheduler: %b".formatted(state));
             } else {
-                Logger.debug("Could not stop render manager: %b".formatted(state));
+                Logger.debug("Could not stop render scheduler: %b".formatted(state));
             }
             this.future = null;
         }
-    }
-
-    private void loop() {
-
     }
 
     /**
@@ -126,16 +125,18 @@ public class RenderScheduler {
      */
     @Nullable
     public ForkJoinTask<?> trigger() {
-        if (this.manualRunning) {
+        if (!this.manualRunning.compareAndSet(false, true)) {
             // render is already manually running
             Logger.debug("Already manually running");
             return null;
         }
 
-        if (this.runningThread != null) {
+        //
+        Thread thread = this.runningThread;
+        if (thread != null) {
             // stop current scheduled run
             Logger.debug("Interrupt");
-            this.runningThread.interrupt();
+            thread.interrupt();
         }
 
         // manually run
@@ -145,29 +146,18 @@ public class RenderScheduler {
 
     private void run(boolean manual) {
         Logger.debug("Run");
-        if (this.manualRunning || this.runningThread != null) {
-            Logger.debug("Skip " + this.manualRunning + " " + (this.runningThread != null));
-            // skip this run, wait for next
-            return;
-        }
+        if (!manual) {
+            synchronized (this.runLock) {
+                long now = System.currentTimeMillis();
 
-        if (manual) {
-            // mark as manually running
-            Logger.debug("Manual");
-            this.manualRunning = true;
-        } else {
-            // check if we need to wait
-            long now = System.currentTimeMillis();
-            if (this.nextRun > now) {
-                Logger.debug("Wait");
-                return;
+                if (this.manualRunning.get() || this.runningThread != null || this.nextRun > now) {
+                    Logger.debug("Skip or Wait");
+                    return;
+                }
+
+                this.runningThread = Thread.currentThread();
+                this.nextRun = now + TimeUnit.SECONDS.toMillis(5);
             }
-
-            // save thread
-            this.runningThread = Thread.currentThread();
-
-            // schedule next run
-            this.nextRun = now + TimeUnit.SECONDS.toMillis(5);
         }
 
         // start
@@ -178,13 +168,17 @@ public class RenderScheduler {
 
             // check each world on by one
             worlds.forEach(this::checkWorld);
-        } catch (Throwable ignore) {
-        }
-        Logger.debug("Done @@@ " + tmpVar);
+        } catch (Exception e) {
+            Logger.error("Error during render loop", e);
+        } finally {
+            Logger.debug("Done @@@ " + tmpVar);
 
-        // finished - cleanup
-        this.manualRunning = false;
-        this.runningThread = null;
+            // finished - cleanup
+            this.runningThread = null;
+            if (manual) {
+                this.manualRunning.set(false);
+            }
+        }
     }
 
     /**
@@ -198,7 +192,13 @@ public class RenderScheduler {
             // sort queue around center point
             queue.sort(world.getCenter());
 
-            Long index = queue.poll();
+            Long index = queue.pop();
+            if (index == null) {
+                // sanity check; should not happen
+                continue;
+            }
+
+            Region region = world.getRegion(index);
             //
             // todo
             //
