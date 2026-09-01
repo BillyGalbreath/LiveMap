@@ -41,12 +41,7 @@ import org.jetbrains.annotations.NotNull;
  * @param <NBT> Chunk nbt type
  */
 public final class Loader<NBT extends Chunk.NBT> {
-    /**
-     * The chunk loaders.
-     *
-     * @see Loader#getForVersion(int)
-     */
-    public static final Loader<?>[] LOADERS = new Loader[] {
+    private static final Loader<?>[] LOADERS = new Loader[] {
         new Loader<>(EmptyChunk::new),
         new Loader<>(Chunk_1_20::new),
         new Loader<>(Chunk_1_18::new),
@@ -66,7 +61,7 @@ public final class Loader<NBT extends Chunk.NBT> {
      * Get chunk loader for specified chunk version.
      *
      * <p>Chunk versions with a loader:<br/>
-     * &emsp;&bull; {@code 3837} <em>(1.20.5)</em> - tile/block entity structure - component overhaul<br/>
+     * &emsp;&bull; {@code 3837} <em>(1.20.5)</em> - block entity structure and component overhaul<br/>
      * &emsp;&bull; {@code 2834} <em>(1.18)</em> - larger and configurable world height<br/>
      * &emsp;&bull; {@code 2529} <em>(1.16)</em> - unstretched bit packing (blockstates and heightmaps)<br/>
      * &emsp;&bull; {@code 2203} <em>(1.15)</em> - 3d biomes<br/>
@@ -79,19 +74,18 @@ public final class Loader<NBT extends Chunk.NBT> {
      * @param version Chunk version
      * @param <NBT>   Type of chunk nbt
      * @return Chunk loader
+     * @see <a href="https://minecraft.wiki/w/Data_version#List_of_data_versions">https://minecraft.wiki/w/Data_version#List_of_data_versions</a>
      */
     @NotNull
     public static <NBT extends Chunk.NBT> Loader<NBT> getForVersion(int version) {
         // @formatter:off
-        // get correct loader
-        // https://minecraft.wiki/w/Data_version#List_of_data_versions
         return Unsafe.cast(Loader.LOADERS[
-              (version >= 3837) ? 1 // 1.20.5 - tile/block entity structure - component overhaul
-            : (version >= 2834) ? 2 // 1.18 - larger and configurable world height
-            : (version >= 2529) ? 3 // 1.16 - unstretched bit packing (blockstates and heightmaps)
-            : (version >= 2203) ? 4 // 1.15 - 3d biomes
-            : (version >= 1451) ? 5 // 1.13 - the flattening
-            :                     0 // older than 1.13; ignore
+              (version >= 3837) ? 1
+            : (version >= 2834) ? 2
+            : (version >= 2529) ? 3
+            : (version >= 2203) ? 4
+            : (version >= 1451) ? 5
+            :                     0
         ]);
         // @formatter:on
     }
