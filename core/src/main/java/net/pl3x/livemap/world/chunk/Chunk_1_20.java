@@ -28,10 +28,15 @@ import net.pl3x.livemap.world.region.Region;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * 1.16 unstretched bit packing (blockstates and heightmaps).
+ * 1.20.5 changed tile/block entity structure and overhauled components.
  */
-class Chunk_1_16 extends Chunk_1_13 {
-    Chunk_1_16(@NotNull Region region, @NotNull Chunk_1_16.NBT chunkNBT) {
+class Chunk_1_20 extends Chunk_1_18 {
+    Chunk_1_20(@NotNull Region region, @NotNull Chunk_1_20.NBT chunkNBT) {
         super(region, chunkNBT);
     }
+
+    /*
+     * This version has nothing new that LiveMap cares about.
+     * It only exists here for completion, and possible future use (render colored banners?)
+     */
 }

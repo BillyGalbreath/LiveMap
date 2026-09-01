@@ -41,12 +41,18 @@ import org.jetbrains.annotations.NotNull;
  * @param <NBT> Chunk nbt type
  */
 public final class Loader<NBT extends Chunk.NBT> {
+    /**
+     * The chunk loaders.
+     *
+     * @see Loader#getForVersion(int)
+     */
     public static final Loader<?>[] LOADERS = new Loader[] {
-        new Loader<>(EmptyChunk::new), // don't worry about pre 1.13 chunks
-        new Loader<>(Chunk_1_13::new),
-        new Loader<>(Chunk_1_15::new),
+        new Loader<>(EmptyChunk::new),
+        new Loader<>(Chunk_1_20::new),
+        new Loader<>(Chunk_1_18::new),
         new Loader<>(Chunk_1_16::new),
-        new Loader<>(Chunk_1_18::new)
+        new Loader<>(Chunk_1_15::new),
+        new Loader<>(Chunk_1_13::new)
     };
 
     public static final BlueNBT BLUENBT = new BlueNBT();
@@ -59,21 +65,33 @@ public final class Loader<NBT extends Chunk.NBT> {
     /**
      * Get chunk loader for specified chunk version.
      *
-     * @param chunkVersion Chunk version
-     * @param <NBT>        Type of chunk nbt
+     * <p>Chunk versions with a loader:<br/>
+     * &emsp;&bull; {@code 3837} <em>(1.20.5)</em> - tile/block entity structure - component overhaul<br/>
+     * &emsp;&bull; {@code 2834} <em>(1.18)</em> - larger and configurable world height<br/>
+     * &emsp;&bull; {@code 2529} <em>(1.16)</em> - unstretched bit packing (blockstates and heightmaps)<br/>
+     * &emsp;&bull; {@code 2203} <em>(1.15)</em> - 3d biomes<br/>
+     * &emsp;&bull; {@code 1451} <em>(1.13)</em> - the flattening
+     *
+     * <p>This method will return the first loader greater than or equal to the specified {@code version}.
+     *
+     * <p>Any version less than {@code 1451} will return a loader that only "loads" {@link EmptyChunk}.
+     *
+     * @param version Chunk version
+     * @param <NBT>   Type of chunk nbt
      * @return Chunk loader
      */
     @NotNull
-    public static <NBT extends Chunk.NBT> Loader<NBT> getForVersion(int chunkVersion) {
+    public static <NBT extends Chunk.NBT> Loader<NBT> getForVersion(int version) {
         // @formatter:off
         // get correct loader
         // https://minecraft.wiki/w/Data_version#List_of_data_versions
         return Unsafe.cast(Loader.LOADERS[
-              (chunkVersion < 1519) ? 0 // wtf, older than 1.13
-            : (chunkVersion < 2200) ? 1 // 1.13 - 1.14
-            : (chunkVersion < 2500) ? 2 // 1.15
-            : (chunkVersion < 2844) ? 3 // 1.16 - 1.18 (21w42a)
-            :                         4 // 1.18+ (21w43a+)
+              (version >= 3837) ? 1 // 1.20.5 - tile/block entity structure - component overhaul
+            : (version >= 2834) ? 2 // 1.18 - larger and configurable world height
+            : (version >= 2529) ? 3 // 1.16 - unstretched bit packing (blockstates and heightmaps)
+            : (version >= 2203) ? 4 // 1.15 - 3d biomes
+            : (version >= 1451) ? 5 // 1.13 - the flattening
+            :                     0 // older than 1.13; ignore
         ]);
         // @formatter:on
     }

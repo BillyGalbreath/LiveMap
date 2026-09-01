@@ -32,7 +32,10 @@ import net.pl3x.livemap.world.region.Region;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class Chunk_1_13 extends Chunk { // todo - make private when _1_15 and _1_16 are implemented
+/**
+ * 1.13 is where it all starts for us, the flattening.
+ */
+class Chunk_1_13 extends Chunk {
     Chunk_1_13(@NotNull Region region, @NotNull Chunk_1_13.NBT chunkNBT) {
         super(region, chunkNBT);
     }
@@ -103,7 +106,7 @@ class Chunk_1_13 extends Chunk { // todo - make private when _1_15 and _1_16 are
     }
 
     @SuppressWarnings("CanBeFinal")
-    static class NBT extends Chunk.NBT { // todo - make private when _1_15 and _1_16 are implemented
+    static class NBT extends Chunk.NBT {
     }
 
     @SuppressWarnings("CanBeFinal")

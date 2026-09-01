@@ -27,7 +27,10 @@ package net.pl3x.livemap.world.chunk;
 import net.pl3x.livemap.world.region.Region;
 import org.jetbrains.annotations.NotNull;
 
-final class Chunk_1_15 extends Chunk_1_13 {
+/**
+ * 1.15 introduced 3d biomes.
+ */
+class Chunk_1_15 extends Chunk_1_13 {
     Chunk_1_15(@NotNull Region region, @NotNull Chunk_1_15.NBT chunkNBT) {
         super(region, chunkNBT);
     }

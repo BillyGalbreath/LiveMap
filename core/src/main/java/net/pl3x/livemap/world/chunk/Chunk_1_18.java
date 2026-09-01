@@ -35,7 +35,10 @@ import net.pl3x.livemap.world.region.Region;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class Chunk_1_18 extends Chunk {
+/**
+ * 1.18 introduced larger and configurable world height.
+ */
+class Chunk_1_18 extends Chunk {
     private static final Section[] EMPTY_SECTION_ARRAY = new Section[0];
     private static final SectionNBT[] EMPTY_SECTION_NBT_ARRAY = new SectionNBT[0];
     private static final HeightmapsNBT EMPTY_HEIGHTMAPS_NBT = new HeightmapsNBT();
