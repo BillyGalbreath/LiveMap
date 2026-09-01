@@ -44,6 +44,8 @@ import org.jetbrains.annotations.Nullable;
  * LiveMap's logger.
  */
 public final class Logger {
+    public static boolean HIDE_UNDERTOW_LOGS = false;
+
     static java.util.logging.Logger logger;
 
     private static final Pattern COLOR_PATTERN = Pattern.compile("(?i)[§&]([0-9a-fk-or])");
@@ -191,15 +193,10 @@ public final class Logger {
     /**
      * Log filter to hide undertow logger output.
      */
-    public static class LogFilter implements Filter {
+    private static class LogFilter implements Filter {
         private final List<String> filters = new ArrayList<>();
 
-        public static boolean HIDE_UNDERTOW_LOGS = false;
-
-        /**
-         * Constructs a new instance of LogFilter.
-         */
-        public LogFilter() {
+        private LogFilter() {
             this.filters.add("io.undertow");
             this.filters.add("org.xnio");
             this.filters.add("org.xnio.nio");

@@ -35,13 +35,6 @@ import org.jetbrains.annotations.Nullable;
  * A registry of renderable worlds.
  */
 public abstract class WorldRegistry extends Registry<World> {
-    /**
-     * Constructs a new instance of WorldRegistry.
-     */
-    public WorldRegistry() {
-        // Explicit constructor to satisfy Javadoc and linter tools
-    }
-
     @Override
     @Nullable
     public World remove(@NotNull Object key) {

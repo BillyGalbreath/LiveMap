@@ -32,13 +32,6 @@ import org.jetbrains.annotations.Nullable;
  * A registry of all known blocks to be rendered.
  */
 public abstract class BlockRegistry extends Registry<Block> {
-    /**
-     * Constructs a new instance of BlockRegistry.
-     */
-    public BlockRegistry() {
-        // Explicit constructor to satisfy Javadoc and linter tools
-    }
-
     @Override
     @NotNull
     public Block get(@NotNull Object key) {

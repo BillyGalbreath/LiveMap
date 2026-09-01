@@ -118,7 +118,7 @@ public abstract class Chunk {
      * @param region Region chunk belongs to
      * @param nbt    The chunk's raw nbt data
      */
-    public Chunk(@NotNull Region region, @NotNull Chunk.NBT nbt) {
+    protected Chunk(@NotNull Region region, @NotNull Chunk.NBT nbt) {
         this.region = region;
         this.nbt = nbt;
     }
@@ -282,44 +282,20 @@ public abstract class Chunk {
 
         @NBTName("zPos")
         int zPos;
-
-        /**
-         * Constructs a new instance of Chunk.NBT.
-         */
-        public NBT() {
-            // Explicit constructor to satisfy Javadoc and linter tools
-        }
     }
 
     /**
      * Represents a chunk section (16x16x16 blocks).
      */
     @SuppressWarnings("CanBeFinal")
-    public static class Section {
-        /**
-         * Constructs a new instance of Section.
-         */
-        public Section() {
-            // Explicit constructor to satisfy Javadoc and linter tools
-        }
-
-        /**
-         * Represents raw NBT data for chunk sections.
-         */
+    protected static class Section {
         @SuppressWarnings("CanBeFinal")
-        public static class NBT {
+        static class NBT {
             @NBTName("Y")
             int y = 0;
 
             @NBTName("BlockLight")
             byte[] light = EMPTY_BYTE_ARRAY;
-
-            /**
-             * Constructs a new instance of Chunk.Section.NBT.
-             */
-            public NBT() {
-                // Explicit constructor to satisfy Javadoc and linter tools
-            }
         }
     }
 }

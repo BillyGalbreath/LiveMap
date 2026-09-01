@@ -73,7 +73,7 @@ public interface LiveMap {
     }
 
     /**
-     * Check if plugin is enabled.
+     * Check if plugin/mod is enabled.
      *
      * @return True if enabled
      */
@@ -296,7 +296,10 @@ public interface LiveMap {
 
         // stop our tick scheduler
         unregisterTickScheduler();
-        Provider.tickScheduler = null;
+        if (Provider.tickScheduler != null) {
+            Provider.tickScheduler.cancelAll();
+            Provider.tickScheduler = null;
+        }
 
         // stop http server
         if (Provider.httpdServer != null) {

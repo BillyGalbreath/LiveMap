@@ -105,7 +105,7 @@ public final class Loader<NBT extends Chunk.NBT> {
         }
     }
 
-    interface Ctor<NBT extends Chunk.NBT> {
+    private interface Ctor<NBT extends Chunk.NBT> {
         @NotNull
         Chunk create(@NotNull Region region, @NotNull NBT nbt);
     }

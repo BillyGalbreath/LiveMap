@@ -83,9 +83,6 @@ public final class Config extends AbstractConfig {
 
     private static final Config CONFIG = new Config();
 
-    /**
-     * Constructs a new instance of Config.
-     */
     private Config() {
         super(LiveMap.api().getDataPath().resolve("config.yml"));
     }

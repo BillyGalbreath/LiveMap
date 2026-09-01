@@ -39,13 +39,6 @@ public class TickScheduler {
     private boolean ticking;
 
     /**
-     * Constructs a new instance of Scheduler.
-     */
-    public TickScheduler() {
-        // Explicit constructor to satisfy Javadoc and linter tools
-    }
-
-    /**
      * Tick the scheduler.
      */
     public void tick() {

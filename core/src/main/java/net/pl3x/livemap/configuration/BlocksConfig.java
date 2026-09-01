@@ -202,9 +202,6 @@ public final class BlocksConfig extends AbstractConfig {
 
     private static final BlocksConfig CONFIG = new BlocksConfig();
 
-    /**
-     * Constructs a new instance of BlocksConfig.
-     */
     private BlocksConfig() {
         super(LiveMap.api().getDataPath().resolve("blocks.yml"));
     }

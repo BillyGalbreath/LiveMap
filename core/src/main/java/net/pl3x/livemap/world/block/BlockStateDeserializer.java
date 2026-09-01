@@ -38,13 +38,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class BlockStateDeserializer implements TypeDeserializer<BlockState> {
     /**
-     * Constructs a new instance of BlockStateDeserializer.
-     */
-    public BlockStateDeserializer() {
-        // Explicit constructor to satisfy Javadoc and linter tools
-    }
-
-    /**
      * Read blockstate from NBT.
      *
      * @param reader NBT reader

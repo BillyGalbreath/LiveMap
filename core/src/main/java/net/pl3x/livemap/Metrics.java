@@ -41,9 +41,6 @@ import org.simpleyaml.configuration.file.YamlFile;
 class Metrics {
     private final MetricsBase metricsBase;
 
-    /**
-     * Creates a new Metrics instance.
-     */
     Metrics() {
         // Get and load the config file
         YamlFile config = new YamlFile(LiveMap.api().getDataPath().getParent()

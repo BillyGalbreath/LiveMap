@@ -33,13 +33,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public abstract class Registry<T> extends ConcurrentHashMap<String, T> {
     /**
-     * Constructs a new instance of Registry.
-     */
-    public Registry() {
-        // Explicit constructor to satisfy Javadoc and linter tools
-    }
-
-    /**
      * Rebuilds the registry.
      */
     public abstract void rebuild();

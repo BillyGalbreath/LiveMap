@@ -385,13 +385,6 @@ public abstract class World {
         public static final SimpleCommandExceptionType ERROR_WORLD_NOT_FOUND = new SimpleCommandExceptionType(() -> Lang.ERROR_WORLD_NOT_FOUND);
         public static final SimpleCommandExceptionType ERROR_MISSING_WORLD = new SimpleCommandExceptionType(() -> Lang.ERROR_MISSING_WORLD);
 
-        /**
-         * Constructs a new instance of a world Argument.
-         */
-        public Argument() {
-            // Explicit constructor to satisfy Javadoc and linter tools
-        }
-
         @Override
         @NotNull
         public World parse(@NotNull StringReader reader) throws CommandSyntaxException {

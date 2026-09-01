@@ -32,13 +32,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class BiomeRegistry extends Registry<Biome> {
     /**
-     * Constructs a new instance of BiomeRegistry.
-     */
-    public BiomeRegistry() {
-        // Explicit constructor to satisfy Javadoc and linter tools
-    }
-
-    /**
      * Get the default color for foliage/grass based on
      * temperature and humidity from image gradient images.
      *

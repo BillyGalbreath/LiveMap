@@ -46,9 +46,6 @@ public final class Lang extends AbstractConfig {
 
     private static final Lang CONFIG = new Lang();
 
-    /**
-     * Constructs a new instance of Lang.
-     */
     private Lang() {
         Path dir = LiveMap.api().getDataPath().resolve("lang");
 

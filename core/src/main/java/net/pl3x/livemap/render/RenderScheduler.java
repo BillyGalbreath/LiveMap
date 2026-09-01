@@ -119,17 +119,6 @@ public class RenderScheduler {
     }
 
     /**
-     * Capture and interrupt the thread safely without blocking execution.
-     */
-    private void interruptRunningThread() {
-        Thread activeThread = this.runningThread.get();
-        if (activeThread != null) {
-            Logger.debug("Interrupting active scheduled render thread");
-            activeThread.interrupt();
-        }
-    }
-
-    /**
      * Trigger the run task right now.
      *
      * <p>If a scheduled run is already running, it will be
@@ -152,6 +141,17 @@ public class RenderScheduler {
 
         // manually run
         return this.worldExecutor.submit(() -> run(true));
+    }
+
+    /**
+     * Capture and interrupt the thread safely without blocking execution.
+     */
+    private void interruptRunningThread() {
+        Thread activeThread = this.runningThread.get();
+        if (activeThread != null) {
+            Logger.debug("Interrupting active scheduled render thread");
+            activeThread.interrupt();
+        }
     }
 
     /**

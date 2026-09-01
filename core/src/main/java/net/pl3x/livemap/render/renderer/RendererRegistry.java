@@ -71,10 +71,10 @@ public class RendererRegistry extends Registry<Renderer> {
                     Unsafe.cast(map.getOrDefault("translucent-fluids", false))
                 );
             } catch (RuntimeException e) {
-                Logger.error("   &7&l-&r Unable to create renderer type %s".formatted(type.id()), e);
+                Logger.error("   &7&l-&r Unable to create renderer type %s".formatted(type.getId()), e);
                 continue;
             }
-            put(renderer.getType().id(), renderer);
+            put(renderer.getType().getId(), renderer);
         }
 
         Logger.info("   &7&l-&r Registered &3%d&r renderers".formatted(size()));

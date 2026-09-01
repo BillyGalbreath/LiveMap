@@ -28,6 +28,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import net.pl3x.livemap.render.heightmap.Heightmap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -131,11 +132,16 @@ public abstract class Renderer {
     /**
      * Represents a type of renderer.
      *
-     * @param id    Unique id for type
-     * @param clazz Renderer class this type represents
      */
-    public record Type(@NotNull String id, @NotNull Class<? extends Renderer> clazz) {
+    public static final class Type {
         private static final Map<String, Type> BY_NAME = new HashMap<>();
+
+        public static final Type BASIC = register("basic", BasicRenderer.class);
+        public static final Type BIOMES = register("biomes", BiomesRenderer.class);
+        public static final Type FANCY = register("fancy", FancyRenderer.class);
+        public static final Type FLOWERMAP = register("flowermap", FlowerMapRenderer.class);
+        public static final Type INHABITED = register("inhabited", InhabitedRenderer.class);
+        public static final Type NETHER_ROOF = register("nether_roof", NetherRoofRenderer.class);
 
         @NotNull
         private static Type register(@NotNull String name, @NotNull Class<? extends Renderer> clazz) {
@@ -144,12 +150,19 @@ public abstract class Renderer {
             return type;
         }
 
-        public static final Type BASIC = register("basic", BasicRenderer.class);
-        public static final Type BIOMES = register("biomes", BiomesRenderer.class);
-        public static final Type FANCY = register("fancy", FancyRenderer.class);
-        public static final Type FLOWERMAP = register("flowermap", FlowerMapRenderer.class);
-        public static final Type INHABITED = register("inhabited", InhabitedRenderer.class);
-        public static final Type NETHER_ROOF = register("nether_roof", NetherRoofRenderer.class);
+        private final @NotNull String id;
+        private final @NotNull Class<? extends Renderer> clazz;
+
+        /**
+         * Constructs a new instance of Type.
+         *
+         * @param id    Unique id for type
+         * @param clazz Renderer class this type represents
+         */
+        public Type(@NotNull String id, @NotNull Class<? extends Renderer> clazz) {
+            this.id = id;
+            this.clazz = clazz;
+        }
 
         /**
          * Get renderer type instance by name.
@@ -181,12 +194,50 @@ public abstract class Renderer {
             boolean translucentFluids
         ) {
             try {
-                return clazz()
+                return this.clazz
                     .getConstructor(String.class, String.class, Heightmap.class, int.class, boolean.class)
                     .newInstance(name, icon, heightmap, biomeBlend, translucentFluids);
             } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
+        }
+
+        /**
+         * Get unique id for this type.
+         *
+         * @return Unique type id
+         */
+        @NotNull
+        public String getId() {
+            return this.id;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (obj.getClass() != this.getClass()) {
+                return false;
+            }
+            var that = (Type) obj;
+            return Objects.equals(this.id, that.id)
+                && Objects.equals(this.clazz, that.clazz);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(this.id, this.clazz);
+        }
+
+        @Override
+        public String toString() {
+            return "Type["
+                + "id=" + this.id
+                + "]";
         }
     }
 }

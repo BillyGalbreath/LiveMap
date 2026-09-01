@@ -38,13 +38,6 @@ public class HttpdServer {
     private Undertow server;
 
     /**
-     * Constructs a new instance of HttpsServer.
-     */
-    public HttpdServer() {
-        // Explicit constructor to satisfy Javadoc and linter tools
-    }
-
-    /**
      * Start the web server.
      */
     public void start() {
@@ -58,7 +51,7 @@ public class HttpdServer {
         }
 
         try (ResourceManager resourceManager = new FriendlyUrlPathResourceManager()) {
-            Logger.LogFilter.HIDE_UNDERTOW_LOGS = true;
+            Logger.HIDE_UNDERTOW_LOGS = true;
 
             this.server = Undertow.builder()
                 .addHttpListener(Config.HTTPD_PORT, Config.HTTPD_BIND)
@@ -68,7 +61,7 @@ public class HttpdServer {
 
             this.server.start();
 
-            Logger.LogFilter.HIDE_UNDERTOW_LOGS = false;
+            Logger.HIDE_UNDERTOW_LOGS = false;
 
             Logger.info("&aInternal webserver started on &e%s&a:&e%s".formatted(Config.HTTPD_BIND, Config.HTTPD_PORT));
         } catch (IOException e) {
@@ -85,12 +78,12 @@ public class HttpdServer {
             return;
         }
 
-        Logger.LogFilter.HIDE_UNDERTOW_LOGS = true;
+        Logger.HIDE_UNDERTOW_LOGS = true;
 
         this.server.stop();
         this.server = null;
 
-        Logger.LogFilter.HIDE_UNDERTOW_LOGS = false;
+        Logger.HIDE_UNDERTOW_LOGS = false;
 
         Logger.info("&aInternal webserver stopped");
     }

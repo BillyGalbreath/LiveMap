@@ -33,9 +33,6 @@ import org.jetbrains.annotations.Nullable;
  */
 @SuppressWarnings("ClassCanBeRecord")
 public class Biome {
-    /**
-     * The default biome to use when no other biome exists. This is the same as the <code>minecraft:ocean</code> biome.
-     */
     public static final Biome DEFAULT = new Biome(0, "minecraft:default", 0x000070, 0x9E814D, 0x73A74E, 0x8EB971, 0x3F76E4, (x, z, def) -> def);
 
     private final int index;

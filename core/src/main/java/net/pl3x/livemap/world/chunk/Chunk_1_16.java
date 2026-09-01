@@ -27,17 +27,8 @@ package net.pl3x.livemap.world.chunk;
 import net.pl3x.livemap.world.region.Region;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Represents a chunk in the 1.16 - 1.18 (21w42a) format.
- */
-public final class Chunk_1_16 extends Chunk_1_13 {
-    /**
-     * Constructs a new instance of Chunk_1_16.
-     *
-     * @param region   Region chunk belongs to
-     * @param chunkNBT NBT data for chunk
-     */
-    public Chunk_1_16(@NotNull Region region, @NotNull Chunk_1_16.NBT chunkNBT) {
+final class Chunk_1_16 extends Chunk_1_13 {
+    Chunk_1_16(@NotNull Region region, @NotNull Chunk_1_16.NBT chunkNBT) {
         super(region, chunkNBT);
     }
 }
