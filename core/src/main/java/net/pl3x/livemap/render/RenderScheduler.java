@@ -39,10 +39,10 @@ import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.Logger;
 import net.pl3x.livemap.configuration.Config;
 import net.pl3x.livemap.render.iterator.RegionSpiralIterator;
-import net.pl3x.livemap.render.iterator.SpiralIterator;
 import net.pl3x.livemap.thread.WorkerThreadFactory;
 import net.pl3x.livemap.thread.WorkerThreadPool;
 import net.pl3x.livemap.world.World;
+import net.pl3x.livemap.world.WorldDispatcher;
 import net.pl3x.livemap.world.region.Region;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -200,23 +200,7 @@ public class RenderScheduler {
 
             debug("Checking worlds for pending regions");
             try {
-                // snapshot to prevent possible CME
-                List<World> worlds = List.copyOf(LiveMap.api().getWorldRegistry().values());
-
-                for (World world : worlds) {
-                    // check if current thread was interrupted
-                    if (cancelled.get() || Thread.currentThread().isInterrupted()) {
-                        break;
-                    }
-
-                    // protect against a world that was discarded midway through the loop
-                    if (world.isDiscarded()) {
-                        continue;
-                    }
-
-                    // safely process world
-                    this.renderWorld(world, cancelled);
-                }
+                renderWorlds(cancelled);
             } catch (Exception e) {
                 if (!cancelled.get()) {
                     Logger.error("Error during render task", e);
@@ -237,59 +221,70 @@ public class RenderScheduler {
     }
 
     /**
-     * Render world if there are any queued regions waiting to render.
+     * Render worlds if there are any queued regions waiting to render.
      *
-     * @param world     World to render
      * @param cancelled Cancellation token
      */
-    private void renderWorld(@NotNull World world, @NotNull AtomicBoolean cancelled) {
-        LongOpenHashSet pending = world.getPendingRegions().get();
-        if (pending.isEmpty()) {
-            debug("No regions pending for %s".formatted(world.getName()));
+    private void renderWorlds(@NotNull AtomicBoolean cancelled) {
+        // snapshot to prevent possible CME
+        List<World> worlds = List.copyOf(LiveMap.api().getWorldRegistry().values());
+        WorldDispatcher dispatcher = new WorldDispatcher();
+
+        for (World world : worlds) {
+            if (world.isDiscarded() || cancelled.get()) {
+                continue;
+            }
+
+            LongOpenHashSet pending = world.getPendingRegions().get();
+            if (pending.isEmpty()) {
+                debug("No regions pending for %s".formatted(world.getName()));
+                continue;
+            }
+
+            // create the iterator, passing the pending collection
+            RegionSpiralIterator spiral = new RegionSpiralIterator(world.getCenter(), pending,
+                () -> !world.isDiscarded() && !cancelled.get() && !Thread.currentThread().isInterrupted()
+            );
+
+            dispatcher.addQueue(world, spiral);
+        }
+
+        if (dispatcher.isEmpty()) {
             return;
         }
 
-        debug("Begin rendering %d pending region(s) for %s".formatted(pending.size(), world.getName()));
-
-        // create the iterator, passing the pending collection
-        SpiralIterator spiral = new RegionSpiralIterator(world.getCenter(),
-            pending, () -> !world.isDiscarded() && !cancelled.get() && !Thread.currentThread().isInterrupted()
-        );
+        int totalRegions = dispatcher.totalPending();
+        debug("Begin rendering %d pending region(s) across active worlds".formatted(totalRegions));
 
         // number of worker tasks to spawn (bounded by thread count and region count)
         int maxThreads = Math.max(1, Config.RENDER_THREADS);
-        int tasksToSpawn = Math.min(maxThreads, spiral.size());
+        int tasksToSpawn = Math.min(maxThreads, totalRegions);
 
-        // track active jobs so we can wait for this world to finish all queued regions
+        // track active jobs so we can wait for all queued regions to finish
         List<CompletableFuture<Void>> workers = new ArrayList<>(tasksToSpawn);
 
         // spawn the tasks
         for (int i = 0; i < tasksToSpawn; i++) {
             CompletableFuture<Void> worker = CompletableFuture.runAsync(() -> {
-                // drive the spiral loop sequentially on the worker thread
-                while (!world.isDiscarded() && !cancelled.get()) {
-                    long index;
-
-                    synchronized (spiral) {
-                        if (!spiral.hasNext()) {
-                            break;
-                        }
-                        index = spiral.nextLong();
+                while (!cancelled.get()) {
+                    WorldDispatcher.Ticket ticket = dispatcher.pollNext();
+                    if (ticket == null) {
+                        break;
                     }
 
                     try {
-                        boolean completed = this.renderRegion(world.getRegion(index), cancelled);
+                        boolean completed = this.renderRegion(ticket.world().getRegion(ticket.region()), cancelled);
 
                         // add back current region (incomplete render)
-                        if (!completed && !world.isDiscarded()) {
-                            world.getPendingRegions().add(index);
+                        if (!completed && !ticket.world().isDiscarded()) {
+                            ticket.world().getPendingRegions().add(ticket.region());
                         }
                     } catch (Exception e) {
                         if (!cancelled.get()) {
-                            Logger.error("Failed executing render task for region index: " + index, e);
-                        } else if (!world.isDiscarded()) {
+                            Logger.error("Failed rendering %s region %d".formatted(ticket.world().getName(), ticket.region()), e);
+                        } else if (!ticket.world().isDiscarded()) {
                             // add back current region (incomplete render)
-                            world.getPendingRegions().add(index);
+                            ticket.world().getPendingRegions().add(ticket.region());
                         }
                     }
                 }
@@ -303,16 +298,16 @@ public class RenderScheduler {
             CompletableFuture.allOf(workers.toArray(EMPTY_FUTURE_ARRAY)).join();
         } catch (Exception e) {
             if (!cancelled.get()) {
-                Logger.error("Error awaiting regional worker tasks in " + world.getName(), e);
+                Logger.error("Error awaiting multi-world render tasks", e);
             }
         }
 
         // return remaining regions that were never processed
-        if (cancelled.get() && !world.isDiscarded()) {
-            spiral.returnRemaining(world.getPendingRegions());
+        if (cancelled.get()) {
+            dispatcher.returnRemainingAll();
         }
 
-        debug("Finished rendering for %s".formatted(world.getName()));
+        debug("Finished rendering");
     }
 
     /**
