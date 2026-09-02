@@ -57,21 +57,13 @@ public class RenderScheduler {
         Logger.debug("[RenderScheduler] %s".formatted(message));
     }
 
-    private final WorkerThreadPool worldExecutor;
-    private final WorkerThreadPool regionExecutor;
+    private WorkerThreadPool worldExecutor;
+    private WorkerThreadPool regionExecutor;
     private ScheduledFuture<?> future;
 
     private final AtomicBoolean manualRunning = new AtomicBoolean(false);
     private final AtomicReference<Thread> runningThread = new AtomicReference<>(null);
     private final Object renderMutex = new Object();
-
-    /**
-     * Constructs a new instance of RenderScheduler.
-     */
-    public RenderScheduler() {
-        this.worldExecutor = WorkerThreadFactory.createExecutor("RendererScheduler");
-        this.regionExecutor = WorkerThreadFactory.createExecutor("RenderRegion", Config.RENDER_THREADS);
-    }
 
     /**
      * Start the render scheduler loop when the plugin loads.
@@ -82,6 +74,9 @@ public class RenderScheduler {
             Logger.warn("Render scheduler is already started. Cannot start again.");
             return;
         }
+
+        this.worldExecutor = WorkerThreadFactory.createExecutor("RendererScheduler");
+        this.regionExecutor = WorkerThreadFactory.createExecutor("RenderRegion", Config.RENDER_THREADS);
 
         // todo - maybe make this configurable?
         final int delay = 10; // wait 10 seconds before starting
@@ -119,15 +114,24 @@ public class RenderScheduler {
         interruptRunningThread();
 
         if (this.future != null) {
-            boolean result = this.future.cancel(true);
-            Future.State state = this.future.state();
-            if (result) {
-                debug("Successfully stopped render scheduler: %b".formatted(state));
-            } else {
-                debug("Could not stop render scheduler: %b".formatted(state));
-            }
+            this.future.cancel(true);
             this.future = null;
         }
+
+        if (this.regionExecutor != null) {
+            this.regionExecutor.shutdownNow();
+            this.regionExecutor = null;
+        }
+
+        if (this.worldExecutor != null) {
+            this.worldExecutor.shutdownNow();
+            this.worldExecutor = null;
+        }
+
+        this.manualRunning.set(false);
+        this.runningThread.set(null);
+
+        debug("Successfully stopped render scheduler.");
     }
 
     /**
@@ -143,6 +147,11 @@ public class RenderScheduler {
      */
     @Nullable
     public ForkJoinTask<?> trigger() {
+        // ensure executor is accepting new tasks
+        if (this.worldExecutor == null || this.worldExecutor.isShutdown()) {
+            return null;
+        }
+
         // atomically set manualRunning to true ONLY if it was false
         if (!this.manualRunning.compareAndSet(false, true)) {
             return null;
