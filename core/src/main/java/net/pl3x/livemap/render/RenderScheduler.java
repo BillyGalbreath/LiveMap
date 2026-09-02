@@ -24,13 +24,14 @@
 
 package net.pl3x.livemap.render;
 
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -51,6 +52,10 @@ import org.jetbrains.annotations.Nullable;
  */
 public class RenderScheduler {
     public static final CompletableFuture<?>[] EMPTY_FUTURE_ARRAY = new CompletableFuture[0];
+
+    private static void debug(@NotNull String message) {
+        Logger.debug("[RenderScheduler] %s".formatted(message));
+    }
 
     private final WorkerThreadPool worldExecutor;
     private final WorkerThreadPool regionExecutor;
@@ -78,6 +83,10 @@ public class RenderScheduler {
             return;
         }
 
+        // todo - maybe make this configurable?
+        final int delay = 10; // wait 10 seconds before starting
+        final int period = 60; // check every 60 seconds
+
         // start task to run every second
         this.future = this.worldExecutor.scheduleAtFixedRateAsync(
             () -> {
@@ -90,13 +99,16 @@ public class RenderScheduler {
                     Logger.error("Error running scheduled render task", e);
                 }
             },
-            10, // wait 10 seconds before starting
-            60, // check every 60 seconds
+            delay,
+            period,
             TimeUnit.SECONDS
         );
 
         Future.State state = this.future.state();
-        Logger.debug("Started render scheduler: %s".formatted(state.name()));
+        debug("Started render scheduler: %s".formatted(state.name()));
+        if (state == Future.State.RUNNING) {
+            debug("Waiting %d seconds then will repeat every %d seconds".formatted(delay, period));
+        }
     }
 
     /**
@@ -110,9 +122,9 @@ public class RenderScheduler {
             boolean result = this.future.cancel(true);
             Future.State state = this.future.state();
             if (result) {
-                Logger.debug("Successfully stopped render scheduler: %b".formatted(state));
+                debug("Successfully stopped render scheduler: %b".formatted(state));
             } else {
-                Logger.debug("Could not stop render scheduler: %b".formatted(state));
+                debug("Could not stop render scheduler: %b".formatted(state));
             }
             this.future = null;
         }
@@ -149,7 +161,7 @@ public class RenderScheduler {
     private void interruptRunningThread() {
         Thread activeThread = this.runningThread.get();
         if (activeThread != null) {
-            Logger.debug("Interrupting active scheduled render thread");
+            debug("Interrupting active scheduled render thread");
             activeThread.interrupt();
         }
     }
@@ -169,7 +181,7 @@ public class RenderScheduler {
 
         // lock strictly the execution context, keeping trigger() unblocked
         synchronized (this.renderMutex) {
-            Logger.debug("Checking worlds for pending regions");
+            debug("Checking worlds for pending regions");
             try {
                 // snapshot to prevent possible CME
                 List<World> worlds = List.copyOf(LiveMap.api().getWorldRegistry().values());
@@ -211,12 +223,13 @@ public class RenderScheduler {
      * @param world World to render
      */
     private void renderWorld(@NotNull World world) {
-        Set<Long> pending = world.getPendingRegions();
+        LongOpenHashSet pending = world.getPendingRegions().get();
         if (pending.isEmpty()) {
+            debug("No regions pending for %s".formatted(world.getName()));
             return;
         }
 
-        Logger.debug("Begin rendering %d pending region(s) for %s".formatted(pending.size(), world.getName()));
+        debug("Begin rendering %d pending region(s) for %s".formatted(pending.size(), world.getName()));
 
         // track active jobs so we can wait for this world to finish all queued regions
         List<CompletableFuture<Void>> runningRenders = new ArrayList<>();
@@ -229,7 +242,7 @@ public class RenderScheduler {
 
         // drive the spiral loop sequentially on the world thread
         while (spiral.hasNext()) {
-            long index = spiral.next();
+            long index = spiral.nextLong();
 
             // atomically remove index from queue or skip if it was not queued
             if (!pending.remove(index)) {
@@ -261,7 +274,7 @@ public class RenderScheduler {
             Logger.error("Error awaiting regional worker tasks in " + world.getName(), e);
         }
 
-        Logger.debug("Finished rendering for %s".formatted(world.getName()));
+        debug("Finished rendering for %s".formatted(world.getName()));
     }
 
     /**
@@ -271,6 +284,9 @@ public class RenderScheduler {
      * @param parentThread The parent thread that spawned this render
      */
     private void renderRegion(@NotNull Region region, @NotNull Thread parentThread) {
+        // random obtained here to prevent a bajillion method calls deeper in the process
+        ThreadLocalRandom rand = ThreadLocalRandom.current();
+
         for (int chunkX = 0; chunkX < 32; chunkX++) {
             for (int chunkZ = 0; chunkZ < 32; chunkZ++) {
                 // check world state and interruptions, for instant responsiveness

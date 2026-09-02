@@ -27,7 +27,6 @@ package net.pl3x.livemap.world.block;
 import java.util.Objects;
 import net.pl3x.livemap.configuration.BlocksConfig;
 import net.pl3x.livemap.configuration.ColorsConfig;
-import net.pl3x.livemap.render.image.Colors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,8 +69,8 @@ public class Block {
         this.id = id;
 
         int color = ColorsConfig.BLOCK_COLORS.getOrDefault(id, vanilla);
-        this.color = color == 0 ? 0 : Colors.alpha(0xFF, color);
-        this.vanilla = vanilla == 0 ? 0 : Colors.alpha(0xFF, vanilla);
+        this.color = color == 0 ? 0 : (color | 0xFF000000);
+        this.vanilla = vanilla == 0 ? 0 : (vanilla | 0xFF000000);
 
         int flat = BlocksConfig.BLOCKS_FLAT.contains(id) ? FLAG_FLAT : 0;
         int air = BlocksConfig.BLOCKS_AIR.contains(id) ? FLAG_AIR : 0;

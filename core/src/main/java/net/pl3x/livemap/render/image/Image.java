@@ -22,49 +22,42 @@
  * SOFTWARE.
  */
 
-package net.pl3x.livemap.render.iterator;
+package net.pl3x.livemap.render.image;
 
-import java.util.function.Supplier;
-import net.pl3x.livemap.marker.Point;
-import net.pl3x.livemap.world.region.Region;
+import java.util.function.Function;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * An iterator that spirals around a center point in a clockwise pattern.
- * <pre>
- *   30 31 32 33 34 35 36
- *   29 12 13 14 15 16 37
- *   28 11 02 03 04 17 38
- *   27 10 01 00 05 18 39
- *   26 09 08 07 06 19 40
- *   25 24 23 22 21 20 41
- *   48 47 46 45 44 43 42
- * </pre>
+ * Represents a collection of pixel data for an image in memory.
  */
-public class RegionSpiralIterator extends SpiralIterator {
+public interface Image {
+    int SIZE = 512;
+    int MASK = 511;
+
     /**
-     * Constructs a new SpiralIterator for regions at the given center.
+     * Get pixel index from pixel coordinates.
      *
-     * @param center  Center point
-     * @param hasNext Supplier to determine if there is a next element
+     * @param x X pixel
+     * @param z Z pixel
+     * @return Index of pixel
      */
-    public RegionSpiralIterator(@NotNull Point center, @NotNull Supplier<Boolean> hasNext) {
-        this(center.getX(), center.getZ(), hasNext);
+    default int getIndex(int x, int z) {
+        return ((z & MASK) << 9) + (x & MASK);
     }
 
     /**
-     * Constructs a new SpiralIterator for regions at the given center.
+     * Represents a function that accepts one argument and produces a non-null result.
      *
-     * @param regionX Center x coordinate
-     * @param regionZ Center z coordinate
-     * @param hasNext Supplier to determine if there is a next element
+     * <p>This is a {@link java.util.function functional interface}
+     * whose functional method is {@link #apply(Object)}.
+     *
+     * @param <T> the type of the input to the function
+     * @param <R> the type of the non-null result of the function
      */
-    public RegionSpiralIterator(int regionX, int regionZ, @NotNull Supplier<Boolean> hasNext) {
-        super(regionX, regionZ, hasNext);
-    }
-
-    @Override
-    protected long getCurrentIndex() {
-        return Region.pack(getCurrentX(), getCurrentZ());
+    @FunctionalInterface
+    interface ImageFunction<T, R> extends Function<T, R> {
+        @Override
+        @NotNull
+        R apply(@NotNull T t);
     }
 }

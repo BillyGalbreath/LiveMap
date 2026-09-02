@@ -24,7 +24,7 @@
 
 package net.pl3x.livemap.render.iterator;
 
-import java.util.Iterator;
+import it.unimi.dsi.fastutil.longs.LongIterator;
 import java.util.function.Supplier;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,7 +40,7 @@ import org.jetbrains.annotations.NotNull;
  *   48 47 46 45 44 43 42
  * </pre>
  */
-public abstract class SpiralIterator implements Iterator<Long> {
+public abstract class SpiralIterator implements LongIterator {
     private final Supplier<Boolean> hasNext;
 
     private int x;
@@ -70,8 +70,7 @@ public abstract class SpiralIterator implements Iterator<Long> {
      *
      * @return Current index
      */
-    @NotNull
-    protected abstract Long getCurrentIndex();
+    protected abstract long getCurrentIndex();
 
     /**
      * Get the current X coordinate.
@@ -97,10 +96,9 @@ public abstract class SpiralIterator implements Iterator<Long> {
     }
 
     @Override
-    @NotNull
-    public Long next() {
+    public long nextLong() {
         // get current index
-        final Long index = getCurrentIndex();
+        final long index = getCurrentIndex();
 
         // set up for the next index
         switch (this.direction) {

@@ -4,9 +4,8 @@ livemap = "4.0.0"
 minecraft = "26.2"
 paper = "26.2.build.+"
 
-bluenbt="3.5.1"               # https://github.com/BlueMap-Minecraft/BlueNBT
+bluenbt = "3.5.1"             # https://github.com/BlueMap-Minecraft/BlueNBT
 bstats = "3.2.1"              # https://github.com/Bastian/bstats-metrics/
-caffeine = "3.2.4"            # https://github.com/ben-manes/caffeine
 fix-javadoc = "1.19"          # https://github.com/mfnalex/gradle-fix-javadoc-plugin
 lz4 = "1.11.2"                # https://github.com/yawkat/lz4-java
 node = "7.1.0"                # https://github.com/node-gradle/gradle-node-plugin
@@ -17,7 +16,7 @@ undertow = "2.4.1.Final"      # https://github.com/undertow-io/undertow
 
 # make these match versions Paper API uses
 # https://github.com/PaperMC/Paper/blob/main/paper-api/build.gradle.kts
-adventure="5.2.0"
+adventure = "5.2.0"
 annotations = "26.0.2"
 apache = "3.20.0"
 asm = "9.9.1"
@@ -45,7 +44,6 @@ asm = { group = "org.ow2.asm", name = "asm-tree", version.ref = "asm" }
 bluenbt = { module = "de.bluecolored:bluenbt", version.ref = "bluenbt" }
 brigadier = { group = "com.mojang", name = "brigadier", version.ref = "brigadier" }
 bstats = { group = "org.bstats", name = "bstats-base", version.ref = "bstats" }
-caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version.ref = "caffeine" }
 fastutil = { group = "it.unimi.dsi", name = "fastutil", version.ref = "fastutil" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }

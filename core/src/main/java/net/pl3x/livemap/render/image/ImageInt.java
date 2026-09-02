@@ -22,32 +22,58 @@
  * SOFTWARE.
  */
 
-package net.pl3x.livemap.thread;
-
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ForkJoinWorkerThread;
-import java.util.concurrent.atomic.AtomicInteger;
-import net.pl3x.livemap.LiveMap;
-import org.jetbrains.annotations.NotNull;
+package net.pl3x.livemap.render.image;
 
 /**
- * A thread managed by a {@link WorkerThreadFactory}.
+ * Represents a collection of pixel integer data for an image in memory.
  */
-public class WorkerThread extends ForkJoinWorkerThread {
-    private static final AtomicInteger COUNTER = new AtomicInteger(0);
+public interface ImageInt extends Image {
+    /**
+     * Get value at specified pixel.
+     *
+     * @param x X pixel
+     * @param z Z pixel
+     * @return Requested value
+     */
+    default int getPixel(int x, int z) {
+        return getPixel(getIndex(x, z));
+    }
 
     /**
-     * Constructs a new instance of WorkerThread.
+     * Get value at specified pixel.
      *
-     * @param pool Executor pool creating this thread
-     * @param name Name to give thread
+     * @param index Pixel index
+     * @return Requested value
      */
-    protected WorkerThread(@NotNull ForkJoinPool pool, @NotNull String name) {
-        super(pool);
-        setContextClassLoader(LiveMap.class.getClassLoader());
-        setName((pool.getParallelism() > 1 ? "LiveMap-%s-%d" : "LiveMap-%s")
-            .formatted(name, COUNTER.incrementAndGet())
-        );
-        setDaemon(true); // don't block server shutdown
+    default int getPixel(int index) {
+        return getPixels()[index];
     }
+
+    /**
+     * Set pixel to specified value.
+     *
+     * @param x     X pixel
+     * @param z     Z pixel
+     * @param value Value to set
+     */
+    default void setPixel(int x, int z, int value) {
+        setPixel(getIndex(x, z), value);
+    }
+
+    /**
+     * Set pixel to specified value.
+     *
+     * @param index Pixel index
+     * @param value Value to set
+     */
+    default void setPixel(int index, int value) {
+        getPixels()[index] = value;
+    }
+
+    /**
+     * Get direct access to the raw pixel array.
+     *
+     * @return Raw pixel array
+     */
+    int[] getPixels();
 }

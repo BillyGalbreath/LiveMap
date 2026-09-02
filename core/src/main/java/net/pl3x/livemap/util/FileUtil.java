@@ -164,4 +164,19 @@ public final class FileUtil {
             throw new RuntimeException(e);
         }
     }
+
+    /**
+     * Create directory, including any parent directories needed.
+     *
+     * @param dirPath Directory path
+     */
+    public static void createDirs(@NotNull Path dirPath) {
+        if (!Files.exists(dirPath)) {
+            try {
+                Files.createDirectories(dirPath);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
 }

@@ -24,15 +24,21 @@
 
 package net.pl3x.livemap.world.chunk;
 
+import de.bluecolored.bluenbt.BlueNBT;
 import de.bluecolored.bluenbt.NBTName;
+import de.bluecolored.bluenbt.NamingStrategy;
+import de.bluecolored.bluenbt.TypeToken;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.util.Objects;
+import net.pl3x.livemap.util.Unsafe;
 import net.pl3x.livemap.world.World;
 import net.pl3x.livemap.world.biome.Biome;
 import net.pl3x.livemap.world.block.BlockState;
+import net.pl3x.livemap.world.block.BlockStateDeserializer;
 import net.pl3x.livemap.world.region.Region;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -296,6 +302,94 @@ public abstract class Chunk {
 
             @NBTName("BlockLight")
             byte[] light = EMPTY_BYTE_ARRAY;
+        }
+    }
+
+    /**
+     * The loader of chunks.
+     *
+     * @param <NBT> Chunk nbt type
+     */
+    public static final class Loader<NBT extends Chunk.NBT> {
+        private static final Loader<?>[] LOADERS = new Loader[] {
+            new Loader<>(EmptyChunk::new),
+            new Loader<>(Chunk_1_20::new),
+            new Loader<>(Chunk_1_18::new),
+            new Loader<>(Chunk_1_16::new),
+            new Loader<>(Chunk_1_15::new),
+            new Loader<>(Chunk_1_13::new)
+        };
+
+        private static final BlueNBT BLUENBT = new BlueNBT();
+
+        static {
+            BLUENBT.setNamingStrategy(NamingStrategy.lowerCaseWithDelimiter("_"));
+            BLUENBT.register(TypeToken.of(BlockState.class), new BlockStateDeserializer());
+        }
+
+        /**
+         * Get chunk loader for specified chunk version.
+         *
+         * <p>Chunk versions with a loader:<br/>
+         * &emsp;&bull; {@code 3837} <em>(1.20.5)</em> - block entity structure and component overhaul<br/>
+         * &emsp;&bull; {@code 2834} <em>(1.18)</em> - larger and configurable world height<br/>
+         * &emsp;&bull; {@code 2529} <em>(1.16)</em> - unstretched bit packing (blockstates and heightmaps)<br/>
+         * &emsp;&bull; {@code 2203} <em>(1.15)</em> - 3d biomes<br/>
+         * &emsp;&bull; {@code 1451} <em>(1.13)</em> - the flattening
+         *
+         * <p>This method will return the first loader greater than or equal to the specified {@code version}.
+         *
+         * <p>Any version less than {@code 1451} will return a loader that only "loads" {@link EmptyChunk}.
+         *
+         * @param version Chunk version
+         * @param <NBT>   Type of chunk nbt
+         * @return Chunk loader
+         * @see <a href="https://minecraft.wiki/w/Data_version#List_of_data_versions">https://minecraft.wiki/w/Data_version#List_of_data_versions</a>
+         */
+        @NotNull
+        public static <NBT extends Chunk.NBT> Loader<NBT> getForVersion(int version) {
+            // @formatter:off
+            return Unsafe.cast(Loader.LOADERS[
+                (version >= 3837) ? 1
+                    : (version >= 2834) ? 2
+                    : (version >= 2529) ? 3
+                    : (version >= 2203) ? 4
+                    : (version >= 1451) ? 5
+                    :                     0
+                ]);
+            // @formatter:on
+        }
+
+        private final TypeToken<NBT> type;
+        private final Ctor<NBT> ctor;
+
+        private Loader(@NotNull Ctor<NBT> ctor) {
+            this.type = new TypeToken<>() {
+            };
+            this.ctor = ctor;
+        }
+
+        /**
+         * Load input stream into a chunk for specified region.
+         *
+         * @param region Owning region
+         * @param in     Input stream of chunk payload data
+         * @return Newly loaded chunk
+         * @throws IOException if an I/O error occurs
+         */
+        @NotNull
+        public Chunk load(@NotNull Region region, @NotNull InputStream in) throws IOException {
+            try {
+                return this.ctor.create(region, BLUENBT.read(in, this.type));
+            } catch (Exception e) {
+                throw new IOException("Failed to parse chunk-data (%s): %s"
+                    .formatted(this.type.getRawType().getSimpleName(), e), e);
+            }
+        }
+
+        private interface Ctor<NBT extends Chunk.NBT> {
+            @NotNull
+            Chunk create(@NotNull Region region, @NotNull NBT nbt);
         }
     }
 }

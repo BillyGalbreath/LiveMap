@@ -44,7 +44,6 @@ import net.pl3x.livemap.world.block.BlockStateDeserializer;
 import net.pl3x.livemap.world.chunk.Chunk;
 import net.pl3x.livemap.world.chunk.CompressionType;
 import net.pl3x.livemap.world.chunk.EmptyChunk;
-import net.pl3x.livemap.world.chunk.Loader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,6 +92,7 @@ public class Region extends Point {
         return (int) (packed >>> 32);
     }
 
+    private final long packed;
     private final World world;
     private final File file;
 
@@ -107,22 +107,13 @@ public class Region extends Point {
      * @param packed Packed region coordinates
      */
     public Region(@NotNull World world, long packed) {
-        this(world, unpackX(packed), unpackZ(packed));
-    }
+        super(unpackX(packed), unpackZ(packed));
 
-    /**
-     * Constructs a new instance of Region.
-     *
-     * @param world   Owning world
-     * @param regionX X coordinate
-     * @param regionZ Z coordinate
-     */
-    public Region(@NotNull World world, int regionX, int regionZ) {
-        super(regionX, regionZ);
+        this.packed = packed;
         this.world = world;
-        this.file = this.world.getRegionsDir().resolve("r.%d.%d.mca".formatted(regionX, regionZ)).toFile();
+        this.file = this.world.getRegionsDir().resolve("r.%d.%d.mca".formatted(getX(), getZ())).toFile();
 
-        this.hash = Objects.hash(world, regionX, regionZ);
+        this.hash = Objects.hash(world, getX(), getZ());
     }
 
     /**
@@ -143,6 +134,15 @@ public class Region extends Point {
     @NotNull
     public File getFile() {
         return this.file;
+    }
+
+    /**
+     * Get packed coordinate index for this region.
+     *
+     * @return Packed index
+     */
+    public long getIndex() {
+        return this.packed;
     }
 
     /**
@@ -178,7 +178,7 @@ public class Region extends Point {
      *
      * @throws IOException if an I/O error occurs
      */
-    public void loadChunks() throws IOException {
+    public void loadAllChunks() throws IOException {
         if (!getFile().exists() || getFile().length() <= 0) {
             return;
         }
@@ -238,7 +238,7 @@ public class Region extends Point {
 
         // we need the chunk version to find correct loader
         int version = Chunk.getChunkDataVersion(raf, compression);
-        Loader<Chunk.NBT> loader = Loader.getForVersion(version);
+        Chunk.Loader<Chunk.NBT> chunkLoader = Chunk.Loader.getForVersion(version);
 
         // put cursor back to after compression type byte
         raf.seek(offset + 5);
@@ -249,7 +249,7 @@ public class Region extends Point {
             InputStream bis = new BufferedInputStream(cis)
         ) {
             // load the chunk
-            Chunk chunk = loader.load(this, bis);
+            Chunk chunk = chunkLoader.load(this, bis);
 
             // we only want full chunks
             return chunk.isFull() ? chunk : new EmptyChunk(this);

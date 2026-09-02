@@ -25,6 +25,7 @@
 package net.pl3x.livemap;
 
 import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
 import net.pl3x.livemap.command.argument.ArgumentParser;
 import net.pl3x.livemap.configuration.BlocksConfig;
 import net.pl3x.livemap.configuration.ColorsConfig;
@@ -34,6 +35,8 @@ import net.pl3x.livemap.httpd.HttpdServer;
 import net.pl3x.livemap.player.PlayerRegistry;
 import net.pl3x.livemap.render.RenderScheduler;
 import net.pl3x.livemap.scheduler.TickScheduler;
+import net.pl3x.livemap.thread.WorkerThreadFactory;
+import net.pl3x.livemap.thread.WorkerThreadPool;
 import net.pl3x.livemap.util.FileUtil;
 import net.pl3x.livemap.world.WorldRegistry;
 import net.pl3x.livemap.world.block.BlockRegistry;
@@ -57,6 +60,8 @@ public interface LiveMap {
         private static TickScheduler tickScheduler;
 
         private static Metrics metrics;
+
+        private static WorkerThreadPool cacheMaintenance;
 
         private Provider() {
         }
@@ -228,9 +233,8 @@ public interface LiveMap {
      * Enables LiveMap.
      */
     default void enable() {
-        // main configs
+        // load main config before anything (for the banner toggle)
         Config.reload();
-        Lang.reload();
 
         if (Config.STARTUP_BANNER) {
             Logger.info("   &3╻  ╻╻ ╻┏━╸&9┏┳┓┏━┓┏━┓");
@@ -241,6 +245,9 @@ public interface LiveMap {
             Logger.info("&b%22s".formatted("Running %s".formatted(getPlatformName())));
             Logger.info("&c%22s".formatted("v%s".formatted(getPlatformVersion())));
         }
+
+        // load language config
+        Lang.reload();
 
         // calculate directories
         Path dir = Path.of(Config.WEB_DIR);
@@ -272,6 +279,15 @@ public interface LiveMap {
         // start tasks
         getRenderScheduler().start();
 
+        Provider.cacheMaintenance = WorkerThreadFactory.createExecutor("CacheMaintenance");
+        Provider.cacheMaintenance.scheduleAtFixedRate(() -> {
+            // iterate all worlds
+            getWorldRegistry().forEach((_, world) -> {
+                Logger.debug("Cleaning up region cache on %s".formatted(world.getName()));
+                world.getRegionCache().cleanUp();
+            });
+        }, 5, 5, TimeUnit.MINUTES);
+
         // bStats metrics
         Provider.metrics = new Metrics();
 
@@ -292,6 +308,11 @@ public interface LiveMap {
         if (Provider.renderScheduler != null) {
             Provider.renderScheduler.stop();
             Provider.renderScheduler = null;
+        }
+
+        if (Provider.cacheMaintenance != null) {
+            Provider.cacheMaintenance.shutdown();
+            Provider.cacheMaintenance = null;
         }
 
         // stop our tick scheduler

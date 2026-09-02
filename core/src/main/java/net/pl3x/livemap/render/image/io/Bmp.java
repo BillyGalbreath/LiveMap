@@ -22,32 +22,41 @@
  * SOFTWARE.
  */
 
-package net.pl3x.livemap.thread;
+package net.pl3x.livemap.render.image.io;
 
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ForkJoinWorkerThread;
-import java.util.concurrent.atomic.AtomicInteger;
-import net.pl3x.livemap.LiveMap;
+import java.awt.image.BufferedImage;
+import java.nio.file.Path;
+import net.pl3x.livemap.render.image.Tile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * A thread managed by a {@link WorkerThreadFactory}.
+ * IO utils for Basic Metabolic Panel (BMP) images.
  */
-public class WorkerThread extends ForkJoinWorkerThread {
-    private static final AtomicInteger COUNTER = new AtomicInteger(0);
+public final class Bmp extends IO.Type {
+    Bmp() {
+        super("bmp");
+    }
 
-    /**
-     * Constructs a new instance of WorkerThread.
-     *
-     * @param pool Executor pool creating this thread
-     * @param name Name to give thread
-     */
-    protected WorkerThread(@NotNull ForkJoinPool pool, @NotNull String name) {
-        super(pool);
-        setContextClassLoader(LiveMap.class.getClassLoader());
-        setName((pool.getParallelism() > 1 ? "LiveMap-%s-%d" : "LiveMap-%s")
-            .formatted(name, COUNTER.incrementAndGet())
-        );
-        setDaemon(true); // don't block server shutdown
+    @Override
+    public @NotNull BufferedImage createBuffer() {
+        // bmp does not support transparency
+        return new BufferedImage(Tile.SIZE, Tile.SIZE, BufferedImage.TYPE_INT_RGB);
+    }
+
+    @Override
+    public int color(int argb) {
+        // bmp does not support transparency
+        return argb & 0xFFFFFF;
+    }
+
+    @Override
+    @Nullable
+    public BufferedImage read(@NotNull Path path) {
+        return null;
+    }
+
+    @Override
+    public void write(@NotNull Path path, @NotNull BufferedImage buffer) {
     }
 }

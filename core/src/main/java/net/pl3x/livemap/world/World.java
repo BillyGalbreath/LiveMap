@@ -24,8 +24,6 @@
 
 package net.pl3x.livemap.world;
 
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -37,9 +35,7 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import net.pl3x.livemap.LiveMap;
@@ -48,6 +44,8 @@ import net.pl3x.livemap.configuration.Lang;
 import net.pl3x.livemap.configuration.WorldConfig;
 import net.pl3x.livemap.marker.Point;
 import net.pl3x.livemap.render.renderer.RendererRegistry;
+import net.pl3x.livemap.util.LongDoubleBuffer;
+import net.pl3x.livemap.util.LongLoadingCache;
 import net.pl3x.livemap.world.biome.BiomeRegistry;
 import net.pl3x.livemap.world.region.Region;
 import org.jetbrains.annotations.NotNull;
@@ -57,6 +55,9 @@ import org.jetbrains.annotations.Nullable;
  * Represents a renderable world.
  */
 public abstract class World {
+    private static final Runnable CACHE_CLEANUP = () -> LiveMap.api()
+        .getWorldRegistry().forEach((_, world) -> world.regionCache.cleanUp());
+
     private final String name;
     private final long seed;
     private final Point spawn;
@@ -67,8 +68,8 @@ public abstract class World {
 
     private final WorldConfig config;
 
-    private final LoadingCache<Long, Region> regionCache;
-    private final Set<Long> pendingRegions;
+    private final LongLoadingCache<Region> regionCache;
+    private final LongDoubleBuffer pendingRegions = new LongDoubleBuffer();
 
     private final AtomicBoolean discarded = new AtomicBoolean(false);
 
@@ -86,19 +87,16 @@ public abstract class World {
         this.seed = seed;
         this.spawn = spawn;
         this.type = type;
+
         this.regionDir = regionsDir;
         this.tilesDir = LiveMap.api().getTilesDir().resolve(name.replace(":", "-"));
 
         this.config = new WorldConfig(this);
 
-        // try to hold loaded regions in memory for up to 1 minute
-        this.regionCache = Caffeine.newBuilder()
-            .expireAfterWrite(1, TimeUnit.MINUTES)
-            .maximumSize(100)
-            .build(index -> new Region(this, index));
-
-        // region indexes waiting to be rendered
-        this.pendingRegions = ConcurrentHashMap.newKeySet();
+        // hold loaded regions in memory for up to 1 minute (max of 100 at any given time)
+        this.regionCache = new LongLoadingCache<>(
+            TimeUnit.MINUTES.toMillis(1), 100,
+            index -> new Region(this, index));
     }
 
     /**
@@ -186,8 +184,18 @@ public abstract class World {
      * @return The pending regions
      */
     @NotNull
-    public Set<Long> getPendingRegions() {
+    public LongDoubleBuffer getPendingRegions() {
         return this.pendingRegions;
+    }
+
+    /**
+     * Get this world's region cache.
+     *
+     * @return Region cache
+     */
+    @NotNull
+    public LongLoadingCache<Region> getRegionCache() {
+        return this.regionCache;
     }
 
     /**
@@ -373,7 +381,8 @@ public abstract class World {
 
         Logger.debug("World discarded, clearing data structures.");
 
-        getPendingRegions().clear();
+        this.regionCache.invalidateAll();
+        this.pendingRegions.clear();
         getBiomeRegistry().clear();
         getRendererRegistry().clear();
     }

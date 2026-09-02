@@ -25,7 +25,6 @@ dependencies {
   // include into livemap jar
   implementation(libs.bstats)
   implementation(libs.bundles.adventure)
-  implementation(libs.caffeine)
   implementation(libs.bluenbt)
   implementation(libs.undertow)
 
@@ -64,7 +63,6 @@ tasks {
     )
 
     arrayOf(
-      "com.github.benmanes.caffeine",
       "com.google.errorprone.annotations",
       "de.bluecolored.bluenbt",
       "io.smallrye",
@@ -108,7 +106,6 @@ tasks {
       "https://repo.bluecolored.de/javadoc/releases/de/bluecolored/bluenbt/${libs.versions.bluenbt.get()}/raw/",
       "https://docs.pl3x.net/brigadier",
       "https://javadoc.io/doc/org.bstats/bstats-bukkit/${libs.versions.bstats.get()}/",
-      "https://javadoc.io/doc/com.github.ben-manes.caffeine/caffeine/${libs.versions.caffeine.get()}/", // named modules
       "https://javadoc.io/doc/it.unimi.dsi/fastutil/${libs.versions.fastutil.get()}/",
       "https://javadoc.io/doc/com.google.code.gson/gson/${libs.versions.gson.get()}/", // named modules
       "https://javadoc.io/doc/com.google.guava/guava/${libs.versions.guava.get()}/",

@@ -29,6 +29,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.random.RandomGenerator;
 import javax.imageio.ImageIO;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.util.Mathf;
@@ -67,7 +68,7 @@ public final class Colors {
     static {
         for (int i = 0; i < 8; i++) {
             BLOCK_WHEAT_COLOR[i] = Colors.lerpRGB(0x007C00, 0xDCBB65, (i + 1) / 8F);
-            BLOCK_STEM_COLOR[i] = rgb(i << 5, 0xFF - (i << 3), i << 2);
+            BLOCK_STEM_COLOR[i] = ((i << 5) << 16) | ((0xFF - (i << 3)) << 8) | (i << 2);
         }
         Path imagesDir = LiveMap.api().getWebDir().resolve("images");
         int[] grass, dryFoliage, foliage;
@@ -100,82 +101,6 @@ public final class Colors {
     }
 
     /**
-     * Combine channels into rgb color.
-     *
-     * @param red   Red channel
-     * @param green Green channel
-     * @param blue  Blue channel
-     * @return Color
-     */
-    public static int rgb(int red, int green, int blue) {
-        return red << 16 | green << 8 | blue;
-    }
-
-    /**
-     * Combine channels into argb color.
-     *
-     * @param alpha Alpha channel
-     * @param red   Red channel
-     * @param green Green channel
-     * @param blue  Blue channel
-     * @return Color
-     */
-    public static int argb(int alpha, int red, int green, int blue) {
-        return alpha(alpha, rgb(red, green, blue));
-    }
-
-    /**
-     * Set alpha channel of color.
-     *
-     * @param alpha Alpha to set
-     * @param argb  Color to set
-     * @return Color with specified alpha
-     */
-    public static int alpha(int alpha, int argb) {
-        return alpha << 24 | argb & 0xFFFFFF;
-    }
-
-    /**
-     * Get color's alpha channel.
-     *
-     * @param argb Color
-     * @return Color's alpha channel
-     */
-    public static int alpha(int argb) {
-        return argb >> 24 & 0xFF;
-    }
-
-    /**
-     * Get color's red channel.
-     *
-     * @param argb Color
-     * @return Color's red channel
-     */
-    public static int red(int argb) {
-        return argb >> 16 & 0xFF;
-    }
-
-    /**
-     * Get color's green channel.
-     *
-     * @param argb Color
-     * @return Color's green channel
-     */
-    public static int green(int argb) {
-        return argb >> 8 & 0xFF;
-    }
-
-    /**
-     * Get color's blue channel.
-     *
-     * @param argb Color
-     * @return Color's blue channel
-     */
-    public static int blue(int argb) {
-        return argb & 0xFF;
-    }
-
-    /**
      * Get the lerp using RGB color space.
      *
      * @param color0 Start color
@@ -193,11 +118,9 @@ public final class Colors {
         if (delta <= 0F) {
             return color0;
         }
-        return rgb(
-            (int) Mathf.lerp(red(color0), red(color1), delta),
-            (int) Mathf.lerp(green(color0), green(color1), delta),
-            (int) Mathf.lerp(blue(color0), blue(color1), delta)
-        );
+        return ((int) Mathf.lerp(color0 >> 16 & 0xFF, color1 >> 16 & 0xFF, delta) << 16)
+            | ((int) Mathf.lerp(color0 >> 8 & 0xFF, color1 >> 8 & 0xFF, delta) << 8)
+            | ((int) Mathf.lerp(color0 & 0xFF, color1 & 0xFF, delta));
     }
 
     /**
@@ -218,12 +141,10 @@ public final class Colors {
         if (delta <= 0F) {
             return color0;
         }
-        return argb(
-            (int) Mathf.lerp(alpha(color0), alpha(color1), delta),
-            (int) Mathf.lerp(red(color0), red(color1), delta),
-            (int) Mathf.lerp(green(color0), green(color1), delta),
-            (int) Mathf.lerp(blue(color0), blue(color1), delta)
-        );
+        return ((int) Mathf.lerp(color0 >>> 24, color1 >>> 24, delta) << 24)
+            | ((int) Mathf.lerp(color0 >> 16 & 0xFF, color1 >> 16 & 0xFF, delta) << 16)
+            | ((int) Mathf.lerp(color0 >> 8 & 0xFF, color1 >> 8 & 0xFF, delta) << 8)
+            | ((int) Mathf.lerp(color0 & 0xFF, color1 & 0xFF, delta));
     }
 
     /**
@@ -248,17 +169,15 @@ public final class Colors {
      * @return The lerped color
      */
     public static int lerpHSB(int color0, int color1, float delta, boolean useShortestAngle) {
-        float[] hsb0 = Color.RGBtoHSB(red(color0), green(color0), blue(color0), null);
-        float[] hsb1 = Color.RGBtoHSB(red(color1), green(color1), blue(color1), null);
-        return alpha(
-            (int) Mathf.lerp(alpha(color0), alpha(color1), delta),
-            Color.HSBtoRGB(
-                useShortestAngle
-                    ? lerpShortestAngle(hsb0[0], hsb1[0], delta)
-                    : Mathf.lerp(hsb0[0], hsb1[0], delta),
-                Mathf.lerp(hsb0[1], hsb1[1], delta),
-                Mathf.lerp(hsb0[2], hsb1[2], delta)
-            )
+        float[] hsb0 = Color.RGBtoHSB(color0 >> 16 & 0xFF, color0 >> 8 & 0xFF, color0 & 0xFF, null);
+        float[] hsb1 = Color.RGBtoHSB(color1 >> 16 & 0xFF, color1 >> 8 & 0xFF, color1 & 0xFF, null);
+        return ((int) Mathf.lerp(color0 >>> 24, color1 >>> 24, delta) << 24)
+            | Color.HSBtoRGB(
+            useShortestAngle
+                ? lerpShortestAngle(hsb0[0], hsb1[0], delta)
+                : Mathf.lerp(hsb0[0], hsb1[0], delta),
+            Mathf.lerp(hsb0[1], hsb1[1], delta),
+            Mathf.lerp(hsb0[2], hsb1[2], delta)
         );
     }
 
@@ -280,11 +199,9 @@ public final class Colors {
         if (delta <= 0F) {
             return color0;
         }
-        return rgb(
-            (int) Mathf.inverseLerp(red(color0), red(color1), delta),
-            (int) Mathf.inverseLerp(green(color0), green(color1), delta),
-            (int) Mathf.inverseLerp(blue(color0), blue(color1), delta)
-        );
+        return ((int) Mathf.inverseLerp(color0 >> 16 & 0xFF, color1 >> 16 & 0xFF, delta)) << 16
+            | ((int) Mathf.inverseLerp(color0 >> 8 & 0xFF, color1 >> 8 & 0xFF, delta)) << 8
+            | ((int) Mathf.inverseLerp(color0 & 0xFF, color1 & 0xFF, delta));
     }
 
     /**
@@ -305,12 +222,10 @@ public final class Colors {
         if (delta <= 0F) {
             return color0;
         }
-        return argb(
-            (int) Mathf.inverseLerp(alpha(color0), alpha(color1), delta),
-            (int) Mathf.inverseLerp(red(color0), red(color1), delta),
-            (int) Mathf.inverseLerp(green(color0), green(color1), delta),
-            (int) Mathf.inverseLerp(blue(color0), blue(color1), delta)
-        );
+        return ((int) Mathf.inverseLerp(color0 >>> 24, color1 >>> 24, delta) << 24)
+            | ((int) Mathf.inverseLerp(color0 >> 16 & 0xFF, color1 >> 16 & 0xFF, delta) << 16)
+            | ((int) Mathf.inverseLerp(color0 >> 8 & 0xFF, color1 >> 8 & 0xFF, delta) << 8)
+            | ((int) Mathf.inverseLerp(color0 & 0xFF, color1 & 0xFF, delta));
     }
 
     /**
@@ -335,17 +250,15 @@ public final class Colors {
      * @return The inverse lerped color
      */
     public static int inverseLerpHSB(int color0, int color1, float delta, boolean useShortestAngle) {
-        float[] hsb0 = Color.RGBtoHSB(red(color0), green(color0), blue(color0), null);
-        float[] hsb1 = Color.RGBtoHSB(red(color1), green(color1), blue(color1), null);
-        return alpha(
-            (int) Mathf.inverseLerp(alpha(color0), alpha(color1), delta),
-            Color.HSBtoRGB(
-                useShortestAngle
-                    ? lerpShortestAngle(hsb0[0], hsb1[0], delta)
-                    : Mathf.inverseLerp(hsb0[0], hsb1[0], delta),
-                Mathf.inverseLerp(hsb0[1], hsb1[1], delta),
-                Mathf.inverseLerp(hsb0[2], hsb1[2], delta)
-            )
+        float[] hsb0 = Color.RGBtoHSB(color0 >> 16 & 0xFF, color0 >> 8 & 0xFF, color0 & 0xFF, null);
+        float[] hsb1 = Color.RGBtoHSB(color1 >> 16 & 0xFF, color1 >> 8 & 0xFF, color1 & 0xFF, null);
+        return ((int) Mathf.inverseLerp(color0 >>> 24, color1 >>> 24, delta) << 24)
+            | Color.HSBtoRGB(
+            useShortestAngle
+                ? lerpShortestAngle(hsb0[0], hsb1[0], delta)
+                : Mathf.inverseLerp(hsb0[0], hsb1[0], delta),
+            Mathf.inverseLerp(hsb0[1], hsb1[1], delta),
+            Mathf.inverseLerp(hsb0[2], hsb1[2], delta)
         );
     }
 
@@ -393,10 +306,25 @@ public final class Colors {
      * @return Sprinkled color
      */
     public static int sprinkle(int color, int amount) {
-        ThreadLocalRandom rand = ThreadLocalRandom.current();
-        int r = Math.clamp(red(color) + rand.nextInt(amount) - amount / 2, 0, 0xFF);
-        int g = Math.clamp(green(color) + rand.nextInt(amount) - amount / 2, 0, 0xFF);
-        int b = Math.clamp(blue(color) + rand.nextInt(amount) - amount / 2, 0, 0xFF);
-        return argb(alpha(color), r, g, b);
+        if (amount <= 0) {
+            return color;
+        }
+        return sprinkle(color, amount, ThreadLocalRandom.current());
+    }
+
+    /**
+     * Offset color slightly to make it look "sprinkled" on the map.
+     *
+     * @param color  Base color
+     * @param amount Max offset amount
+     * @param rand   Random number generator (ThreadLocalRandom)
+     * @return Sprinkled color
+     */
+    public static int sprinkle(int color, int amount, @NotNull RandomGenerator rand) {
+        int half = amount >> 1;
+        return (color & 0xFF000000)
+            | (Math.clamp((color >> 16 & 0xFF) + rand.nextInt(amount) - half, 0, 255) << 16)
+            | (Math.clamp((color >> 8 & 0xFF) + rand.nextInt(amount) - half, 0, 255) << 8)
+            | Math.clamp((color & 0xFF) + rand.nextInt(amount) - half, 0, 255);
     }
 }
