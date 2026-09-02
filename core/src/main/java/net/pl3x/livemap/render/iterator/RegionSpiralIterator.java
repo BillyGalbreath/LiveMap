@@ -24,10 +24,12 @@
 
 package net.pl3x.livemap.render.iterator;
 
-import java.util.function.Supplier;
+import it.unimi.dsi.fastutil.longs.LongCollection;
+import java.util.function.BooleanSupplier;
 import net.pl3x.livemap.marker.Point;
 import net.pl3x.livemap.world.region.Region;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * An iterator that spirals around a center point in a clockwise pattern.
@@ -46,10 +48,11 @@ public class RegionSpiralIterator extends SpiralIterator {
      * Constructs a new SpiralIterator for regions at the given center.
      *
      * @param center  Center point
+     * @param regions Collection of regions to iterate
      * @param hasNext Supplier to determine if there is a next element
      */
-    public RegionSpiralIterator(@NotNull Point center, @NotNull Supplier<Boolean> hasNext) {
-        this(center.getX(), center.getZ(), hasNext);
+    public RegionSpiralIterator(@NotNull Point center, @NotNull LongCollection regions, @Nullable BooleanSupplier hasNext) {
+        this(center.getX(), center.getZ(), regions, hasNext);
     }
 
     /**
@@ -57,14 +60,20 @@ public class RegionSpiralIterator extends SpiralIterator {
      *
      * @param regionX Center x coordinate
      * @param regionZ Center z coordinate
+     * @param regions Collection of regions to iterate
      * @param hasNext Supplier to determine if there is a next element
      */
-    public RegionSpiralIterator(int regionX, int regionZ, @NotNull Supplier<Boolean> hasNext) {
-        super(regionX, regionZ, hasNext);
+    public RegionSpiralIterator(int regionX, int regionZ, @NotNull LongCollection regions, @Nullable BooleanSupplier hasNext) {
+        super(regionX, regionZ, regions, hasNext);
     }
 
     @Override
-    protected long getCurrentIndex() {
-        return Region.pack(getCurrentX(), getCurrentZ());
+    protected int unpackX(long packed) {
+        return Region.unpackX(packed);
+    }
+
+    @Override
+    protected int unpackZ(long packed) {
+        return Region.unpackZ(packed);
     }
 }

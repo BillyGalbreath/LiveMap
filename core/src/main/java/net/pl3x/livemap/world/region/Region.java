@@ -67,7 +67,7 @@ public class Region extends Point {
      */
     public static long pack(int regionX, int regionZ) {
         // 64 bits; upper 32 are z; lower 32 are x
-        return ((long) regionX << 32) | (regionZ & 0xFFFFFFFFL);
+        return ((long) regionZ << 32) | (regionX & 0xFFFFFFFFL);
     }
 
     /**

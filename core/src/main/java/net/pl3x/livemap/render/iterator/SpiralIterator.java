@@ -24,125 +24,112 @@
 
 package net.pl3x.livemap.render.iterator;
 
+import it.unimi.dsi.fastutil.longs.LongArrays;
+import it.unimi.dsi.fastutil.longs.LongCollection;
 import it.unimi.dsi.fastutil.longs.LongIterator;
-import java.util.function.Supplier;
+import java.util.NoSuchElementException;
+import java.util.function.BooleanSupplier;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * An iterator that spirals around a center point in a clockwise pattern.
- * <pre>
- *   30 31 32 33 34 35 36
- *   29 12 13 14 15 16 37
- *   28 11 02 03 04 17 38
- *   27 10 01 00 05 18 39
- *   26 09 08 07 06 19 40
- *   25 24 23 22 21 20 41
- *   48 47 46 45 44 43 42
- * </pre>
+ * An iterator that sorts and traverses a collection of 2D packed coordinates
+ * in an outward clockwise spiral order from a center point.
  */
 public abstract class SpiralIterator implements LongIterator {
-    private final Supplier<Boolean> hasNext;
-
-    private int x;
-    private int z;
-
-    private long totalStepsInLeg = 1;
-    private long currentStepInLeg = 0;
-    private long legAxis;
-
-    private Direction direction = Direction.WEST;
+    private final long[] elements;
+    private final BooleanSupplier hasNext;
+    private int cursor = 0;
 
     /**
-     * Constructs a new SpiralIterator at the given center.
+     * Constructs a new SpiralIterator for a collection of packed coordinates.
      *
-     * @param x       Center x coordinate
-     * @param z       Center z coordinate
-     * @param hasNext Supplier to determine if there is a next element
+     * @param centerX  Center X coordinate
+     * @param centerZ  Center Z coordinate
+     * @param elements Collection of packed coordinates to iterate
+     * @param hasNext  Optional live condition check (e.g. cancellation/interruption)
      */
-    protected SpiralIterator(int x, int z, @NotNull Supplier<Boolean> hasNext) {
-        this.x = x;
-        this.z = z;
+    protected SpiralIterator(int centerX, int centerZ, @NotNull LongCollection elements, @Nullable BooleanSupplier hasNext) {
+        this.elements = elements.toLongArray();
         this.hasNext = hasNext;
+
+        // sort the primitive array in-place by spiral order
+        LongArrays.quickSort(this.elements, (a, b) -> {
+            long indexA = spiralIndex(unpackX(a) - centerX, unpackZ(a) - centerZ);
+            long indexB = spiralIndex(unpackX(b) - centerX, unpackZ(b) - centerZ);
+            return Long.compare(indexA, indexB);
+        });
     }
 
     /**
-     * Get current coordinate index.
+     * Unpack the X coordinate from a packed index.
      *
-     * @return Current index
-     */
-    protected abstract long getCurrentIndex();
-
-    /**
-     * Get the current X coordinate.
-     *
+     * @param packed Packed index
      * @return X coordinate
      */
-    public int getCurrentX() {
-        return this.x;
-    }
+    protected abstract int unpackX(long packed);
 
     /**
-     * Get the current Z coordinate.
+     * Unpack the Z coordinate from a packed index.
      *
+     * @param packed Packed index
      * @return Z coordinate
      */
-    public int getCurrentZ() {
-        return this.z;
-    }
+    protected abstract int unpackZ(long packed);
 
     @Override
     public boolean hasNext() {
-        return this.hasNext.get();
+        return this.cursor < this.elements.length
+            && (this.hasNext == null || this.hasNext.getAsBoolean());
     }
 
     @Override
     public long nextLong() {
-        // get current index
-        final long index = getCurrentIndex();
-
-        // set up for the next index
-        switch (this.direction) {
-            case SOUTH -> this.z++;
-            case WEST -> this.x--;
-            case NORTH -> this.z--;
-            default -> this.x++;
+        if (!hasNext()) {
+            throw new NoSuchElementException();
         }
-
-        // calculate where we are in the spiral
-        ++this.currentStepInLeg;
-        if (this.currentStepInLeg >= this.totalStepsInLeg) {
-            this.currentStepInLeg = 0;
-            this.direction = this.direction.next();
-            if (++this.legAxis > 1) {
-                this.legAxis = 0;
-                this.totalStepsInLeg++;
-            }
-        }
-
-        // return current index
-        return index;
+        return this.elements[this.cursor++];
     }
 
     /**
-     * Represents a cardinal direction the iterator is iterating.
+     * Total number of elements queued in this iterator.
+     *
+     * @return Total size
      */
-    protected enum Direction {
-        EAST, SOUTH, WEST, NORTH;
+    public int size() {
+        return this.elements.length;
+    }
 
-        // cache values for efficiency
-        protected static final Direction[] VALUES = values();
+    /**
+     * Number of elements remaining to be processed.
+     *
+     * @return Remaining elements
+     */
+    public int remaining() {
+        return Math.max(0, this.elements.length - this.cursor);
+    }
 
-        /**
-         * Gets the next direction in the enum.
-         *
-         * <p>If this is the last value then the first will be returned.
-         *
-         * @return The next direction
-         */
-        @NotNull
-        protected Direction next() {
-            // increment and overflow if needed
-            return VALUES[(ordinal() + 1) & 3];
+    /**
+     * Maps relative (dx, dz) coordinates to a 1D scalar position on a clockwise square spiral in O(1).
+     *
+     * @param dx Relative X coordinate from center
+     * @param dz Relative Z coordinate from center
+     * @return The 1D scalar position
+     */
+    public static long spiralIndex(int dx, int dz) {
+        if (dx == 0 && dz == 0) {
+            return 0L;
+        }
+        int k = Math.max(Math.abs(dx), Math.abs(dz)); // ring radius
+        long innerArea = (2L * k - 1) * (2L * k - 1); // total points in all inner rings
+        if (dz == -k) {
+            return innerArea + (k - dx);            // north edge
+        } else if (dx == -k) {
+            return innerArea + (2L * k) + (k + dz); // west edge
+        } else if (dz == k) {
+            return innerArea + (4L * k) + (k + dx); // south edge
+        } else {
+            return innerArea + (6L * k) + (k - dz); // east edge
         }
     }
 }

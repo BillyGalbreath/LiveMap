@@ -231,25 +231,27 @@ public class RenderScheduler {
 
         debug("Begin rendering %d pending region(s) for %s".formatted(pending.size(), world.getName()));
 
-        // track active jobs so we can wait for this world to finish all queued regions
-        List<CompletableFuture<Void>> runningRenders = new ArrayList<>();
         final Thread worldThread = Thread.currentThread();
 
-        // the hasNext supplier keeps the iterator bounded by active queue allocations and live states
-        SpiralIterator spiral = new RegionSpiralIterator(world.getCenter(), () ->
-            !pending.isEmpty() && !world.isDiscarded() && !worldThread.isInterrupted()
+        // create the iterator, passing the pending collection
+        SpiralIterator spiral = new RegionSpiralIterator(world.getCenter(),
+            pending, () -> !world.isDiscarded() && !worldThread.isInterrupted()
         );
+
+        // track active jobs so we can wait for this world to finish all queued regions
+        List<CompletableFuture<Void>> runningRenders = new ArrayList<>(spiral.size());
 
         // drive the spiral loop sequentially on the world thread
         while (spiral.hasNext()) {
             long index = spiral.nextLong();
 
-            // atomically remove index from queue or skip if it was not queued
-            if (!pending.remove(index)) {
+            if (world.isDiscarded() || worldThread.isInterrupted()) {
+                // re-queue remaining unrendered regions so they aren't lost
+                world.getPendingRegions().add(index);
                 continue;
             }
 
-            // Offload the validated region task onto the multithreaded worker pool
+            // offload the task onto the multithreaded worker pool
             CompletableFuture<Void> task = CompletableFuture.runAsync(() -> {
                 try {
                     // double check world state and interruptions
