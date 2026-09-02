@@ -29,6 +29,7 @@ import it.unimi.dsi.fastutil.longs.LongCollection;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import java.util.NoSuchElementException;
 import java.util.function.BooleanSupplier;
+import net.pl3x.livemap.util.LongDoubleBuffer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,8 +106,19 @@ public abstract class SpiralIterator implements LongIterator {
      *
      * @return Remaining elements
      */
-    public int remaining() {
+    public synchronized int remaining() {
         return Math.max(0, this.elements.length - this.cursor);
+    }
+
+    /**
+     * Returns all unpulled elements remaining in this iterator back into a double buffer.
+     *
+     * @param buffer Buffer to receive remaining elements
+     */
+    public synchronized void returnRemaining(@NotNull LongDoubleBuffer buffer) {
+        while (this.cursor < this.elements.length) {
+            buffer.add(this.elements[this.cursor++]);
+        }
     }
 
     /**

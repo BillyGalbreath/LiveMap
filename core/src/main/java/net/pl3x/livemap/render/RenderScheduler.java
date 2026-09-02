@@ -278,10 +278,18 @@ public class RenderScheduler {
                     }
 
                     try {
-                        this.renderRegion(world.getRegion(index), cancelled);
+                        boolean completed = this.renderRegion(world.getRegion(index), cancelled);
+
+                        // add back current region (incomplete render)
+                        if (!completed && !world.isDiscarded()) {
+                            world.getPendingRegions().add(index);
+                        }
                     } catch (Exception e) {
                         if (!cancelled.get()) {
                             Logger.error("Failed executing render task for region index: " + index, e);
+                        } else if (!world.isDiscarded()) {
+                            // add back current region (incomplete render)
+                            world.getPendingRegions().add(index);
                         }
                     }
                 }
@@ -299,6 +307,11 @@ public class RenderScheduler {
             }
         }
 
+        // return remaining regions that were never processed
+        if (cancelled.get() && !world.isDiscarded()) {
+            spiral.returnRemaining(world.getPendingRegions());
+        }
+
         debug("Finished rendering for %s".formatted(world.getName()));
     }
 
@@ -307,8 +320,9 @@ public class RenderScheduler {
      *
      * @param region    Region to render
      * @param cancelled Cancellation token
+     * @return True if the entire region was rendered, false if aborted
      */
-    private void renderRegion(@NotNull Region region, @NotNull AtomicBoolean cancelled) {
+    private boolean renderRegion(@NotNull Region region, @NotNull AtomicBoolean cancelled) {
         // random obtained here to prevent a bajillion method calls deeper in the process
         ThreadLocalRandom rand = ThreadLocalRandom.current();
 
@@ -316,7 +330,7 @@ public class RenderScheduler {
             for (int chunkZ = 0; chunkZ < 32; chunkZ++) {
                 // check world state and interruptions, for instant responsiveness
                 if (region.getWorld().isDiscarded() || cancelled.get()) {
-                    return;
+                    return false; // aborted
                 }
 
                 //
@@ -324,5 +338,7 @@ public class RenderScheduler {
                 //
             }
         }
+
+        return true;
     }
 }
