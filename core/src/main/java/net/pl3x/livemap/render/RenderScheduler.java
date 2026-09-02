@@ -256,36 +256,43 @@ public class RenderScheduler {
             pending, () -> !world.isDiscarded() && !cancelled.get() && !Thread.currentThread().isInterrupted()
         );
 
+        // number of worker tasks to spawn (bounded by thread count and region count)
+        int maxThreads = Math.max(1, Config.RENDER_THREADS);
+        int tasksToSpawn = Math.min(maxThreads, spiral.size());
+
         // track active jobs so we can wait for this world to finish all queued regions
-        List<CompletableFuture<Void>> runningRenders = new ArrayList<>(spiral.size());
+        List<CompletableFuture<Void>> workers = new ArrayList<>(tasksToSpawn);
 
-        // drive the spiral loop sequentially on the world thread
-        while (spiral.hasNext()) {
-            long index = spiral.nextLong();
+        // spawn the tasks
+        for (int i = 0; i < tasksToSpawn; i++) {
+            CompletableFuture<Void> worker = CompletableFuture.runAsync(() -> {
+                // drive the spiral loop sequentially on the worker thread
+                while (!world.isDiscarded() && !cancelled.get()) {
+                    long index;
 
-            // offload the task onto the multithreaded worker pool
-            CompletableFuture<Void> task = CompletableFuture.runAsync(() -> {
-                try {
-                    // double check world state and interruptions
-                    if (world.isDiscarded() || cancelled.get()) {
-                        return;
+                    synchronized (spiral) {
+                        if (!spiral.hasNext()) {
+                            break;
+                        }
+                        index = spiral.nextLong();
                     }
 
-                    // render the region
-                    this.renderRegion(world.getRegion(index), cancelled);
-                } catch (Exception e) {
-                    if (!cancelled.get()) {
-                        Logger.error("Failed executing parallel render task for region index: " + index, e);
+                    try {
+                        this.renderRegion(world.getRegion(index), cancelled);
+                    } catch (Exception e) {
+                        if (!cancelled.get()) {
+                            Logger.error("Failed executing render task for region index: " + index, e);
+                        }
                     }
                 }
             }, this.regionExecutor);
 
-            runningRenders.add(task);
+            workers.add(worker);
         }
 
-        // block until all render threads are finished
+        // await the worker pool tasks
         try {
-            CompletableFuture.allOf(runningRenders.toArray(EMPTY_FUTURE_ARRAY)).join();
+            CompletableFuture.allOf(workers.toArray(EMPTY_FUTURE_ARRAY)).join();
         } catch (Exception e) {
             if (!cancelled.get()) {
                 Logger.error("Error awaiting regional worker tasks in " + world.getName(), e);
