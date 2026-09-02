@@ -63,12 +63,13 @@ public class RenderScheduler {
 
     private final AtomicBoolean manualRunning = new AtomicBoolean(false);
     private final AtomicReference<Thread> runningThread = new AtomicReference<>(null);
+    private volatile AtomicBoolean currentCancellation; // Run-scoped token
     private final Object renderMutex = new Object();
 
     /**
      * Start the render scheduler loop when the plugin loads.
      */
-    public void start() {
+    public synchronized void start() {
         // check if already started
         if (this.future != null) {
             Logger.warn("Render scheduler is already started. Cannot start again.");
@@ -111,7 +112,7 @@ public class RenderScheduler {
      */
     public void stop() {
         // safely stop current running thread
-        interruptRunningThread();
+        cancelActiveRun();
 
         if (this.future != null) {
             this.future.cancel(true);
@@ -129,7 +130,6 @@ public class RenderScheduler {
         }
 
         this.manualRunning.set(false);
-        this.runningThread.set(null);
 
         debug("Successfully stopped render scheduler.");
     }
@@ -158,19 +158,25 @@ public class RenderScheduler {
         }
 
         // safely stop current running thread
-        interruptRunningThread();
+        cancelActiveRun();
 
         // manually run
         return this.worldExecutor.submit(() -> run(true));
     }
 
     /**
-     * Capture and interrupt the thread safely without blocking execution.
+     * Safely cancels both the active worker tasks and interrupts the orchestrator thread.
      */
-    private void interruptRunningThread() {
+    private void cancelActiveRun() {
+        // flip the cancellation token (workers stop at next chunk)
+        AtomicBoolean token = this.currentCancellation;
+        if (token != null) {
+            token.set(true);
+        }
+        // interrupt the orchestrator thread (wakes up any blocking joins/sleeps)
         Thread activeThread = this.runningThread.get();
         if (activeThread != null) {
-            debug("Interrupting active scheduled render thread");
+            debug("Interrupting active render thread");
             activeThread.interrupt();
         }
     }
@@ -181,23 +187,25 @@ public class RenderScheduler {
      * @param manual True if manually triggered instead of scheduled
      */
     private void run(boolean manual) {
-        if (!manual) {
-            // set runningThread safely if no other thread beat us to it
-            if (this.manualRunning.get() || !this.runningThread.compareAndSet(null, Thread.currentThread())) {
-                return;
-            }
-        }
-
         // lock strictly the execution context, keeping trigger() unblocked
         synchronized (this.renderMutex) {
+            if (!manual && this.manualRunning.get()) {
+                return; // do not run scheduled run if manually running
+            }
+
+            // create a new cancellation token and register the active thread
+            AtomicBoolean cancelled = new AtomicBoolean(false);
+            this.currentCancellation = cancelled;
+            this.runningThread.set(Thread.currentThread());
+
             debug("Checking worlds for pending regions");
             try {
                 // snapshot to prevent possible CME
                 List<World> worlds = List.copyOf(LiveMap.api().getWorldRegistry().values());
 
                 for (World world : worlds) {
-                    // check if current thread was interrupted by trigger()
-                    if (Thread.currentThread().isInterrupted()) {
+                    // check if current thread was interrupted
+                    if (cancelled.get() || Thread.currentThread().isInterrupted()) {
                         break;
                     }
 
@@ -207,19 +215,21 @@ public class RenderScheduler {
                     }
 
                     // safely process world
-                    this.renderWorld(world);
+                    this.renderWorld(world, cancelled);
                 }
             } catch (Exception e) {
-                Logger.error("Error during render task", e);
+                if (!cancelled.get()) {
+                    Logger.error("Error during render task", e);
+                }
             } finally {
                 // finished - cleanup
+                this.runningThread.set(null);
+                this.currentCancellation = null;
                 if (manual) {
                     this.manualRunning.set(false);
-                } else {
-                    this.runningThread.compareAndSet(Thread.currentThread(), null);
                 }
 
-                // clear interrupted status flag to prevent thread-reuse state pollution in the pool
+                // clear interrupted status flag
                 // noinspection ResultOfMethodCallIgnored
                 Thread.interrupted();
             }
@@ -229,9 +239,10 @@ public class RenderScheduler {
     /**
      * Render world if there are any queued regions waiting to render.
      *
-     * @param world World to render
+     * @param world     World to render
+     * @param cancelled Cancellation token
      */
-    private void renderWorld(@NotNull World world) {
+    private void renderWorld(@NotNull World world, @NotNull AtomicBoolean cancelled) {
         LongOpenHashSet pending = world.getPendingRegions().get();
         if (pending.isEmpty()) {
             debug("No regions pending for %s".formatted(world.getName()));
@@ -240,11 +251,9 @@ public class RenderScheduler {
 
         debug("Begin rendering %d pending region(s) for %s".formatted(pending.size(), world.getName()));
 
-        final Thread worldThread = Thread.currentThread();
-
         // create the iterator, passing the pending collection
         SpiralIterator spiral = new RegionSpiralIterator(world.getCenter(),
-            pending, () -> !world.isDiscarded() && !worldThread.isInterrupted()
+            pending, () -> !world.isDiscarded() && !cancelled.get() && !Thread.currentThread().isInterrupted()
         );
 
         // track active jobs so we can wait for this world to finish all queued regions
@@ -254,24 +263,20 @@ public class RenderScheduler {
         while (spiral.hasNext()) {
             long index = spiral.nextLong();
 
-            if (world.isDiscarded() || worldThread.isInterrupted()) {
-                // re-queue remaining unrendered regions so they aren't lost
-                world.getPendingRegions().add(index);
-                continue;
-            }
-
             // offload the task onto the multithreaded worker pool
             CompletableFuture<Void> task = CompletableFuture.runAsync(() -> {
                 try {
                     // double check world state and interruptions
-                    if (world.isDiscarded() || worldThread.isInterrupted()) {
+                    if (world.isDiscarded() || cancelled.get()) {
                         return;
                     }
 
                     // render the region
-                    this.renderRegion(world.getRegion(index), worldThread);
+                    this.renderRegion(world.getRegion(index), cancelled);
                 } catch (Exception e) {
-                    Logger.error("Failed executing parallel render task for region index: " + index, e);
+                    if (!cancelled.get()) {
+                        Logger.error("Failed executing parallel render task for region index: " + index, e);
+                    }
                 }
             }, this.regionExecutor);
 
@@ -282,7 +287,9 @@ public class RenderScheduler {
         try {
             CompletableFuture.allOf(runningRenders.toArray(EMPTY_FUTURE_ARRAY)).join();
         } catch (Exception e) {
-            Logger.error("Error awaiting regional worker tasks in " + world.getName(), e);
+            if (!cancelled.get()) {
+                Logger.error("Error awaiting regional worker tasks in " + world.getName(), e);
+            }
         }
 
         debug("Finished rendering for %s".formatted(world.getName()));
@@ -291,17 +298,17 @@ public class RenderScheduler {
     /**
      * Render specified region.
      *
-     * @param region       Region to render
-     * @param parentThread The parent thread that spawned this render
+     * @param region    Region to render
+     * @param cancelled Cancellation token
      */
-    private void renderRegion(@NotNull Region region, @NotNull Thread parentThread) {
+    private void renderRegion(@NotNull Region region, @NotNull AtomicBoolean cancelled) {
         // random obtained here to prevent a bajillion method calls deeper in the process
         ThreadLocalRandom rand = ThreadLocalRandom.current();
 
         for (int chunkX = 0; chunkX < 32; chunkX++) {
             for (int chunkZ = 0; chunkZ < 32; chunkZ++) {
                 // check world state and interruptions, for instant responsiveness
-                if (region.getWorld().isDiscarded() || parentThread.isInterrupted()) {
+                if (region.getWorld().isDiscarded() || cancelled.get()) {
                     return;
                 }
 
