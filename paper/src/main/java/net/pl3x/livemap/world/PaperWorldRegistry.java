@@ -92,7 +92,8 @@ public class PaperWorldRegistry extends WorldRegistry {
     @Override
     @Nullable
     public World get(@Nullable Object obj) {
-        return super.get(obj2key(obj));
+        String key = obj2key(obj);
+        return key == null ? null : super.get(key);
     }
 
     @NotNull

@@ -12,7 +12,7 @@ node = "7.1.0"                # https://github.com/node-gradle/gradle-node-plugi
 paperweight = "2.0.0-beta.22" # https://github.com/PaperMC/Paperweight
 shadowJar = "9.6.1"           # https://github.com/GradleUp/shadow
 simpleYaml = "1.8.5"          # https://github.com/Carleslc/Simple-YAML
-undertow = "2.4.1.Final"      # https://github.com/undertow-io/undertow
+undertow = "2.4.3.Final"      # https://github.com/undertow-io/undertow
 
 # make these match versions Paper API uses
 # https://github.com/PaperMC/Paper/blob/main/paper-api/build.gradle.kts

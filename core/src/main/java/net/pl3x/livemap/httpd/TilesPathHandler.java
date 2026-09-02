@@ -35,6 +35,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.util.FileUtil;
+import org.apache.commons.lang3.Strings;
 import org.jetbrains.annotations.NotNull;
 
 final class TilesPathHandler extends io.undertow.server.handlers.PathHandler {
@@ -58,7 +59,15 @@ final class TilesPathHandler extends io.undertow.server.handlers.PathHandler {
         @Override
         public void handleRequest(@NotNull HttpServerExchange exchange) {
             String url = exchange.getRelativePath();
-            if (url.contains("/tiles/") && url.endsWith(".png")) {
+            if (url.contains("/tiles/") && Strings.CS.endsWithAny(url,
+                ".bmp",
+                ".gif",
+                ".jpg",
+                ".jpeg",
+                ".png",
+                ".webp",
+                ".gz" // blockinfo
+            )) {
                 // do not 404 on missing tiles (keeps client log clean)
                 exchange.setStatusCode(StatusCodes.OK);
                 return;

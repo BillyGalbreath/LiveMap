@@ -26,31 +26,30 @@ package net.pl3x.livemap.httpd;
 
 import io.undertow.server.handlers.resource.PathResourceManager;
 import io.undertow.server.handlers.resource.Resource;
-import java.lang.reflect.Field;
+import io.undertow.server.handlers.resource.ResourceChangeListener;
+import io.undertow.server.handlers.resource.ResourceManager;
+import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import net.pl3x.livemap.LiveMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class FriendlyUrlPathResourceManager extends PathResourceManager {
+final class FriendlyUrlPathResourceManager implements ResourceManager {
     private static final Pattern FRIENDLY_URLS = Pattern.compile("^/(.+?)(?:/(.+?)?/?(-?\\d+)?/?(-?\\d+)?/?(-?\\d+)?(?:/(.+)?)?)?$");
 
-    FriendlyUrlPathResourceManager() {
-        super(LiveMap.api().getWebDir());
+    private final ResourceManager wrapped;
 
-        // weird that this isn't exposed anywhere except the builder...
-        try {
-            Field eTagFunction = PathResourceManager.class.getDeclaredField("eTagFunction");
-            eTagFunction.setAccessible(true);
-            eTagFunction.set(this, new LastModifiedETagFunction());
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
+    FriendlyUrlPathResourceManager() {
+        this.wrapped = PathResourceManager.builder()
+            .setBase(LiveMap.api().getWebDir())
+            .setETagFunction(new LastModifiedETagFunction())
+            .build();
     }
 
     @Override
     @Nullable
-    public Resource getResource(@Nullable String input) {
+    public Resource getResource(@Nullable String input) throws IOException {
         // this is a cheap way of handling friendly urls. the server has
         // zero care about what world/renderer/zoom/coords the client
         // wants so we basically just chop out those parts from the
@@ -70,6 +69,26 @@ final class FriendlyUrlPathResourceManager extends PathResourceManager {
         }
 
         // let the real PathResourceManager do its thing with the altered input
-        return super.getResource(input == null ? "/" : input);
+        return this.wrapped.getResource(input == null ? "/" : input);
+    }
+
+    @Override
+    public boolean isResourceChangeListenerSupported() {
+        return this.wrapped.isResourceChangeListenerSupported();
+    }
+
+    @Override
+    public void registerResourceChangeListener(@NotNull ResourceChangeListener listener) {
+        this.wrapped.registerResourceChangeListener(listener);
+    }
+
+    @Override
+    public void removeResourceChangeListener(@NotNull ResourceChangeListener listener) {
+        this.wrapped.removeResourceChangeListener(listener);
+    }
+
+    @Override
+    public void close() throws IOException {
+        this.wrapped.close();
     }
 }

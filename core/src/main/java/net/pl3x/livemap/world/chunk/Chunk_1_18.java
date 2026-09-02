@@ -95,7 +95,7 @@ class Chunk_1_18 extends Chunk {
         if (heightmap == null) {
             return getWorld().getMinY();
         }
-        return this.heightmap.get(((getZ() & 0xF) << 4) | (getX() & 0xF)) + getWorld().getMinY();
+        return this.heightmap.get(((blockZ & 0xF) << 4) | (blockX & 0xF)) + getWorld().getMinY();
     }
 
     @Override
@@ -123,7 +123,7 @@ class Chunk_1_18 extends Chunk {
 
     @Nullable
     private Section getSection(int y) {
-        y -= this.sections[0].getY();
+        y -= getY();
         if (y < 0 || y >= this.sections.length) {
             return null;
         }

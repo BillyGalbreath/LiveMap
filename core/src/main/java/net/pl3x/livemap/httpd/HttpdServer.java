@@ -26,8 +26,6 @@ package net.pl3x.livemap.httpd;
 
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
-import io.undertow.server.handlers.resource.ResourceManager;
-import java.io.IOException;
 import net.pl3x.livemap.Logger;
 import net.pl3x.livemap.configuration.Config;
 
@@ -50,13 +48,13 @@ public class HttpdServer {
             return;
         }
 
-        try (ResourceManager resourceManager = new FriendlyUrlPathResourceManager()) {
+        try {
             Logger.HIDE_UNDERTOW_LOGS = true;
 
             this.server = Undertow.builder()
                 .addHttpListener(Config.HTTPD_PORT, Config.HTTPD_BIND)
                 .setServerOption(UndertowOptions.ENABLE_HTTP2, true)
-                .setHandler(new TilesPathHandler(resourceManager))
+                .setHandler(new TilesPathHandler(new FriendlyUrlPathResourceManager()))
                 .build();
 
             this.server.start();
@@ -64,7 +62,7 @@ public class HttpdServer {
             Logger.HIDE_UNDERTOW_LOGS = false;
 
             Logger.info("&aInternal webserver started on &e%s&a:&e%s".formatted(Config.HTTPD_BIND, Config.HTTPD_PORT));
-        } catch (IOException e) {
+        } catch (Exception e) {
             this.server = null;
             Logger.error("An error occurred starting the internal webserver", e);
         }

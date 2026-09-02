@@ -24,9 +24,6 @@
 
 package net.pl3x.livemap.render.image;
 
-import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -48,7 +45,7 @@ import org.jetbrains.annotations.NotNull;
  * to disk per region. <em>(images, heightmaps, block/biome info, etc.)</em>
  */
 public class Tile implements ImageInt {
-    private static final Long2ObjectMap<@NotNull ReadWriteLock> FILE_LOCKS = Long2ObjectMaps.synchronize(new Long2ObjectOpenHashMap<>());
+    private static final Map<@NotNull Path, @NotNull ReadWriteLock> FILE_LOCKS = new ConcurrentHashMap<>();
 
     public static final String DIR_PATH = "%d/%s/";
     public static final String FILE_PATH = "%d_%d.%s";
@@ -142,7 +139,7 @@ public class Tile implements ImageInt {
             FileUtil.createDirs(dir);
             Path file = dir.resolve(String.format("%d_%d.%s", x, z, getIO().getExtension()));
 
-            ReadWriteLock lock = FILE_LOCKS.computeIfAbsent(getRegion().getIndex(), _ -> new ReentrantReadWriteLock(true));
+            ReadWriteLock lock = FILE_LOCKS.computeIfAbsent(file, _ -> new ReentrantReadWriteLock(true));
             lock.writeLock().lock();
 
             try {
@@ -193,12 +190,14 @@ public class Tile implements ImageInt {
         // walk the pixels
         for (int x = 0; x < Tile.SIZE; x += step) {
             for (int z = 0; z < Tile.SIZE; z += step) {
-                // current pixel
-                int argb = getPixel(x, z);
+                int argb;
 
-                // downsample merge pixels if we are at higher zoom than base
-                if (zoom > 0) {
-                    argb = downSample(x, z, argb, step, count);
+                if (zoom == 0) {
+                    // current pixel as-is on base zoom level
+                    argb = getPixel(x, z);
+                } else {
+                    // downsample merge pixels if we are at higher zoom than base
+                    argb = downSample(x, z, step, count);
                 }
 
                 // write pixel to buffer for region at specified zoom
@@ -211,13 +210,11 @@ public class Tile implements ImageInt {
         }
     }
 
-    private int downSample(int x, int z, int rgb, int step, int count) {
-        int a = 0, r = 0, g = 0, b = 0;
+    private int downSample(int x, int z, int step, int count) {
+        int rgb, a = 0, r = 0, g = 0, b = 0;
         for (int i = 0; i < step; i++) {
             for (int j = 0; j < step; j++) {
-                if (i != 0 && j != 0) {
-                    rgb = getPixel(x + i, z + j);
-                }
+                rgb = getPixel(x + i, z + j);
                 a += (rgb >>> 24);
                 r += (rgb >> 16 & 0xFF);
                 g += (rgb >> 8 & 0xFF);
