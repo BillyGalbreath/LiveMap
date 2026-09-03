@@ -55,8 +55,12 @@ import org.jetbrains.annotations.Nullable;
  * Represents a renderable world.
  */
 public abstract class World {
-    private static final Runnable CACHE_CLEANUP = () -> LiveMap.api()
-        .getWorldRegistry().forEach((_, world) -> world.regionCache.cleanUp());
+    public static final Runnable CACHE_CLEANUP_TASK = () -> LiveMap.api().getWorldRegistry()
+        // iterate all worlds
+        .forEach((_, world) -> {
+            Logger.debug("Cleaning up region cache on %s".formatted(world.getName()));
+            world.regionCache.cleanUp();
+        });
 
     private final String name;
     private final long seed;

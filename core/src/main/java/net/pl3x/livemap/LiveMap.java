@@ -38,6 +38,7 @@ import net.pl3x.livemap.scheduler.TickScheduler;
 import net.pl3x.livemap.thread.WorkerThreadFactory;
 import net.pl3x.livemap.thread.WorkerThreadPool;
 import net.pl3x.livemap.util.FileUtil;
+import net.pl3x.livemap.world.World;
 import net.pl3x.livemap.world.WorldRegistry;
 import net.pl3x.livemap.world.block.BlockRegistry;
 import org.jetbrains.annotations.NotNull;
@@ -280,13 +281,7 @@ public interface LiveMap {
         getRenderScheduler().start();
 
         Provider.cacheMaintenance = WorkerThreadFactory.createExecutor("CacheMaintenance");
-        Provider.cacheMaintenance.scheduleAtFixedRate(() -> {
-            // iterate all worlds
-            getWorldRegistry().forEach((_, world) -> {
-                Logger.debug("Cleaning up region cache on %s".formatted(world.getName()));
-                world.getRegionCache().cleanUp();
-            });
-        }, 5, 5, TimeUnit.MINUTES);
+        Provider.cacheMaintenance.scheduleAtFixedRate(World.CACHE_CLEANUP_TASK, 5, 5, TimeUnit.MINUTES);
 
         // bStats metrics
         Provider.metrics = new Metrics();
