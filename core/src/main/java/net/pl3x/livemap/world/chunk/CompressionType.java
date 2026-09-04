@@ -53,9 +53,9 @@ public enum CompressionType {
      */
     GZIP(GZIPOutputStream::new, GZIPInputStream::new),
     /**
-     * Zip compression.
+     * Zlib compression.
      */
-    ZIP(DeflaterOutputStream::new, InflaterInputStream::new),
+    ZLIB(DeflaterOutputStream::new, InflaterInputStream::new),
     /**
      * No compression.
      *

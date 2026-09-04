@@ -24,8 +24,8 @@
 
 package net.pl3x.livemap.util;
 
-import io.undertow.util.FastConcurrentDirectDeque;
-import java.util.Deque;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Supplier;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,8 +35,7 @@ import org.jetbrains.annotations.NotNull;
  * @param <T> Type of object pooled in this pool
  */
 public class Pool<T extends Pool.Reusable> {
-    private final Deque<T> pool = new FastConcurrentDirectDeque<>();
-
+    private final Queue<T> pool = new ConcurrentLinkedQueue<>();
     private final Supplier<T> supplier;
 
     /**
@@ -58,10 +57,7 @@ public class Pool<T extends Pool.Reusable> {
     @NotNull
     public T get() {
         T obj = this.pool.poll();
-        if (obj == null) {
-            return this.supplier.get();
-        }
-        return obj;
+        return obj == null ? this.supplier.get() : obj;
     }
 
     /**
@@ -70,7 +66,7 @@ public class Pool<T extends Pool.Reusable> {
      * @param obj Unused reusable object
      */
     public void put(@NotNull T obj) {
-        this.pool.add(obj);
+        this.pool.offer(obj);
     }
 
     /**

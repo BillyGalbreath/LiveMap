@@ -36,7 +36,6 @@ import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.Logger;
@@ -44,8 +43,8 @@ import net.pl3x.livemap.configuration.Lang;
 import net.pl3x.livemap.configuration.WorldConfig;
 import net.pl3x.livemap.marker.Point;
 import net.pl3x.livemap.render.renderer.RendererRegistry;
+import net.pl3x.livemap.util.ConcurrentLong2ObjectMap;
 import net.pl3x.livemap.util.LongDoubleBuffer;
-import net.pl3x.livemap.util.LongLoadingCache;
 import net.pl3x.livemap.world.biome.BiomeRegistry;
 import net.pl3x.livemap.world.chunk.Chunk;
 import net.pl3x.livemap.world.region.Region;
@@ -56,13 +55,6 @@ import org.jetbrains.annotations.Nullable;
  * Represents a renderable world.
  */
 public abstract class World {
-    public static final Runnable CACHE_CLEANUP_TASK = () -> LiveMap.api().getWorldRegistry()
-        // iterate all worlds
-        .forEach((_, world) -> {
-            Logger.debug("Cleaning up region cache on %s".formatted(world.getName()));
-            world.regionCache.cleanUp();
-        });
-
     private final String name;
     private final long seed;
     private final Point spawn;
@@ -73,7 +65,7 @@ public abstract class World {
 
     private final WorldConfig config;
 
-    private final LongLoadingCache<Region> regionCache;
+    private final ConcurrentLong2ObjectMap<Region> regionCache;
     private final LongDoubleBuffer pendingRegions = new LongDoubleBuffer();
 
     private final AtomicBoolean discarded = new AtomicBoolean(false);
@@ -98,10 +90,7 @@ public abstract class World {
 
         this.config = new WorldConfig(this);
 
-        // hold loaded regions in memory for up to 1 minute (max of 100 at any given time)
-        this.regionCache = new LongLoadingCache<>(
-            TimeUnit.MINUTES.toMillis(1), 100,
-            index -> new Region(this, index));
+        this.regionCache = new ConcurrentLong2ObjectMap<>();
     }
 
     /**
@@ -194,16 +183,6 @@ public abstract class World {
     }
 
     /**
-     * Get this world's region cache.
-     *
-     * @return Region cache
-     */
-    @NotNull
-    public LongLoadingCache<Region> getRegionCache() {
-        return this.regionCache;
-    }
-
-    /**
      * Get a region by index.
      *
      * <p>If region is not cached it will be loaded from disk.
@@ -213,7 +192,7 @@ public abstract class World {
      */
     @NotNull
     public Region getRegion(long index) {
-        return this.regionCache.get(index);
+        return this.regionCache.computeIfAbsent(index, _ -> new Region(this, index));
     }
 
     /**
@@ -409,7 +388,7 @@ public abstract class World {
 
         Logger.debug("World discarded, clearing data structures.");
 
-        this.regionCache.invalidateAll();
+        this.regionCache.clear(); // .invalidateAll();
         this.pendingRegions.clear();
         getBiomeRegistry().clear();
         getRendererRegistry().clear();

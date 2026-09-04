@@ -98,29 +98,36 @@ public class PackedIntArrayAccess {
         Integer.MIN_VALUE, 0, 5
     };
 
-    private final int bitsPerElement;
-    private final long[] data;
+    private int bitsPerElement;
+    private long[] data;
 
-    private final long maxValue, indexScale, indexOffset;
-    private final int elementsPerLong, indexShift;
+    private long maxValue, indexScale, indexOffset;
+    private int elementsPerLong, indexShift;
 
     /**
-     * Constructs a new instance of PackedIntArrayAccess.
+     * No-args constructor specifically for thread-local caching phases.
+     */
+    public PackedIntArrayAccess() {
+        init(1, new long[1]);
+    }
+
+    /**
+     * Mutates this wrapper instance to read a fresh byte pointer sector seamlessly.
      *
      * @param data         Raw data array
      * @param elementCount Number of elements in the raw data
      */
-    public PackedIntArrayAccess(long @NotNull [] data, int elementCount) {
-        this(Math.max(data.length * Long.SIZE / elementCount, 1), data);
+    public void init(long @NotNull [] data, int elementCount) {
+        init(Math.max(data.length * Long.SIZE / elementCount, 1), data);
     }
 
     /**
-     * Constructs a new instance of PackedIntArrayAccess.
+     * Mutates this wrapper instance to read a fresh byte pointer sector seamlessly.
      *
      * @param bitsPerElement Bits per element in the raw data
      * @param data           Raw data array
      */
-    public PackedIntArrayAccess(int bitsPerElement, long @NotNull [] data) {
+    public void init(int bitsPerElement, long @NotNull [] data) {
         this.bitsPerElement = bitsPerElement;
         this.data = data;
 

@@ -70,6 +70,7 @@ public class PaperBiomeRegistry extends BiomeRegistry {
                     () -> biome.getSpecialEffects().waterColor()),
                 (x, z, color) -> biome.getSpecialEffects().grassColorModifier().modifyColor(x, z, color)
             ));
+            Logger.debug("Registered biome %s".formatted(get(id)));
         }
 
         Logger.info("   &7&l-&r Registered &3%d&r biomes".formatted(size()));

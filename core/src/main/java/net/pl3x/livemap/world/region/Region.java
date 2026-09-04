@@ -29,7 +29,6 @@ import de.bluecolored.bluenbt.NamingStrategy;
 import de.bluecolored.bluenbt.TypeToken;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -37,8 +36,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import net.pl3x.livemap.Logger;
 import net.pl3x.livemap.marker.Point;
+import net.pl3x.livemap.util.PackedIntArrayAccess;
 import net.pl3x.livemap.world.World;
 import net.pl3x.livemap.world.block.BlockState;
 import net.pl3x.livemap.world.block.BlockStateDeserializer;
@@ -54,11 +55,67 @@ import org.jetbrains.annotations.Nullable;
 public class Region extends Point {
     private static final ThreadLocal<byte[]> THREAD_LOCAL_PAYLOAD_BUFFER = ThreadLocal.withInitial(() -> new byte[1024 * 1024]);
 
+    private static final ThreadLocal<PackedIntArrayAccess> LOCAL_HEIGHTMAP_WRAPPER = ThreadLocal.withInitial(PackedIntArrayAccess::new);
+    private static final ThreadLocal<PackedIntArrayAccess[]> LOCAL_BLOCK_STACK = ThreadLocal.withInitial(() -> new PackedIntArrayAccess[0]);
+    private static final ThreadLocal<PackedIntArrayAccess[]> LOCAL_BIOME_STACK = ThreadLocal.withInitial(() -> new PackedIntArrayAccess[0]);
+
     private static final BlueNBT BLUENBT = new BlueNBT();
 
     static {
         BLUENBT.setNamingStrategy(NamingStrategy.lowerCaseWithDelimiter("_"));
         BLUENBT.register(TypeToken.of(BlockState.class), new BlockStateDeserializer());
+    }
+
+    /**
+     * Get current thread's shared heightmap.
+     *
+     * @return Shared heightmap
+     */
+    @NotNull
+    public static PackedIntArrayAccess getThreadLocalHeightmap() {
+        return LOCAL_HEIGHTMAP_WRAPPER.get();
+    }
+
+    /**
+     * Get thread local block stack.
+     *
+     * @param requiredSize Required size of stack
+     * @return Thread local block stack of at least required size
+     */
+    @NotNull
+    public static PackedIntArrayAccess @NotNull [] getThreadLocalBlockStack(int requiredSize) {
+        PackedIntArrayAccess[] current = LOCAL_BLOCK_STACK.get();
+        if (current.length < requiredSize) {
+            PackedIntArrayAccess[] expanded = new PackedIntArrayAccess[requiredSize];
+            System.arraycopy(current, 0, expanded, 0, current.length);
+            for (int i = current.length; i < requiredSize; i++) {
+                expanded[i] = new PackedIntArrayAccess();
+            }
+            LOCAL_BLOCK_STACK.set(expanded);
+            return expanded;
+        }
+        return current;
+    }
+
+    /**
+     * Get thread local biome stack.
+     *
+     * @param requiredSize Required size of stack
+     * @return Thread local biome stack of at least required size
+     */
+    @NotNull
+    public static PackedIntArrayAccess @NotNull [] getThreadLocalBiomeStack(int requiredSize) {
+        PackedIntArrayAccess[] current = LOCAL_BIOME_STACK.get();
+        if (current.length < requiredSize) {
+            PackedIntArrayAccess[] expanded = new PackedIntArrayAccess[requiredSize];
+            System.arraycopy(current, 0, expanded, 0, current.length);
+            for (int i = current.length; i < requiredSize; i++) {
+                expanded[i] = new PackedIntArrayAccess();
+            }
+            LOCAL_BIOME_STACK.set(expanded);
+            return expanded;
+        }
+        return current;
     }
 
     /**
@@ -149,6 +206,24 @@ public class Region extends Point {
     }
 
     /**
+     * Get a chunk by coordinates.
+     *
+     * <p>If the coordinates are in the supplied chunk, then the supplied chunk is returned.
+     *
+     * @param chunk  Cached chunk
+     * @param chunkX X coordinate
+     * @param chunkZ Z coordinate
+     * @return Requested chunk
+     */
+    @NotNull
+    public Chunk getChunkFast(@NotNull Chunk chunk, int chunkX, int chunkZ) {
+        if (chunk.getX() == chunkX && chunk.getZ() == chunkZ) {
+            return chunk;
+        }
+        return getWorld().getRegionFast(this, chunkX >> 5, chunkZ >> 5).getChunk(chunkX, chunkZ);
+    }
+
+    /**
      * Get chunk at specified chunk coordinates.
      *
      * <p>If no chunk exists there, an EmptyChunk will be returned.
@@ -167,6 +242,7 @@ public class Region extends Point {
         try (RandomAccessFile raf = new RandomAccessFile(getFile(), "r")) {
             chunk = loadChunk(raf, index);
         } catch (EOFException | FileNotFoundException ignore) {
+            ignore.printStackTrace();
         } catch (IOException e) {
             Logger.error("Failed to load chunk at region &3[&e%d&r, &e%d&3]".formatted(chunkX, chunkZ), e);
         }
@@ -179,18 +255,23 @@ public class Region extends Point {
     /**
      * Load all chunks (that exist) in the region from disk.
      *
+     * @param cancelled Cancellation token
      * @throws IOException if an I/O error occurs
      */
-    public void loadAllChunks() throws IOException {
+    public void loadAllChunks(@NotNull AtomicBoolean cancelled) throws IOException {
         if (!getFile().exists() || getFile().length() <= 0) {
             return;
         }
         try (RandomAccessFile raf = new RandomAccessFile(getFile(), "r")) {
             for (int index = 0; index < this.chunks.length; index++) {
-                // LiveMap.api().getRegionProcessor().checkPaused(); // todo
+                if (getWorld().isDiscarded() || cancelled.get()) {
+                    return; // aborted
+                }
+
                 loadChunk(raf, index);
             }
         } catch (EOFException ignore) {
+            ignore.printStackTrace();
         }
     }
 
@@ -253,51 +334,10 @@ public class Region extends Point {
             compressedPayload = new byte[payloadLength];
         }
 
-        raf.readFully(compressedPayload);
+        raf.readFully(compressedPayload, 0, payloadLength);
 
         // we need the chunk version to find correct loader
-        int version;
-        try (ByteArrayInputStream vbais = new ByteArrayInputStream(compressedPayload, 0, payloadLength);
-             InputStream vcis = compression.decompress(vbais);
-             DataInputStream vdis = new DataInputStream(vcis)) {
-            // root compound envelope verification (0x0A)
-            if (vdis.readByte() != 0x0A) {
-                version = -1;
-            } else {
-                // skip root name string block safely
-                int rootNameLen = vdis.readUnsignedShort();
-                if (rootNameLen > 0) {
-                    vdis.skipBytes(rootNameLen);
-                }
-
-                int foundVersion = -1;
-                while (vdis.available() > 0) {
-                    byte tagType = vdis.readByte();
-                    if (tagType == 0x00) {
-                        break; // TAG_End
-                    }
-
-                    int nameLen = vdis.readUnsignedShort();
-                    byte[] nameBytes = new byte[nameLen];
-                    vdis.readFully(nameBytes);
-                    String tagName = new String(nameBytes, java.nio.charset.StandardCharsets.UTF_8);
-
-                    if (tagType == 3 && "DataVersion".equals(tagName)) {
-                        foundVersion = vdis.readInt();
-                        break;
-                    }
-
-                    // if it isn't our metadata token, step past the data structure carefully
-                    if (!Chunk.skipTagPayload(vdis, tagType)) {
-                        break;
-                    }
-                }
-                version = foundVersion;
-            }
-        } catch (EOFException ignore) {
-            version = -1; // handled safely if hitting payload bounds early
-        }
-
+        int version = Chunk.getChunkDataVersion(compressedPayload, payloadLength, compression);
         Chunk.Loader<Chunk.NBT> chunkLoader = Chunk.Loader.getForVersion(version);
 
         try (
@@ -311,6 +351,23 @@ public class Region extends Point {
             // we only want full chunks
             return chunk.isFull() ? chunk.preScan() : new EmptyChunk(this);
         }
+    }
+
+    /**
+     * Sever all references to loaded chunks inside this region
+     * to allow immediate Garbage Collection reclamation.
+     */
+    public void unload() {
+        for (int i = 0; i < this.chunks.length; i++) {
+            Chunk chunk = this.chunks[i];
+            if (chunk != null) {
+                chunk.recycle(); // clear the BlockData pools
+                this.chunks[i] = null; // break the heap reference chain
+            }
+        }
+        LOCAL_HEIGHTMAP_WRAPPER.remove();
+        LOCAL_BLOCK_STACK.remove();
+        LOCAL_BIOME_STACK.remove();
     }
 
     @Override

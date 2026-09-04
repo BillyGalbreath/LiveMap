@@ -278,6 +278,39 @@ public final class Colors {
     }
 
     /**
+     * Apply a shade (dark or light) to a color.
+     *
+     * @param color Color to shade
+     * @param shade The shade amount
+     * @return Modified color
+     */
+    public static int shade(int color, int shade) {
+        float ratio = shade / 255F;
+        int r = (int) ((color >> 16 & 0xFF) * ratio);
+        int g = (int) ((color >> 8 & 0xFF) * ratio);
+        int b = (int) ((color & 0xFF) * ratio);
+        return 0xFF000000 | (r << 16) | (g << 8) | b;
+    }
+
+    /**
+     * Blends one color over another.
+     *
+     * @param color0 color to blend over with
+     * @param color1 color to be blended over
+     * @return resulting blended color
+     * @see <a href="https://en.wikipedia.org/wiki/Alpha_compositing#Alpha_blending">Alpha Blending</a>
+     */
+    public static int blend(int color0, int color1) {
+        double a0 = (double) (color0 >>> 24) / 0xFF;
+        double a1 = (double) (color1 >>> 24) / 0xFF;
+        double a = a0 + a1 * (1 - a0);
+        double r = ((color0 >> 16 & 0xFF) * a0 + (color1 >> 16 & 0xFF) * a1 * (1 - a0)) / a;
+        double g = ((color0 >> 8 & 0xFF) * a0 + (color1 >> 8 & 0xFF) * a1 * (1 - a0)) / a;
+        double b = ((color0 & 0xFF) * a0 + (color1 & 0xFF) * a1 * (1 - a0)) / a;
+        return ((int) a * 0xFF) << 24 | (int) r << 16 | (int) g << 8 | (int) b;
+    }
+
+    /**
      * Get color from hex string.
      *
      * @param hex Hex string

@@ -25,7 +25,9 @@
 package net.pl3x.livemap.render.renderer;
 
 import net.pl3x.livemap.render.heightmap.Heightmap;
+import net.pl3x.livemap.render.image.Colors;
 import net.pl3x.livemap.render.image.TileCanvas;
+import net.pl3x.livemap.world.block.Block;
 import net.pl3x.livemap.world.chunk.Chunk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +52,13 @@ public class BasicRenderer extends Renderer {
     @Override
     protected void renderBlock(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data) {
         int pixelColor = data.getTopState().getBlock().getVanilla();
-        tile.setPixel(data.getBlockX(), data.getBlockZ(), pixelColor);
+        int amount;
+        if (data.getFluidState() == null) {
+            boolean greenery = data.getBlock().hasFlag(Block.FLAG_GRASS | Block.FLAG_FOLIAGE);
+            amount = greenery ? 50 : 20;
+        } else {
+            amount = 15;
+        }
+        tile.setPixel(data.getBlockX(), data.getBlockZ(), pixelColor == 0 ? 0 : Colors.sprinkle(pixelColor, amount));
     }
 }

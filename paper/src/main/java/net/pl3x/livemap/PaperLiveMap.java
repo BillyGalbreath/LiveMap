@@ -28,6 +28,7 @@ import io.papermc.paper.ServerBuildInfo;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import java.nio.file.Path;
 import java.util.List;
+import net.minecraft.world.level.block.RedStoneWireBlock;
 import net.pl3x.livemap.command.LiveMapCommand;
 import net.pl3x.livemap.command.PaperSource;
 import net.pl3x.livemap.command.argument.PaperArgumentParser;
@@ -150,5 +151,10 @@ public final class PaperLiveMap extends JavaPlugin implements LiveMap {
     @NotNull
     public PaperArgumentParser getArgumentParser() {
         return this.argumentParser;
+    }
+
+    @Override
+    public int getRedstoneColorForPower(byte power) {
+        return RedStoneWireBlock.getColorForPower(power);
     }
 }

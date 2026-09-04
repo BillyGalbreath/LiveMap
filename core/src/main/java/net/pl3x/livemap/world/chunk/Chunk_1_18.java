@@ -65,19 +65,23 @@ class Chunk_1_18 extends Chunk {
         this.inhabitedTime = chunkNBT.inhabitedTime;
 
         int bitsPerHeightmapElement = MCAMath.ceilLog2(getWorld().getHeight() + 1);
-        this.heightmap = new PackedIntArrayAccess(bitsPerHeightmapElement, chunkNBT.heightmaps.worldSurface);
+        this.heightmap = Region.getThreadLocalHeightmap();
+        this.heightmap.init(bitsPerHeightmapElement, chunkNBT.heightmaps.worldSurface);
         if (!this.heightmap.isExpectedSize(VALUES_PER_HEIGHTMAP)) {
             this.heightmap = null;
         }
 
         SectionNBT[] sectionsNBT = chunkNBT.sections;
         if (sectionsNBT != null && sectionsNBT.length > 0) {
+            int worldSectionCount = getWorld().getHeight() >> 4;
+            PackedIntArrayAccess[] blockStack = Region.getThreadLocalBlockStack(worldSectionCount);
+            PackedIntArrayAccess[] biomeStack = Region.getThreadLocalBiomeStack(worldSectionCount);
+
             this.sections = new Section[sectionsNBT.length];
             for (SectionNBT sectionNBT : sectionsNBT) {
-                Section section = new Section(getWorld(), sectionNBT);
-                int index = section.getY() - getMinY();
+                int index = sectionNBT.getY() - getMinY();
                 if (index >= 0 && index < this.sections.length) {
-                    this.sections[index] = section;
+                    this.sections[index] = new Section(getWorld(), blockStack[index], biomeStack[index], sectionNBT);
                 }
             }
         }
@@ -131,44 +135,49 @@ class Chunk_1_18 extends Chunk {
     }
 
     private static class Section extends Chunk.Section {
-        private final SectionNBT nbt;
-
+        private final int y;
+        private final BlockState[] blockPalette;
         private final Biome[] biomePalette;
         private final PackedIntArrayAccess blocks;
         private final PackedIntArrayAccess biomes;
         private final byte[] light;
 
-        private Section(@NotNull World world, @NotNull SectionNBT nbt) {
-            this.nbt = nbt;
+        private Section(
+            @NotNull World world,
+            @NotNull PackedIntArrayAccess blocks,
+            @NotNull PackedIntArrayAccess biomes,
+            @NotNull SectionNBT nbt
+        ) {
+            this.y = nbt.getY();
+
+            this.blockPalette = new BlockState[nbt.blockStates.palette.length];
+            System.arraycopy(nbt.blockStates.palette, 0, this.blockPalette, 0, nbt.blockStates.palette.length);
 
             this.biomePalette = new Biome[nbt.biomes.palette.length];
             for (int i = 0; i < this.biomePalette.length; i++) {
                 this.biomePalette[i] = world.getBiomeRegistry().getOrDefault(nbt.biomes.palette[i], Biome.DEFAULT);
             }
 
-            this.blocks = new PackedIntArrayAccess(nbt.blockStates.data, BLOCKS_PER_SECTION);
-            this.biomes = new PackedIntArrayAccess(Math.max(MCAMath.ceilLog2(this.biomePalette.length), 1), nbt.biomes.data);
+            this.blocks = blocks;
+            this.blocks.init(nbt.blockStates.data, BLOCKS_PER_SECTION);
+            this.biomes = biomes;
+            this.biomes.init(Math.max(MCAMath.ceilLog2(this.biomePalette.length), 1), nbt.biomes.data);
 
             this.light = nbt.getLight();
         }
 
         private int getY() {
-            return this.nbt.getY();
-        }
-
-        @NotNull
-        private BlockState[] getBlockPalette() {
-            return this.nbt.blockStates.palette;
+            return this.y;
         }
 
         @NotNull
         private BlockState getBlockState(int x, int y, int z) {
-            return switch (getBlockPalette().length) {
+            return switch (this.blockPalette.length) {
                 case 0 -> Block.AIR.getDefaultState();
-                case 1 -> getBlockPalette()[0];
+                case 1 -> this.blockPalette[0];
                 default -> {
                     int id = this.blocks.get(((y & 0xF) << 8) | ((z & 0xF) << 4) | (x & 0xF));
-                    yield id < getBlockPalette().length ? getBlockPalette()[id] : Block.AIR.getDefaultState();
+                    yield id < this.blockPalette.length ? this.blockPalette[id] : Block.AIR.getDefaultState();
                 }
             };
         }

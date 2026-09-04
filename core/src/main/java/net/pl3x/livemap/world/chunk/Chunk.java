@@ -30,14 +30,16 @@ import de.bluecolored.bluenbt.NamingStrategy;
 import de.bluecolored.bluenbt.TypeToken;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.RandomAccessFile;
 import java.util.Objects;
+import net.pl3x.livemap.Logger;
 import net.pl3x.livemap.util.Pool;
 import net.pl3x.livemap.util.Unsafe;
 import net.pl3x.livemap.world.World;
 import net.pl3x.livemap.world.biome.Biome;
+import net.pl3x.livemap.world.block.Block;
 import net.pl3x.livemap.world.block.BlockState;
 import net.pl3x.livemap.world.block.BlockStateDeserializer;
 import net.pl3x.livemap.world.region.Region;
@@ -59,6 +61,33 @@ public abstract class Chunk {
 
     private static final Pool<BlockData> BLOCK_DATA_POOL = new Pool<>(BlockData::new);
 
+    // reusable 256-byte name cache buffer (Minecraft NBT keys never exceed 255 characters)
+    private static final ThreadLocal<byte[]> THREAD_LOCAL_NAME_BUFFER = ThreadLocal.withInitial(() -> new byte[256]);
+
+    private static final byte[] DATA_VERSION_BYTES = {
+        // D     a     t     a     V     e     r     s     i     o     n
+        0x44, 0x61, 0x74, 0x61, 0x56, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E
+    };
+
+    /**
+     * Checks if a raw byte array matches the "DataVersion" signature without allocating strings.
+     *
+     * @param buf Byte payload
+     * @param len Payload length
+     * @return True if payload matches data version signature
+     */
+    public static boolean isDataVersionSignature(byte[] buf, int len) {
+        if (len != DATA_VERSION_BYTES.length) {
+            return false;
+        }
+        for (int i = 0; i < len; i++) {
+            if (buf[i] != DATA_VERSION_BYTES[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /**
      * Clear the block data pool entirely to release references after major runs.
      */
@@ -69,133 +98,133 @@ public abstract class Chunk {
     /**
      * Get chunk's data version early without loading the end nbt.
      *
-     * @param raf         The region file
-     * @param compression The compression type
+     * @param compressedPayload The compressed payload for a chunk
+     * @param payloadLength     The length of the payload
+     * @param compression       The compression type
      * @return The chunk's data version, or -1 if was unable to determine
      * @throws IOException if an I/O error occurs
      */
-    public static int getChunkDataVersion(@NotNull RandomAccessFile raf, @NotNull CompressionType compression) throws IOException {
-        // grab a tiny chunk of compressed data (512 bytes is plenty for headers)
-        byte[] compressedBuffer = new byte[512];
-        int bytesRead = raf.read(compressedBuffer);
-        if (bytesRead <= 0) {
-            return -1;
-        }
-
-        // create an uncompression stream
-        try (ByteArrayInputStream bais = new ByteArrayInputStream(compressedBuffer, 0, bytesRead);
-             DataInputStream dis = new DataInputStream(compression.decompress(bais))
+    public static int getChunkDataVersion(byte[] compressedPayload, int payloadLength, @NotNull CompressionType compression) throws IOException {
+        // we need the chunk version to find correct loader
+        int version;
+        try (ByteArrayInputStream vbais = new ByteArrayInputStream(compressedPayload, 0, payloadLength);
+             InputStream vcis = compression.decompress(vbais);
+             DataInputStream vdis = new DataInputStream(vcis)
         ) {
-            // root must be TAG_Compound (0x0A)
-            if (dis.readByte() != 0x0A) {
-                return -1;
-            }
-
-            // skip root tag
-            int rootNameLen = dis.readUnsignedShort();
-            if (rootNameLen > 0) {
-                dis.skipBytes(rootNameLen);
-            }
-
-            // scan the first few tags immediately inside the root compound
-            // look for TAG_Int (0x03) followed by "DataVersion"
-            while (dis.available() > 0) {
-                byte tagType = dis.readByte();
-                if (tagType == 0x00) {
-                    break; // TAG_End
+            // root compound envelope verification (0x0A)
+            if (vdis.readByte() != 0x0A) {
+                version = -1;
+            } else {
+                // skip root name string block safely
+                int rootNameLen = vdis.readUnsignedShort();
+                if (rootNameLen > 0) {
+                    vdis.skipBytes(rootNameLen);
                 }
 
-                // read the tag name
-                int nameLen = dis.readUnsignedShort();
-                byte[] nameBytes = new byte[nameLen];
-                dis.readFully(nameBytes);
-                String tagName = new String(nameBytes, java.nio.charset.StandardCharsets.UTF_8);
+                byte[] nameBuffer = THREAD_LOCAL_NAME_BUFFER.get();
 
-                // "DataVersion" is a TAG_Int at the root level
-                if (tagType == 0x03 && "DataVersion".equals(tagName)) {
-                    return dis.readInt();
-                }
+                int foundVersion = -1;
+                while (vdis.available() > 0) {
+                    byte tagType = vdis.readByte();
+                    if (tagType == 0x00) {
+                        break; // TAG_End
+                    }
 
-                // not our tag, skip to next tag
-                if (!skipTagPayload(dis, tagType)) {
-                    // met complex nested map arrays early or stream boundary dropped
-                    break;
+                    int nameLen = vdis.readUnsignedShort();
+                    byte[] nameBytes = nameLen <= nameBuffer.length ? nameBuffer : new byte[nameLen];
+                    vdis.readFully(nameBytes, 0, nameLen);
+
+                    if (tagType == 3 && isDataVersionSignature(nameBytes, nameLen)) {
+                        foundVersion = vdis.readInt();
+                        break;
+                    }
+
+                    // if it isn't our metadata token, step past the data structure carefully
+                    if (Chunk.skipTagPayload(vdis, tagType)) {
+                        break;
+                    }
                 }
+                version = foundVersion;
             }
+        } catch (EOFException e) {
+            Logger.error("Error reading chunk version", e);
+            version = -1; // handled safely if hitting payload bounds early
         }
-        // `DataVersion` tag not found
-        return -1;
+        return version;
     }
 
     /**
      * Step over adjacent payload footprints.
      *
-     * @param dis     dis
-     * @param tagType tag
-     * @return bool
+     * @param dis     Input stream
+     * @param tagType Type of tag
+     * @return True if we didn't hit a known tag
      */
     public static boolean skipTagPayload(@NotNull DataInputStream dis, byte tagType) throws IOException {
         switch (tagType) {
             case 1: // TAG_Byte
                 dis.skipBytes(1);
-                return true;
+                return false;
             case 2: // TAG_Short
                 dis.skipBytes(2);
-                return true;
+                return false;
             case 3: // TAG_Int
                 dis.skipBytes(4);
-                return true;
+                return false;
             case 4: // TAG_Long
                 dis.skipBytes(8);
-                return true;
+                return false;
             case 5: // TAG_Float
                 dis.skipBytes(4);
-                return true;
+                return false;
             case 6: // TAG_Double
                 dis.skipBytes(8);
-                return true;
+                return false;
             case 7: // TAG_Byte_Array
                 int bLen = dis.readInt();
                 dis.skipBytes(bLen);
-                return true;
+                return false;
             case 8: // TAG_String
-                int sLen = dis.readUnsignedShort();
-                dis.skipBytes(sLen);
-                return true;
+                dis.skipBytes(dis.readUnsignedShort());
+                return false;
             case 9: // TAG_List
                 byte listType = dis.readByte();
                 int listSize = dis.readInt();
                 for (int i = 0; i < listSize; i++) {
-                    if (!skipTagPayload(dis, listType)) {
-                        return false;
+                    if (skipTagPayload(dis, listType)) {
+                        return true;
                     }
                 }
-                return true;
+                return false;
             case 10: // TAG_Compound (Nested structural sweeps)
                 byte nestedType;
                 while ((nestedType = dis.readByte()) != 0) {
                     int nLen = dis.readUnsignedShort();
                     dis.skipBytes(nLen);
-                    if (!skipTagPayload(dis, nestedType)) {
-                        return false;
+                    if (skipTagPayload(dis, nestedType)) {
+                        return true;
                     }
                 }
-                return true;
+                return false;
             case 11: // TAG_Int_Array
                 int iLen = dis.readInt();
                 dis.skipBytes(iLen * 4);
-                return true;
+                return false;
             case 12: // TAG_Long_Array
                 int lLen = dis.readInt();
                 dis.skipBytes(lLen * 8);
-                return true;
-            default: // Unmapped formatting token
                 return false;
+            default: // Unmapped formatting token
+                return true;
         }
     }
 
-    private final NBT nbt;
     private final Region region;
+    private final int version;
+    private final int xPos;
+    private final int yPos;
+    private final int zPos;
+
     private final BlockData[] data = new BlockData[256];
 
     private boolean preScanned;
@@ -208,7 +237,10 @@ public abstract class Chunk {
      */
     protected Chunk(@NotNull Region region, @NotNull Chunk.NBT nbt) {
         this.region = region;
-        this.nbt = nbt;
+        this.version = nbt.version;
+        this.xPos = nbt.xPos;
+        this.yPos = nbt.yPos;
+        this.zPos = nbt.zPos;
     }
 
     /**
@@ -260,8 +292,7 @@ public abstract class Chunk {
                     //
 
                     // test if block is renderable. we ignore blocks with black color
-                    if (data.blockstate.getBlock().getColor() != 0
-                        || data.blockstate.getBlock().getVanilla() != 0) {
+                    if (data.blockstate.getBlock().getColor() != 0) {
                         break;
                     }
                 } while (data.blockY > getWorld().getMinY());
@@ -320,7 +351,7 @@ public abstract class Chunk {
      * @return NBT structure version
      */
     public int getVersion() {
-        return this.nbt.version;
+        return this.version;
     }
 
     /**
@@ -329,7 +360,7 @@ public abstract class Chunk {
      * @return X chunk position
      */
     public int getX() {
-        return this.nbt.xPos;
+        return this.xPos;
     }
 
     /**
@@ -338,7 +369,7 @@ public abstract class Chunk {
      * @return Y chunk position
      */
     public int getMinY() {
-        return this.nbt.yPos;
+        return this.yPos;
     }
 
     /**
@@ -347,7 +378,7 @@ public abstract class Chunk {
      * @return Z chunk position
      */
     public int getZ() {
-        return this.nbt.zPos;
+        return this.zPos;
     }
 
     /**
@@ -635,6 +666,26 @@ public abstract class Chunk {
         }
 
         /**
+         * Get the block.
+         *
+         * @return The block
+         */
+        @NotNull
+        public Block getBlock() {
+            return this.blockstate.getBlock();
+        }
+
+        /**
+         * Get the fluid, if there is one.
+         *
+         * @return The fluid, or null if not a fluid
+         */
+        @Nullable
+        public Block getFluid() {
+            return this.fluidstate == null ? null : this.fluidstate.getBlock();
+        }
+
+        /**
          * Get the chunk this block data belongs to.
          *
          * @return Owning chunk
@@ -740,8 +791,8 @@ public abstract class Chunk {
         public @NotNull Biome getBiome() {
             if (this.biome == null) {
                 // calculate real biome
-                this.biome = this.chunk.getRegion().getWorld().getBiomeRegistry()
-                    .getBiome(this.chunk.getRegion(), this.blockX, this.blockY, this.blockZ);
+                this.biome = getChunk().getRegion().getWorld().getBiomeRegistry()
+                    .getBiome(getChunk().getRegion(), getBlockX(), getBlockY(), getBlockZ());
             }
             return this.biome;
         }

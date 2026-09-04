@@ -29,13 +29,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReadWriteLock;
 import net.pl3x.livemap.Logger;
 import net.pl3x.livemap.configuration.Config;
 import net.pl3x.livemap.render.image.io.IO;
+import net.pl3x.livemap.render.renderer.Renderer;
 import net.pl3x.livemap.util.FileUtil;
-import net.pl3x.livemap.util.Unsafe;
 import net.pl3x.livemap.world.World;
 import net.pl3x.livemap.world.region.Region;
 import org.jetbrains.annotations.NotNull;
@@ -45,15 +43,12 @@ import org.jetbrains.annotations.NotNull;
  * to disk per region. <em>(images, heightmaps, block/biome info, etc.)</em>
  */
 public class TileCanvas implements ImageInt {
-    private static final Map<@NotNull Path, @NotNull ReadWriteLock> FILE_LOCKS = new ConcurrentHashMap<>();
-
     public static final String DIR_PATH = "%d/%s/";
     public static final String FILE_PATH = "%d_%d.%s";
 
     private final Region region;
+    private final Renderer renderer;
     private final IO.Type io;
-
-    private final Map<String, Image> images = new ConcurrentHashMap<>();
 
     private final int[] pixels = new int[512 << 9];
     private boolean dirty;
@@ -61,10 +56,12 @@ public class TileCanvas implements ImageInt {
     /**
      * Constructs a new instance of Tile.
      *
-     * @param region Region this tile belongs to
+     * @param region   Region this tile belongs to
+     * @param renderer The renderer drawing on this tile
      */
-    public TileCanvas(@NotNull Region region) {
+    public TileCanvas(@NotNull Region region, @NotNull Renderer renderer) {
         this.region = region;
+        this.renderer = renderer;
         this.io = IO.getType(Config.WEB_TILE_FORMAT);
     }
 
@@ -99,16 +96,13 @@ public class TileCanvas implements ImageInt {
     }
 
     /**
-     * Get an image by id, or create a new one if one doesn't exist.
+     * Get the renderer that's drawing on this tile.
      *
-     * @param id   The id for an image (usually it is the id of the renderer that uses it)
-     * @param func The function to create a new image if one does not exist
-     * @param <T>  The type of image
-     * @return The image for specified id
+     * @return The renderer
      */
     @NotNull
-    public <T extends Image> T getOrCreateImage(@NotNull String id, @NotNull ImageFunction<String, T> func) {
-        return Unsafe.cast(this.images.computeIfAbsent(id, func));
+    public Renderer getRenderer() {
+        return this.renderer;
     }
 
     @Override
@@ -140,7 +134,7 @@ public class TileCanvas implements ImageInt {
             int x = getRegion().getX() >> curZoom;
             int z = getRegion().getZ() >> curZoom;
 
-            Path dir = getWorld().getTilesDir().resolve(DIR_PATH.formatted(curZoom, "basic")); // todo - use renderer's id
+            Path dir = getWorld().getTilesDir().resolve(DIR_PATH.formatted(curZoom, getRenderer().getType().getId()));
             FileUtil.createDirs(dir);
             Path file = dir.resolve(FILE_PATH.formatted(x, z, getIO().getExtension()));
 
@@ -161,19 +155,19 @@ public class TileCanvas implements ImageInt {
                 _ -> new ActiveTileCanvas(this, curZoom)
             );
 
-            // Synchronize on the canvas to safely draw pixel matrices from multiple threads
+            // synchronize on the canvas to safely draw pixel matrices from multiple threads
             synchronized (canvas) {
                 writePixels(canvas.getImageBuffer(), zoom);
-            }
 
-            // record this thread's contribution. the very last thread to finish writing
-            // its quadrant triggers true, removes the entry from the map, and saves it to the disk.
-            if (canvas.recordContribution()) {
-                sharedCanvases.remove(file); // purge from memory to prevent leaks
-                try {
-                    getIO().write(file, canvas.getImageBuffer());
-                } catch (Throwable t) {
-                    Logger.error("Failed flushing consolidated tile to disk: " + file, t);
+                // record this thread's contribution. the very last thread to finish writing
+                // its quadrant triggers true, removes the entry from the map, and saves it to the disk.
+                if (canvas.recordContribution()) {
+                    sharedCanvases.remove(file); // purge from memory to prevent leaks
+                    try {
+                        getIO().write(file, canvas.getImageBuffer());
+                    } catch (Throwable t) {
+                        Logger.error("Failed flushing consolidated tile to disk: " + file, t);
+                    }
                 }
             }
         }

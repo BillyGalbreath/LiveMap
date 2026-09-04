@@ -25,6 +25,7 @@
 package net.pl3x.livemap.render;
 
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -65,8 +66,8 @@ public class RenderScheduler {
         Logger.debug("[RenderScheduler] %s".formatted(message));
     }
 
-    private WorkerThreadPool worldExecutor;
-    private WorkerThreadPool regionExecutor;
+    private final WorkerThreadPool worldExecutor;
+    private final WorkerThreadPool regionExecutor;
     private ScheduledFuture<?> future;
 
     private final AtomicBoolean manualRunning = new AtomicBoolean(false);
@@ -77,6 +78,23 @@ public class RenderScheduler {
     private final Map<Path, ActiveTileCanvas> activeCanvases = new ConcurrentHashMap<>();
 
     /**
+     * Constructs a new instance of RenderScheduler.
+     */
+    public RenderScheduler() {
+        this.worldExecutor = WorkerThreadFactory.createExecutor("RendererScheduler");
+        this.regionExecutor = WorkerThreadFactory.createExecutor("RenderRegion", Config.RENDER_THREADS);
+    }
+
+    /**
+     * Get the targeted parallelism level of the region executor.
+     *
+     * @return The targeted parallelism level
+     */
+    public int getParallelism() {
+        return this.regionExecutor.getParallelism();
+    }
+
+    /**
      * Start the render scheduler loop when the plugin loads.
      */
     public synchronized void start() {
@@ -85,9 +103,6 @@ public class RenderScheduler {
             Logger.warn("Render scheduler is already started. Cannot start again.");
             return;
         }
-
-        this.worldExecutor = WorkerThreadFactory.createExecutor("RendererScheduler");
-        this.regionExecutor = WorkerThreadFactory.createExecutor("RenderRegion", Config.RENDER_THREADS);
 
         Logger.debug("Region executor threads: %d".formatted(this.regionExecutor.getParallelism()));
 
@@ -131,15 +146,8 @@ public class RenderScheduler {
             this.future = null;
         }
 
-        // shutdown executors, but do not set them to null.
-        // active threads will still use them while they terminate
-        if (this.regionExecutor != null) {
-            this.regionExecutor.shutdownNow();
-        }
-
-        if (this.worldExecutor != null) {
-            this.worldExecutor.shutdownNow();
-        }
+        this.regionExecutor.shutdownNow();
+        this.worldExecutor.shutdownNow();
 
         this.manualRunning.set(false);
 
@@ -160,7 +168,7 @@ public class RenderScheduler {
     @Nullable
     public ForkJoinTask<?> trigger() {
         // ensure executor is accepting new tasks
-        if (this.worldExecutor == null || this.worldExecutor.isShutdown()) {
+        if (this.worldExecutor.isShutdown()) {
             return null;
         }
 
@@ -274,7 +282,7 @@ public class RenderScheduler {
         debug("Begin rendering %d total pending region(s) across all active worlds".formatted(totalRegions));
 
         // number of worker tasks to spawn (bounded by thread count and region count)
-        int maxThreads = Math.max(1, this.regionExecutor.getParallelism());
+        int maxThreads = Math.max(1, getParallelism());
         int tasksToSpawn = Math.min(maxThreads, totalRegions);
 
         // track active jobs so we can wait for all queued regions to finish
@@ -348,6 +356,9 @@ public class RenderScheduler {
         // purge the object pool references so the GC can reclaim the memory
         Chunk.clearPool();
 
+        // nudge the jvm to run gc
+        System.gc();
+
         debug("Finished rendering");
     }
 
@@ -358,40 +369,36 @@ public class RenderScheduler {
      * @param renderers Snapshot of world's renderers
      * @param cancelled Cancellation token
      * @return True if the entire region was rendered, false if aborted
+     * @throws IOException if an I/O error occurs
      */
-    private boolean renderRegion(@NotNull Region region, @NotNull List<Renderer> renderers, @NotNull AtomicBoolean cancelled) {
+    private boolean renderRegion(@NotNull Region region, @NotNull List<Renderer> renderers, @NotNull AtomicBoolean cancelled) throws IOException {
         Logger.debug("[%s] Rendering: %d,%d".formatted(Thread.currentThread().getName(), region.getX(), region.getZ()));
 
         // random obtained here to prevent a bajillion method calls deeper in the process
         ThreadLocalRandom rand = ThreadLocalRandom.current();
 
-        TileCanvas tile = new TileCanvas(region);
+        // quickly load all chunks into memory
+        region.loadAllChunks(cancelled);
 
         // render regions to tiles
         for (Renderer renderer : renderers) {
+            TileCanvas tile = new TileCanvas(region, renderer);
+
             if (!renderer.renderRegion(region, tile, rand, cancelled)) {
                 return false;
             }
+
+            debug("Saving %s's render on %s for region %d,%d"
+                .formatted(renderer.getName(), region.getWorld().getName(), region.getX(), region.getZ())
+            );
+            tile.save(this.activeCanvases);
         }
 
-        debug("Saving: %d,%d".formatted(region.getX(), region.getZ()));
-
-        tile.save(this.activeCanvases);
-
-        debug("Done: %d,%d".formatted(region.getX(), region.getZ()));
-
-        // unload/recycle all chunk data
+        // aggressively wipe the entire region reference tree from memory
         try {
-            int startChunkX = region.getX() << 5;
-            int startChunkZ = region.getZ() << 5;
-
-            for (int chunkX = startChunkX; chunkX < startChunkX + 32; chunkX++) {
-                for (int chunkZ = startChunkX; chunkZ < startChunkZ + 32; chunkZ++) {
-                    Chunk chunk = region.getChunk(chunkX, chunkZ);
-                    chunk.recycle();
-                }
-            }
-        } catch (Throwable ignore) {
+            region.unload();
+        } catch (Throwable e) {
+            Logger.error("Error unloading region %d,%d".formatted(region.getX(), region.getZ()), e);
         }
 
         return true;
