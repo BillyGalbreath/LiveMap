@@ -81,7 +81,7 @@ public class Pool<T extends Pool.Reusable> {
     }
 
     /**
-     * Interface for reusable objects that can be inserted into this pool.
+     * Represents a reusable object that can be inserted into the pool.
      */
     public interface Reusable {
     }

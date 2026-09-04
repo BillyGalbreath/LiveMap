@@ -50,6 +50,7 @@ import net.pl3x.livemap.thread.WorkerThreadFactory;
 import net.pl3x.livemap.thread.WorkerThreadPool;
 import net.pl3x.livemap.world.World;
 import net.pl3x.livemap.world.WorldDispatcher;
+import net.pl3x.livemap.world.chunk.Chunk;
 import net.pl3x.livemap.world.region.Region;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -344,6 +345,9 @@ public class RenderScheduler {
             dispatcher.returnRemainingAll();
         }
 
+        // purge the object pool references so the GC can reclaim the memory
+        Chunk.clearPool();
+
         debug("Finished rendering");
     }
 
@@ -375,6 +379,20 @@ public class RenderScheduler {
         tile.save(this.activeCanvases);
 
         debug("Done: %d,%d".formatted(region.getX(), region.getZ()));
+
+        // unload/recycle all chunk data
+        try {
+            int startChunkX = region.getX() << 5;
+            int startChunkZ = region.getZ() << 5;
+
+            for (int chunkX = startChunkX; chunkX < startChunkX + 32; chunkX++) {
+                for (int chunkZ = startChunkX; chunkZ < startChunkZ + 32; chunkZ++) {
+                    Chunk chunk = region.getChunk(chunkX, chunkZ);
+                    chunk.recycle();
+                }
+            }
+        } catch (Throwable ignore) {
+        }
 
         return true;
     }

@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.util.Objects;
+import net.pl3x.livemap.util.Pool;
 import net.pl3x.livemap.util.Unsafe;
 import net.pl3x.livemap.world.World;
 import net.pl3x.livemap.world.biome.Biome;
@@ -55,6 +56,15 @@ public abstract class Chunk {
     static final long[] EMPTY_LONG_ARRAY = new long[0];
     static final String[] EMPTY_STRING_ARRAY = new String[0];
     static final BlockState[] EMPTY_BLOCKSTATE_ARRAY = new BlockState[0];
+
+    private static final Pool<BlockData> BLOCK_DATA_POOL = new Pool<>(BlockData::new);
+
+    /**
+     * Clear the block data pool entirely to release references after major runs.
+     */
+    public static void clearPool() {
+        BLOCK_DATA_POOL.clear();
+    }
 
     /**
      * Get chunk's data version early without loading the end nbt.
@@ -217,7 +227,8 @@ public abstract class Chunk {
 
         for (int blockX = blockStartX; blockX < blockStartX + 16; blockX++) {
             for (int blockZ = blockStartZ; blockZ < blockStartZ + 16; blockZ++) {
-                BlockData data = new BlockData(this, blockX, blockZ);
+                BlockData data = BLOCK_DATA_POOL.get();
+                data.setup(this, blockX, blockZ);
 
                 data.blockY = getHeight(blockX, blockZ) + 1;
 
@@ -267,6 +278,20 @@ public abstract class Chunk {
         this.preScanned = true;
 
         return this;
+    }
+
+    /**
+     * Flush all local block data entities back into the global object pool.
+     */
+    public void recycle() {
+        for (int i = 0; i < this.data.length; i++) {
+            BlockData data = this.data[i];
+            if (data != null) {
+                BLOCK_DATA_POOL.put(data);
+                this.data[i] = null;
+            }
+        }
+        this.preScanned = false;
     }
 
     /**
@@ -573,10 +598,10 @@ public abstract class Chunk {
     /**
      * Represents pre-scanned block data that can be reused by multiple renderers.
      */
-    public static class BlockData {
-        protected final Chunk chunk;
-        protected final int blockX;
-        protected final int blockZ;
+    public static class BlockData implements Pool.Reusable {
+        protected Chunk chunk;
+        protected int blockX;
+        protected int blockZ;
 
         protected int blockY;
         protected int fluidY;
@@ -586,15 +611,27 @@ public abstract class Chunk {
 
         /**
          * Constructs a new instance of BlockData.
+         */
+        public BlockData() {
+        }
+
+        /**
+         * Re-initializes with fresh data.
          *
          * @param chunk  Chunk this block data belongs to
          * @param blockX X block coordinate
          * @param blockZ Z block coordinate
          */
-        public BlockData(@NotNull Chunk chunk, int blockX, int blockZ) {
+        public void setup(@NotNull Chunk chunk, int blockX, int blockZ) {
             this.chunk = chunk;
             this.blockX = blockX;
             this.blockZ = blockZ;
+
+            this.blockY = 0;
+            this.fluidY = 0;
+            this.blockstate = null;
+            this.fluidstate = null;
+            this.biome = null;
         }
 
         /**

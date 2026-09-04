@@ -52,6 +52,8 @@ import org.jetbrains.annotations.Nullable;
  * Represents a region in a world.
  */
 public class Region extends Point {
+    private static final ThreadLocal<byte[]> THREAD_LOCAL_PAYLOAD_BUFFER = ThreadLocal.withInitial(() -> new byte[1024 * 1024]);
+
     private static final BlueNBT BLUENBT = new BlueNBT();
 
     static {
@@ -242,19 +244,27 @@ public class Region extends Point {
         byte compressionTypeId = raf.readByte();
         CompressionType compression = CompressionType.byId(compressionTypeId);
 
-        byte[] compressedPayload = new byte[length - 1]; // Subtract the 1 byte for compressionTypeId
+        byte[] compressedPayload = THREAD_LOCAL_PAYLOAD_BUFFER.get();
+
+        int payloadLength = length - 1; // Subtract the 1 byte for compressionTypeId;
+        if (payloadLength > compressedPayload.length) {
+            // if an atypical oversized custom chunk exceeds 1MB,
+            // gracefully fall back to a manual allocation
+            compressedPayload = new byte[payloadLength];
+        }
+
         raf.readFully(compressedPayload);
 
         // we need the chunk version to find correct loader
         int version;
-        try (ByteArrayInputStream vbais = new ByteArrayInputStream(compressedPayload);
+        try (ByteArrayInputStream vbais = new ByteArrayInputStream(compressedPayload, 0, payloadLength);
              InputStream vcis = compression.decompress(vbais);
              DataInputStream vdis = new DataInputStream(vcis)) {
-            // Root compound envelope verification (0x0A)
+            // root compound envelope verification (0x0A)
             if (vdis.readByte() != 0x0A) {
                 version = -1;
             } else {
-                // Skip root name string block safely
+                // skip root name string block safely
                 int rootNameLen = vdis.readUnsignedShort();
                 if (rootNameLen > 0) {
                     vdis.skipBytes(rootNameLen);
@@ -277,7 +287,7 @@ public class Region extends Point {
                         break;
                     }
 
-                    // If it isn't our metadata token, step past the data structure carefully
+                    // if it isn't our metadata token, step past the data structure carefully
                     if (!Chunk.skipTagPayload(vdis, tagType)) {
                         break;
                     }
@@ -285,13 +295,13 @@ public class Region extends Point {
                 version = foundVersion;
             }
         } catch (EOFException ignore) {
-            version = -1; // Handled safely if hitting payload bounds early
+            version = -1; // handled safely if hitting payload bounds early
         }
 
         Chunk.Loader<Chunk.NBT> chunkLoader = Chunk.Loader.getForVersion(version);
 
         try (
-            ByteArrayInputStream bais = new ByteArrayInputStream(compressedPayload);
+            ByteArrayInputStream bais = new ByteArrayInputStream(compressedPayload, 0, payloadLength);
             InputStream cis = compression.decompress(bais);
             InputStream bis = new BufferedInputStream(cis)
         ) {
