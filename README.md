@@ -179,7 +179,7 @@ The compiled jars will be in `/build/libs/`
 [CodeFactor Url]: https://www.codefactor.io/repository/github/BillyGalbreath/LiveMap
 
 [bStats Url]: https://bstats.org/plugin/bukkit/LiveMap/26542
-[Stars Url]: https://github.com/BillyGalbreath/LiveMap/stars
+[Stars Url]: https://github.com/BillyGalbreath/LiveMap/stargazers
 [Forks Url]: https://github.com/BillyGalbreath/LiveMap/forks
 [Watchers Url]: https://github.com/BillyGalbreath/LiveMap/watchers
 
