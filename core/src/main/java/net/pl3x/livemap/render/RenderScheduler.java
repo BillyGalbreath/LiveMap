@@ -246,9 +246,54 @@ public class RenderScheduler {
      * @param cancelled Cancellation token
      */
     private void renderWorlds(@NotNull AtomicBoolean cancelled) {
+        WorldDispatcher dispatcher = new WorldDispatcher();
+
+        queuePendingRegions(dispatcher, cancelled);
+
+        if (dispatcher.isEmpty()) {
+            return;
+        }
+
+        int totalRegions = dispatcher.totalPending();
+        debug("Begin rendering %d total pending region(s) across all active worlds".formatted(totalRegions));
+
+        // number of worker tasks to spawn (bounded by thread count and region count)
+        int maxThreads = Math.max(1, getParallelism());
+        int tasksToSpawn = Math.min(maxThreads, totalRegions);
+
+        // track active jobs so we can wait for all queued regions to finish
+        List<CompletableFuture<Void>> workers = new ArrayList<>(tasksToSpawn);
+
+        spawnTheTasks(dispatcher, workers, tasksToSpawn, cancelled);
+
+        // await the worker pool tasks
+        try {
+            CompletableFuture.allOf(workers.toArray(EMPTY_FUTURE_ARRAY)).join();
+        } catch (Exception e) {
+            if (!cancelled.get()) {
+                Logger.error("Error awaiting multi-world render tasks", e);
+            }
+        }
+
+        cleanupCanvases();
+
+        // return remaining regions that were never processed
+        if (cancelled.get()) {
+            dispatcher.returnRemainingAll();
+        }
+
+        // purge the object pool references so the GC can reclaim the memory
+        Chunk.clearPool();
+
+        // nudge the jvm to run gc
+        System.gc();
+
+        debug("Finished rendering");
+    }
+
+    private void queuePendingRegions(@NotNull WorldDispatcher dispatcher, @NotNull AtomicBoolean cancelled) {
         // snapshot to prevent possible CMEs
         List<World> worlds = List.copyOf(LiveMap.api().getWorldRegistry().values());
-        WorldDispatcher dispatcher = new WorldDispatcher();
 
         for (World world : worlds) {
             if (world.isDiscarded() || cancelled.get()) {
@@ -273,21 +318,9 @@ public class RenderScheduler {
 
             dispatcher.addQueue(world, renderers, spiral);
         }
+    }
 
-        if (dispatcher.isEmpty()) {
-            return;
-        }
-
-        int totalRegions = dispatcher.totalPending();
-        debug("Begin rendering %d total pending region(s) across all active worlds".formatted(totalRegions));
-
-        // number of worker tasks to spawn (bounded by thread count and region count)
-        int maxThreads = Math.max(1, getParallelism());
-        int tasksToSpawn = Math.min(maxThreads, totalRegions);
-
-        // track active jobs so we can wait for all queued regions to finish
-        List<CompletableFuture<Void>> workers = new ArrayList<>(tasksToSpawn);
-
+    private void spawnTheTasks(@NotNull WorldDispatcher dispatcher, @NotNull List<CompletableFuture<Void>> workers, int tasksToSpawn, @NotNull AtomicBoolean cancelled) {
         // spawn the tasks
         for (int i = 0; i < tasksToSpawn; i++) {
             CompletableFuture<Void> worker = CompletableFuture.runAsync(() -> {
@@ -321,16 +354,9 @@ public class RenderScheduler {
 
             workers.add(worker);
         }
+    }
 
-        // await the worker pool tasks
-        try {
-            CompletableFuture.allOf(workers.toArray(EMPTY_FUTURE_ARRAY)).join();
-        } catch (Exception e) {
-            if (!cancelled.get()) {
-                Logger.error("Error awaiting multi-world render tasks", e);
-            }
-        }
-
+    private void cleanupCanvases() {
         // workers are done. anything left in the map is a partial tile on map borders
         if (!this.activeCanvases.isEmpty()) {
             debug("Flushing incomplete edge-of-the-map canvases to disk...");
@@ -347,19 +373,6 @@ public class RenderScheduler {
 
             this.activeCanvases.clear(); // wipe map entirely clean to drop memory footprints to 0
         }
-
-        // return remaining regions that were never processed
-        if (cancelled.get()) {
-            dispatcher.returnRemainingAll();
-        }
-
-        // purge the object pool references so the GC can reclaim the memory
-        Chunk.clearPool();
-
-        // nudge the jvm to run gc
-        System.gc();
-
-        debug("Finished rendering");
     }
 
     /**
