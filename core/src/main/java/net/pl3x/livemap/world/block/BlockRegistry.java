@@ -35,7 +35,8 @@ public abstract class BlockRegistry extends Registry<Block> {
     @Override
     @NotNull
     public Block get(@NotNull Object key) {
-        return getOrDefault(key, Block.AIR);
+        Block block;
+        return (block = super.get(key)) == null ? Block.AIR : block;
     }
 
     /**

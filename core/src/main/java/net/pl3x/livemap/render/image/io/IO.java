@@ -32,21 +32,50 @@ import javax.imageio.ImageReader;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
-import net.pl3x.livemap.render.image.Tile;
+import net.pl3x.livemap.render.image.TileCanvas;
+import net.pl3x.livemap.util.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * IO utils for PNG images.
  */
-public abstract class IO {
-    public static IO.Type BMP = new Bmp();
-    public static IO.Type GIF = new Gif();
-    public static IO.Type JPEG = new Jpeg();
-    public static IO.Type PNG = new Png();
-    public static IO.Type WEBP = new WebP();
+public final class IO extends Registry<IO.Type> {
+    private static final IO INSTANCE = new IO();
+
+    static {
+        INSTANCE.rebuild();
+    }
+
+    /**
+     * Get io type by id (aka, file extension).
+     *
+     * @param id Type id
+     * @return Type of id
+     * @throws IllegalStateException if type with id does not exist
+     */
+    @NotNull
+    public static Type getType(@NotNull String id) {
+        Type type = INSTANCE.get(id);
+        if (type == null) {
+            throw new IllegalStateException("Unknown or unsupported image format");
+        }
+        return type;
+    }
 
     private IO() {
+    }
+
+    @Override
+    public void rebuild() {
+        clear();
+
+        put("bmp", new Bmp());
+        put("gif", new Gif());
+        put("jpg", new Jpeg());
+        put("jpeg", get("jpg"));
+        put("png", new Png());
+        put("webp", new WebP());
     }
 
     /**
@@ -67,7 +96,7 @@ public abstract class IO {
          */
         @NotNull
         public BufferedImage createBuffer() {
-            return new BufferedImage(Tile.SIZE, Tile.SIZE, BufferedImage.TYPE_INT_ARGB);
+            return new BufferedImage(TileCanvas.SIZE, TileCanvas.SIZE, BufferedImage.TYPE_INT_ARGB);
         }
 
         /**

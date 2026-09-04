@@ -105,11 +105,11 @@ class Chunk_1_13 extends Chunk {
         }
     }
 
-    @SuppressWarnings("CanBeFinal")
-    static class NBT extends Chunk.NBT {
+    @SuppressWarnings("FieldMayBeFinal")
+    public static class NBT extends Chunk.NBT {
     }
 
-    @SuppressWarnings("CanBeFinal")
-    private static class SectionNBT extends Chunk.Section.NBT {
+    @SuppressWarnings("FieldMayBeFinal")
+    public static class SectionNBT extends Chunk.Section.NBT {
     }
 }

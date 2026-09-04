@@ -27,6 +27,7 @@ package net.pl3x.livemap.world;
 import java.util.ArrayList;
 import java.util.List;
 import net.pl3x.livemap.render.iterator.SpiralIterator;
+import net.pl3x.livemap.render.renderer.Renderer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,11 +41,12 @@ public class WorldDispatcher {
     /**
      * Add a world to the queue.
      *
-     * @param world  World to add
-     * @param spiral Iterator of region indexes waiting to be rendered
+     * @param world     World to add
+     * @param renderers Snapshot of world's renderers
+     * @param spiral    Iterator of region indexes waiting to be rendered
      */
-    public void addQueue(@NotNull World world, @NotNull SpiralIterator spiral) {
-        this.worldQueues.add(new WorldQueue(world, spiral));
+    public void addQueue(@NotNull World world, @NotNull List<Renderer> renderers, @NotNull SpiralIterator spiral) {
+        this.worldQueues.add(new WorldQueue(world, renderers, spiral));
     }
 
     /**
@@ -76,24 +78,33 @@ public class WorldDispatcher {
      */
     @Nullable
     public synchronized Ticket pollNext() {
-        int attempts = 0;
-        while (!this.worldQueues.isEmpty() && attempts < this.worldQueues.size()) {
+        // loop until we find work or exhaustively confirm all queues are dead
+        while (!this.worldQueues.isEmpty()) {
+            // enforce safety bounds against structural shifts
+            if (this.currentIndex >= this.worldQueues.size()) {
+                this.currentIndex = 0;
+            }
+
             WorldQueue queue = this.worldQueues.get(this.currentIndex);
-            if (queue.spiral.hasNext() && !queue.world.isDiscarded()) {
+
+            // purge explicitly broken or unloaded worlds immediately
+            if (queue.world.isDiscarded()) {
+                this.worldQueues.remove(this.currentIndex);
+                continue;
+            }
+
+            // safely verify if this specific world has regions left to handle
+            if (queue.spiral.hasNext()) {
                 long regionIndex = queue.spiral.nextLong();
 
-                // Advance to the next world for fair round-robin distribution
+                // advance round-robin pointer for the NEXT requesting thread
                 this.currentIndex = (this.currentIndex + 1) % this.worldQueues.size();
-                return new Ticket(queue.world, regionIndex);
+
+                return new Ticket(queue.world, queue.renderers, regionIndex);
             } else {
-                // This world is exhausted or discarded, remove it from active rotation
+                // queue is legitimately exhausted. purge it and let loop continue naturally
                 this.worldQueues.remove(this.currentIndex);
-                if (this.worldQueues.isEmpty()) {
-                    break;
-                }
-                this.currentIndex %= this.worldQueues.size();
             }
-            attempts++;
         }
         return null;
     }
@@ -112,18 +123,20 @@ public class WorldDispatcher {
     /**
      * Represents a queue of regions waiting to be rendered for a specific world.
      *
-     * @param world  World for queue
-     * @param spiral Iterator of pending region indexes
+     * @param world     World for queue
+     * @param renderers Snapshot of world's renderers
+     * @param spiral    Iterator of pending region indexes
      */
-    public record WorldQueue(@NotNull World world, @NotNull SpiralIterator spiral) {
+    public record WorldQueue(@NotNull World world, @NotNull List<Renderer> renderers, @NotNull SpiralIterator spiral) {
     }
 
     /**
      * Represents a single region render task for a specific world.
      *
-     * @param world  World for task
-     * @param region Region to render
+     * @param world     World for task
+     * @param renderers Snapshot of world's renderers
+     * @param region    Region to render
      */
-    public record Ticket(@NotNull World world, long region) {
+    public record Ticket(@NotNull World world, @NotNull List<Renderer> renderers, long region) {
     }
 }

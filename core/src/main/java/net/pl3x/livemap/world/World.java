@@ -47,6 +47,7 @@ import net.pl3x.livemap.render.renderer.RendererRegistry;
 import net.pl3x.livemap.util.LongDoubleBuffer;
 import net.pl3x.livemap.util.LongLoadingCache;
 import net.pl3x.livemap.world.biome.BiomeRegistry;
+import net.pl3x.livemap.world.chunk.Chunk;
 import net.pl3x.livemap.world.region.Region;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -226,11 +227,24 @@ public abstract class World {
      * @return Requested region
      */
     @NotNull
-    public Region getRegionFast(@NotNull Region region, int regionX, int regionZ) {
-        if (region.getX() == regionX && region.getZ() == regionZ) {
+    public Region getRegionFast(@Nullable Region region, int regionX, int regionZ) {
+        if (region != null && region.getX() == regionX && region.getZ() == regionZ) {
             return region;
         }
         return getRegion(Region.pack(regionX, regionZ));
+    }
+
+    /**
+     * Get chunk at specified chunk coordinates.
+     *
+     * @param region Possible region (used as cache for faster lookups)
+     * @param chunkX X chunk coordinate
+     * @param chunkZ Z chunk coordinate
+     * @return Requested chunk
+     */
+    @NotNull
+    public Chunk getChunk(@Nullable Region region, int chunkX, int chunkZ) {
+        return getRegionFast(region, chunkX >> 5, chunkZ >> 5).getChunk(chunkX, chunkZ);
     }
 
     /**
@@ -318,6 +332,16 @@ public abstract class World {
      * @return Maximum Z coordinate
      */
     public abstract double getBorderMaxZ();
+
+    /**
+     * Get the world's seed, but hashed.
+     *
+     * <p>Uses the server's internal hashing method.
+     *
+     * @param seed World's seed
+     * @return World's hashed seed
+     */
+    public abstract long hashSeed(long seed);
 
     /**
      * Get the biome registry.

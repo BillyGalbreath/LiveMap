@@ -24,6 +24,9 @@
 
 package net.pl3x.livemap.util;
 
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongCollection;
+import it.unimi.dsi.fastutil.longs.LongLists;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
@@ -31,21 +34,35 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.nio.file.StandardCopyOption;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.stream.Stream;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.Logger;
 import net.pl3x.livemap.configuration.Config;
+import net.pl3x.livemap.world.World;
+import net.pl3x.livemap.world.region.Region;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Utility class to handle file operations.
  */
 public final class FileUtil {
+    public static final PathMatcher JSON_MATCHER = FileSystems.getDefault().getPathMatcher("glob:**/*.json");
+    public static final PathMatcher MCA_MATCHER = FileSystems.getDefault().getPathMatcher("glob:**/r.*.*.mca");
+
     private static Path jarPath;
 
     private FileUtil() {
@@ -178,5 +195,100 @@ public final class FileUtil {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    /**
+     * Create a path to a temporary file.
+     *
+     * <p>File starts with {@code .} and ends with {@code .tmp} (i.e., {@code .0_0.png.tmp})
+     *
+     * @param filename Name of file
+     * @return Temporary file path
+     */
+    @NotNull
+    public static Path tmp(@NotNull Path filename) {
+        return filename.resolveSibling("." + filename.getFileName().toString() + ".tmp");
+    }
+
+    /**
+     * Atomically move a file.
+     *
+     * @param source Source file to move from
+     * @param target Target file to move to
+     * @throws IOException if an I/O error occurs
+     */
+    public static void atomicMove(@NotNull Path source, @NotNull Path target) throws IOException {
+        try {
+            atomicMove(source, target, 0);
+        } catch (AccessDeniedException | NoSuchFileException ignore) {
+        }
+    }
+
+    private static void atomicMove(@NotNull Path source, @NotNull Path target, int attempt) throws IOException {
+        try {
+            com.google.common.io.Files.move(source.toFile(), target.toFile());
+            Files.move(source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        } catch (AtomicMoveNotSupportedException e) {
+            Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+        } catch (AccessDeniedException e) {
+            if (attempt < 5) {
+                try {
+                    Thread.sleep(20);
+                } catch (InterruptedException ignore) {
+                }
+                atomicMove(source, target, ++attempt);
+            } else if (source.getFileName().toString().endsWith(".tmp")) {
+                try {
+                    Files.delete(source);
+                } catch (Throwable ignore) {
+                }
+            }
+        }
+    }
+
+    /**
+     * Get region file paths for specified world.
+     *
+     * @param world World to check
+     * @return Collection of file paths
+     */
+    @NotNull
+    public static Collection<Path> getRegionPaths(@NotNull World world) {
+        if (!Files.exists(world.getRegionsDir())) {
+            return Collections.emptySet();
+        }
+        try (Stream<Path> stream = Files.list(world.getRegionsDir())) {
+            return stream.filter(MCA_MATCHER::matches).toList();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to list region files in directory '" + world.getRegionsDir().toAbsolutePath() + "'", e);
+        }
+    }
+
+    /**
+     * Convert a collection of region file paths to a collection of longs.
+     *
+     * @param paths Paths to convert
+     * @return Collection of longs
+     */
+    @NotNull
+    public static LongCollection regionPathsToLongs(@Nullable Collection<Path> paths) {
+        if (paths == null || paths.isEmpty()) {
+            return LongLists.emptyList();
+        }
+        LongCollection regions = new LongArrayList();
+        for (Path file : paths) {
+            if (file.toFile().length() <= 0) {
+                Logger.debug("Skipping zero length region file: " + file.getFileName());
+                continue;
+            }
+            try {
+                String[] split = file.getFileName().toString().split("\\.");
+                int rX = Integer.parseInt(split[1]);
+                int rZ = Integer.parseInt(split[2]);
+                regions.add(Region.pack(rX, rZ));
+            } catch (NumberFormatException ignore) {
+            }
+        }
+        return regions;
     }
 }

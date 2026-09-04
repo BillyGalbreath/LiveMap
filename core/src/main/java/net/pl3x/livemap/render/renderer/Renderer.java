@@ -29,7 +29,13 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicBoolean;
+import net.pl3x.livemap.Logger;
 import net.pl3x.livemap.render.heightmap.Heightmap;
+import net.pl3x.livemap.render.image.TileCanvas;
+import net.pl3x.livemap.world.chunk.Chunk;
+import net.pl3x.livemap.world.region.Region;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -128,6 +134,58 @@ public abstract class Renderer {
     public boolean isTranslucentFluids() {
         return this.translucentFluids;
     }
+
+    /**
+     * Render the specified region.
+     *
+     * @param region    Region to render
+     * @param tile      Tile image to render to
+     * @param rand      Random for RNG stuff
+     * @param cancelled Cancellation token
+     * @return True if the entire region was rendered, false if aborted
+     */
+    public boolean renderRegion(@NotNull Region region, @NotNull TileCanvas tile, @NotNull ThreadLocalRandom rand, @NotNull AtomicBoolean cancelled) {
+        int chunkStartX = region.getX() << 5;
+        int chunkStartZ = region.getZ() << 5;
+
+        for (int chunkX = chunkStartX; chunkX < chunkStartX + 32; chunkX++) {
+            int blockStartX = chunkX << 4;
+            for (int chunkZ = chunkStartZ; chunkZ < chunkStartZ + 32; chunkZ++) {
+                // check world state and interruptions, for instant responsiveness
+                if (region.getWorld().isDiscarded() || cancelled.get()) {
+                    return false; // aborted
+                }
+
+                Chunk chunk = region.getChunk(chunkX, chunkZ);
+                if (!chunk.isFull()) {
+                    continue; // chunk not fully generated
+                }
+
+                int blockStartZ = chunkZ << 4;
+
+                for (int blockX = blockStartX; blockX < blockStartX + 16; blockX++) {
+                    for (int blockZ = blockStartZ; blockZ < blockStartZ + 16; blockZ++) {
+                        Chunk.BlockData data = chunk.getData(blockX, blockZ);
+                        if (data == null) {
+                            Logger.debug("Null data at block %d,%d".formatted(blockX, blockZ));
+                            continue; // this shouldn't happen, but just in case
+                        }
+                        renderBlock(tile, data);
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Render the block on the tile using the block data.
+     *
+     * @param tile Tile image
+     * @param data Block data
+     */
+    protected abstract void renderBlock(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data);
 
     /**
      * Represents a type of renderer.

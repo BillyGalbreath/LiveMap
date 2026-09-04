@@ -27,6 +27,9 @@ package net.pl3x.livemap.command.subcommand;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import it.unimi.dsi.fastutil.longs.LongCollection;
+import java.nio.file.Path;
+import java.util.Collection;
 import java.util.concurrent.ForkJoinTask;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.command.BaseCommand;
@@ -34,6 +37,7 @@ import net.pl3x.livemap.command.Player;
 import net.pl3x.livemap.command.Sender;
 import net.pl3x.livemap.command.Source;
 import net.pl3x.livemap.configuration.Lang;
+import net.pl3x.livemap.util.FileUtil;
 import net.pl3x.livemap.world.World;
 import org.jetbrains.annotations.NotNull;
 
@@ -72,22 +76,23 @@ public class FullRenderCommand<S> extends BaseCommand<S> {
     }
 
     private void execute(@NotNull Sender sender, @NotNull World world) throws CommandSyntaxException {
-        sender.sendMessage(Lang.FULLRENDER_STARTED
+        sender.sendMessage(Lang.FULLRENDER_STARTING
             .replace("<world>", world.getName()));
 
-        sender.sendMessage("// todo (fullrender)");
-        // todo - add all regions to render queue
-
         // add all regions to queue
-        //
+        Collection<Path> paths = FileUtil.getRegionPaths(world);
+        LongCollection regions = FileUtil.regionPathsToLongs(paths);
+        world.getPendingRegions().addAll(regions);
 
-        // trigger render manager _now_
+        // trigger render scheduler _now_
         ForkJoinTask<?> future = LiveMap.api().getRenderScheduler().trigger();
         if (future == null) {
-            sender.sendMessage("<red>Fullrender is already running");
+            sender.sendMessage("<red>Unable to start fullrender (is it already running?)");
             return;
         }
 
-        sender.sendMessage("<green>Fullrender started");
+        sender.sendMessage(Lang.FULLRENDER_STARTED
+            .replace("<count>", Integer.toString(regions.size()))
+            .replace("<world>", world.getName()));
     }
 }

@@ -25,9 +25,12 @@
 package net.pl3x.livemap.render;
 
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
@@ -38,7 +41,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.Logger;
 import net.pl3x.livemap.configuration.Config;
+import net.pl3x.livemap.render.image.ActiveTileCanvas;
+import net.pl3x.livemap.render.image.TileCanvas;
+import net.pl3x.livemap.render.image.io.IO;
 import net.pl3x.livemap.render.iterator.RegionSpiralIterator;
+import net.pl3x.livemap.render.renderer.Renderer;
 import net.pl3x.livemap.thread.WorkerThreadFactory;
 import net.pl3x.livemap.thread.WorkerThreadPool;
 import net.pl3x.livemap.world.World;
@@ -66,6 +73,8 @@ public class RenderScheduler {
     private volatile AtomicBoolean currentCancellation; // Run-scoped token
     private final Object renderMutex = new Object();
 
+    private final Map<Path, ActiveTileCanvas> activeCanvases = new ConcurrentHashMap<>();
+
     /**
      * Start the render scheduler loop when the plugin loads.
      */
@@ -78,6 +87,8 @@ public class RenderScheduler {
 
         this.worldExecutor = WorkerThreadFactory.createExecutor("RendererScheduler");
         this.regionExecutor = WorkerThreadFactory.createExecutor("RenderRegion", Config.RENDER_THREADS);
+
+        Logger.debug("Region executor threads: %d".formatted(this.regionExecutor.getParallelism()));
 
         // todo - maybe make this configurable?
         final int delay = 10; // wait 10 seconds before starting
@@ -119,14 +130,14 @@ public class RenderScheduler {
             this.future = null;
         }
 
+        // shutdown executors, but do not set them to null.
+        // active threads will still use them while they terminate
         if (this.regionExecutor != null) {
             this.regionExecutor.shutdownNow();
-            this.regionExecutor = null;
         }
 
         if (this.worldExecutor != null) {
             this.worldExecutor.shutdownNow();
-            this.worldExecutor = null;
         }
 
         this.manualRunning.set(false);
@@ -226,7 +237,7 @@ public class RenderScheduler {
      * @param cancelled Cancellation token
      */
     private void renderWorlds(@NotNull AtomicBoolean cancelled) {
-        // snapshot to prevent possible CME
+        // snapshot to prevent possible CMEs
         List<World> worlds = List.copyOf(LiveMap.api().getWorldRegistry().values());
         WorldDispatcher dispatcher = new WorldDispatcher();
 
@@ -241,12 +252,17 @@ public class RenderScheduler {
                 continue;
             }
 
+            debug("Found %d pending regions for %s".formatted(pending.size(), world.getName()));
+
             // create the iterator, passing the pending collection
             RegionSpiralIterator spiral = new RegionSpiralIterator(world.getCenter(), pending,
-                () -> !world.isDiscarded() && !cancelled.get() && !Thread.currentThread().isInterrupted()
+                () -> !world.isDiscarded() && !cancelled.get()
             );
 
-            dispatcher.addQueue(world, spiral);
+            // store snapshot to prevent possible CMEs
+            List<Renderer> renderers = List.copyOf(world.getRendererRegistry().values());
+
+            dispatcher.addQueue(world, renderers, spiral);
         }
 
         if (dispatcher.isEmpty()) {
@@ -254,10 +270,10 @@ public class RenderScheduler {
         }
 
         int totalRegions = dispatcher.totalPending();
-        debug("Begin rendering %d pending region(s) across active worlds".formatted(totalRegions));
+        debug("Begin rendering %d total pending region(s) across all active worlds".formatted(totalRegions));
 
         // number of worker tasks to spawn (bounded by thread count and region count)
-        int maxThreads = Math.max(1, Config.RENDER_THREADS);
+        int maxThreads = Math.max(1, this.regionExecutor.getParallelism());
         int tasksToSpawn = Math.min(maxThreads, totalRegions);
 
         // track active jobs so we can wait for all queued regions to finish
@@ -273,7 +289,11 @@ public class RenderScheduler {
                     }
 
                     try {
-                        boolean completed = this.renderRegion(ticket.world().getRegion(ticket.region()), cancelled);
+                        boolean completed = this.renderRegion(
+                            ticket.world().getRegion(ticket.region()),
+                            ticket.renderers(),
+                            cancelled
+                        );
 
                         // add back current region (incomplete render)
                         if (!completed && !ticket.world().isDiscarded()) {
@@ -302,6 +322,23 @@ public class RenderScheduler {
             }
         }
 
+        // workers are done. anything left in the map is a partial tile on map borders
+        if (!this.activeCanvases.isEmpty()) {
+            debug("Flushing incomplete edge-of-the-map canvases to disk...");
+
+            this.activeCanvases.forEach((file, canvas) -> {
+                if (canvas.hasContributions()) {
+                    try {
+                        IO.getType(Config.WEB_TILE_FORMAT).write(file, canvas.getImageBuffer());
+                    } catch (Throwable t) {
+                        Logger.error("Failed to flush partial tile: " + file, t);
+                    }
+                }
+            });
+
+            this.activeCanvases.clear(); // wipe map entirely clean to drop memory footprints to 0
+        }
+
         // return remaining regions that were never processed
         if (cancelled.get()) {
             dispatcher.returnRemainingAll();
@@ -314,25 +351,30 @@ public class RenderScheduler {
      * Render specified region.
      *
      * @param region    Region to render
+     * @param renderers Snapshot of world's renderers
      * @param cancelled Cancellation token
      * @return True if the entire region was rendered, false if aborted
      */
-    private boolean renderRegion(@NotNull Region region, @NotNull AtomicBoolean cancelled) {
+    private boolean renderRegion(@NotNull Region region, @NotNull List<Renderer> renderers, @NotNull AtomicBoolean cancelled) {
+        Logger.debug("[%s] Rendering: %d,%d".formatted(Thread.currentThread().getName(), region.getX(), region.getZ()));
+
         // random obtained here to prevent a bajillion method calls deeper in the process
         ThreadLocalRandom rand = ThreadLocalRandom.current();
 
-        for (int chunkX = 0; chunkX < 32; chunkX++) {
-            for (int chunkZ = 0; chunkZ < 32; chunkZ++) {
-                // check world state and interruptions, for instant responsiveness
-                if (region.getWorld().isDiscarded() || cancelled.get()) {
-                    return false; // aborted
-                }
+        TileCanvas tile = new TileCanvas(region);
 
-                //
-                // todo
-                //
+        // render regions to tiles
+        for (Renderer renderer : renderers) {
+            if (!renderer.renderRegion(region, tile, rand, cancelled)) {
+                return false;
             }
         }
+
+        debug("Saving: %d,%d".formatted(region.getX(), region.getZ()));
+
+        tile.save(this.activeCanvases);
+
+        debug("Done: %d,%d".formatted(region.getX(), region.getZ()));
 
         return true;
     }

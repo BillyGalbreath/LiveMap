@@ -56,6 +56,12 @@ public class EmptyChunk extends Chunk {
     }
 
     @Override
+    @NotNull
+    public Chunk preScan() {
+        return this;
+    }
+
+    @Override
     public boolean isFull() {
         return false;
     }
@@ -93,7 +99,7 @@ public class EmptyChunk extends Chunk {
         return "EmptyChunk["
             + "world=" + getWorld()
             + ",xPos=" + getX()
-            + ",yPos=" + getY()
+            + ",yPos=" + getMinY()
             + ",zPos=" + getZ()
             + "]";
     }

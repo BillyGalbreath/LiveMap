@@ -28,9 +28,10 @@ import de.bluecolored.bluenbt.BlueNBT;
 import de.bluecolored.bluenbt.NamingStrategy;
 import de.bluecolored.bluenbt.TypeToken;
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -232,27 +233,73 @@ public class Region extends Point {
     @NotNull
     public Chunk loadChunk(@NotNull RandomAccessFile raf, long offset) throws IOException {
         // seek to chunk data location and skip the 4-byte payload length
-        raf.seek(offset + 4);
+        raf.seek(offset);
+        int length = raf.readInt();
+        if (length <= 0) {
+            return new EmptyChunk(this);
+        }
+
         byte compressionTypeId = raf.readByte();
         CompressionType compression = CompressionType.byId(compressionTypeId);
 
+        byte[] compressedPayload = new byte[length - 1]; // Subtract the 1 byte for compressionTypeId
+        raf.readFully(compressedPayload);
+
         // we need the chunk version to find correct loader
-        int version = Chunk.getChunkDataVersion(raf, compression);
+        int version;
+        try (ByteArrayInputStream vbais = new ByteArrayInputStream(compressedPayload);
+             InputStream vcis = compression.decompress(vbais);
+             DataInputStream vdis = new DataInputStream(vcis)) {
+            // Root compound envelope verification (0x0A)
+            if (vdis.readByte() != 0x0A) {
+                version = -1;
+            } else {
+                // Skip root name string block safely
+                int rootNameLen = vdis.readUnsignedShort();
+                if (rootNameLen > 0) {
+                    vdis.skipBytes(rootNameLen);
+                }
+
+                int foundVersion = -1;
+                while (vdis.available() > 0) {
+                    byte tagType = vdis.readByte();
+                    if (tagType == 0x00) {
+                        break; // TAG_End
+                    }
+
+                    int nameLen = vdis.readUnsignedShort();
+                    byte[] nameBytes = new byte[nameLen];
+                    vdis.readFully(nameBytes);
+                    String tagName = new String(nameBytes, java.nio.charset.StandardCharsets.UTF_8);
+
+                    if (tagType == 3 && "DataVersion".equals(tagName)) {
+                        foundVersion = vdis.readInt();
+                        break;
+                    }
+
+                    // If it isn't our metadata token, step past the data structure carefully
+                    if (!Chunk.skipTagPayload(vdis, tagType)) {
+                        break;
+                    }
+                }
+                version = foundVersion;
+            }
+        } catch (EOFException ignore) {
+            version = -1; // Handled safely if hitting payload bounds early
+        }
+
         Chunk.Loader<Chunk.NBT> chunkLoader = Chunk.Loader.getForVersion(version);
 
-        // put cursor back to after compression type byte
-        raf.seek(offset + 5);
-
         try (
-            InputStream fis = new FileInputStream(raf.getFD());
-            InputStream cis = compression.decompress(fis);
+            ByteArrayInputStream bais = new ByteArrayInputStream(compressedPayload);
+            InputStream cis = compression.decompress(bais);
             InputStream bis = new BufferedInputStream(cis)
         ) {
             // load the chunk
             Chunk chunk = chunkLoader.load(this, bis);
 
             // we only want full chunks
-            return chunk.isFull() ? chunk : new EmptyChunk(this);
+            return chunk.isFull() ? chunk.preScan() : new EmptyChunk(this);
         }
     }
 

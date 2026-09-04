@@ -37,8 +37,10 @@ public final class Lang extends AbstractConfig {
     @Key("error-missing-world")
     public static String ERROR_MISSING_WORLD = "You must enter a world name or id";
 
+    @Key("command-fullrender-starting")
+    public static String FULLRENDER_STARTING = "Starting fullrender on <grey><world>";
     @Key("command-fullrender-started")
-    public static String FULLRENDER_STARTED = "Starting fullrender on <grey><world>";
+    public static String FULLRENDER_STARTED = "Found <grey><count></grey> regions for <grey><world>";
     @Key("command-fullrender-finished")
     public static String FULLRENDER_FINISHED = "Finished fullrender on <grey><world></grey> in <yellow><elapsed></yellow> at <dark_aqua><cps>cps</dark_aqua> (<grey><chunks></grey> total chunks scanned)";
     @Key("command-fullrender-errored")

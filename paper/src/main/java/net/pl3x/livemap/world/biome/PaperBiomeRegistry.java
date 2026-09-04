@@ -34,16 +34,14 @@ import net.pl3x.livemap.world.World;
 import org.jetbrains.annotations.NotNull;
 
 public class PaperBiomeRegistry extends BiomeRegistry {
-    private final World world;
-
-    public PaperBiomeRegistry(@NotNull World world) {
-        this.world = world;
+    public PaperBiomeRegistry(@NotNull World world, long hashedSeed) {
+        super(world, hashedSeed);
     }
 
     public void rebuild() {
         clear();
 
-        var entries = this.world.<ServerLevel>getLevel()
+        var entries = getWorld().<ServerLevel>getLevel()
             .registryAccess().lookupOrThrow(Registries.BIOME).entrySet();
         for (var entry : entries) {
             String id = entry.getKey().identifier().toString();

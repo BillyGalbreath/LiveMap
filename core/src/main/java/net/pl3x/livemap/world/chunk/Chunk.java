@@ -28,8 +28,8 @@ import de.bluecolored.bluenbt.BlueNBT;
 import de.bluecolored.bluenbt.NBTName;
 import de.bluecolored.bluenbt.NamingStrategy;
 import de.bluecolored.bluenbt.TypeToken;
-import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
@@ -56,9 +56,6 @@ public abstract class Chunk {
     static final String[] EMPTY_STRING_ARRAY = new String[0];
     static final BlockState[] EMPTY_BLOCKSTATE_ARRAY = new BlockState[0];
 
-    // target sequence: TAG_Int (0x03) + Name Length (0x00 0x0B) + "DataVersion"
-    private static final byte[] DATA_VERSION_SEQ = {0x03, 0x00, 0x0B, 'D', 'a', 't', 'a', 'V', 'e', 'r', 's', 'i', 'o', 'n'};
-
     /**
      * Get chunk's data version early without loading the end nbt.
      *
@@ -68,8 +65,8 @@ public abstract class Chunk {
      * @throws IOException if an I/O error occurs
      */
     public static int getChunkDataVersion(@NotNull RandomAccessFile raf, @NotNull CompressionType compression) throws IOException {
-        // grab a tiny chunk of compressed data (1024 bytes is plenty for headers)
-        byte[] compressedBuffer = new byte[1024];
+        // grab a tiny chunk of compressed data (512 bytes is plenty for headers)
+        byte[] compressedBuffer = new byte[512];
         int bytesRead = raf.read(compressedBuffer);
         if (bytesRead <= 0) {
             return -1;
@@ -77,46 +74,121 @@ public abstract class Chunk {
 
         // create an uncompression stream
         try (ByteArrayInputStream bais = new ByteArrayInputStream(compressedBuffer, 0, bytesRead);
-             BufferedInputStream bis = new BufferedInputStream(compression.decompress(bais))
+             DataInputStream dis = new DataInputStream(compression.decompress(bais))
         ) {
-            // decompress just enough to scan the early NBT headers
-            byte[] raw = bis.readNBytes(2048);
+            // root must be TAG_Compound (0x0A)
+            if (dis.readByte() != 0x0A) {
+                return -1;
+            }
 
-            int i = jumpToSequence(raw, DATA_VERSION_SEQ);
-            if (i != -1 && i + 4 <= raw.length) {
-                // the next 4 bytes contain the integer value
-                // @formatter:off
-                return ((raw[i    ] & 0xFF) << 24)
-                    | ((raw[i + 1] & 0xFF) << 16)
-                    | ((raw[i + 2] & 0xFF) << 8)
-                    |  (raw[i + 3] & 0xFF);
-                // @formatter:on
+            // skip root tag
+            int rootNameLen = dis.readUnsignedShort();
+            if (rootNameLen > 0) {
+                dis.skipBytes(rootNameLen);
+            }
+
+            // scan the first few tags immediately inside the root compound
+            // look for TAG_Int (0x03) followed by "DataVersion"
+            while (dis.available() > 0) {
+                byte tagType = dis.readByte();
+                if (tagType == 0x00) {
+                    break; // TAG_End
+                }
+
+                // read the tag name
+                int nameLen = dis.readUnsignedShort();
+                byte[] nameBytes = new byte[nameLen];
+                dis.readFully(nameBytes);
+                String tagName = new String(nameBytes, java.nio.charset.StandardCharsets.UTF_8);
+
+                // "DataVersion" is a TAG_Int at the root level
+                if (tagType == 0x03 && "DataVersion".equals(tagName)) {
+                    return dis.readInt();
+                }
+
+                // not our tag, skip to next tag
+                if (!skipTagPayload(dis, tagType)) {
+                    // met complex nested map arrays early or stream boundary dropped
+                    break;
+                }
             }
         }
         // `DataVersion` tag not found
         return -1;
     }
 
-    private static int jumpToSequence(byte @NotNull [] src, @SuppressWarnings("SameParameterValue") byte @NotNull [] seq) {
-        int i, j;
-        boolean match;
-        for (i = 0; i <= src.length - seq.length; i++) {
-            match = true;
-            for (j = 0; j < seq.length; j++) {
-                if (src[i + j] != seq[j]) {
-                    match = false;
-                    break;
+    /**
+     * Step over adjacent payload footprints.
+     *
+     * @param dis     dis
+     * @param tagType tag
+     * @return bool
+     */
+    public static boolean skipTagPayload(@NotNull DataInputStream dis, byte tagType) throws IOException {
+        switch (tagType) {
+            case 1: // TAG_Byte
+                dis.skipBytes(1);
+                return true;
+            case 2: // TAG_Short
+                dis.skipBytes(2);
+                return true;
+            case 3: // TAG_Int
+                dis.skipBytes(4);
+                return true;
+            case 4: // TAG_Long
+                dis.skipBytes(8);
+                return true;
+            case 5: // TAG_Float
+                dis.skipBytes(4);
+                return true;
+            case 6: // TAG_Double
+                dis.skipBytes(8);
+                return true;
+            case 7: // TAG_Byte_Array
+                int bLen = dis.readInt();
+                dis.skipBytes(bLen);
+                return true;
+            case 8: // TAG_String
+                int sLen = dis.readUnsignedShort();
+                dis.skipBytes(sLen);
+                return true;
+            case 9: // TAG_List
+                byte listType = dis.readByte();
+                int listSize = dis.readInt();
+                for (int i = 0; i < listSize; i++) {
+                    if (!skipTagPayload(dis, listType)) {
+                        return false;
+                    }
                 }
-            }
-            if (match) {
-                return i + seq.length;
-            }
+                return true;
+            case 10: // TAG_Compound (Nested structural sweeps)
+                byte nestedType;
+                while ((nestedType = dis.readByte()) != 0) {
+                    int nLen = dis.readUnsignedShort();
+                    dis.skipBytes(nLen);
+                    if (!skipTagPayload(dis, nestedType)) {
+                        return false;
+                    }
+                }
+                return true;
+            case 11: // TAG_Int_Array
+                int iLen = dis.readInt();
+                dis.skipBytes(iLen * 4);
+                return true;
+            case 12: // TAG_Long_Array
+                int lLen = dis.readInt();
+                dis.skipBytes(lLen * 8);
+                return true;
+            default: // Unmapped formatting token
+                return false;
         }
-        return -1;
     }
 
     private final NBT nbt;
     private final Region region;
+    private final BlockData[] data = new BlockData[256];
+
+    private boolean preScanned;
 
     /**
      * Constructs a new instance of Chunk.
@@ -127,6 +199,74 @@ public abstract class Chunk {
     protected Chunk(@NotNull Region region, @NotNull Chunk.NBT nbt) {
         this.region = region;
         this.nbt = nbt;
+    }
+
+    /**
+     * Pre-scan this chunk and store the block data so multiple renderers can share it.
+     *
+     * @return This chunk
+     */
+    @NotNull
+    public Chunk preScan() {
+        if (this.preScanned) {
+            return this;
+        }
+
+        int blockStartX = getX() << 4;
+        int blockStartZ = getZ() << 4;
+
+        for (int blockX = blockStartX; blockX < blockStartX + 16; blockX++) {
+            for (int blockZ = blockStartZ; blockZ < blockStartZ + 16; blockZ++) {
+                BlockData data = new BlockData(this, blockX, blockZ);
+
+                data.blockY = getHeight(blockX, blockZ) + 1;
+
+                // if world has a ceiling (i.e., nether), iterate down until we find air
+                if (getWorld().hasCeiling()) {
+                    data.blockY = getWorld().getMaxY();
+                    do {
+                        data.blockY -= 1;
+                        data.blockstate = getBlockState(blockX, data.blockY, blockZ);
+                    } while (data.blockY > getWorld().getMinY() && !data.blockstate.getBlock().isAir());
+                }
+
+                // iterate down from here until we find a renderable block
+                do {
+                    data.blockY -= 1;
+                    data.blockstate = getBlockState(blockX, data.blockY, blockZ);
+                    if (data.blockstate.getBlock().isFluid()) {
+                        // if we found a fluid we need to store it and then
+                        // continue iterating down until we hit a solid
+                        if (data.fluidstate == null) {
+                            // get fluid information for only the top fluid block
+                            data.fluidY = data.blockY;
+                            data.fluidstate = data.blockstate;
+                        }
+                        continue;
+                    }
+
+                    // todo render translucent glass?
+                    //
+
+                    // test if block is renderable. we ignore blocks with black color
+                    if (data.blockstate.getBlock().getColor() != 0
+                        || data.blockstate.getBlock().getVanilla() != 0) {
+                        break;
+                    }
+                } while (data.blockY > getWorld().getMinY());
+
+                // if we found a flat block, render the block under it instead
+                if (data.blockstate.getBlock().isFlat()) {
+                    data.blockY--;
+                }
+
+                this.data[((blockZ & 0xF) << 4) + (blockX & 0xF)] = data;
+            }
+        }
+
+        this.preScanned = true;
+
+        return this;
     }
 
     /**
@@ -168,11 +308,11 @@ public abstract class Chunk {
     }
 
     /**
-     * Get the lowest Y section position.
+     * Get the Y chunk position (lowest Y section position).
      *
-     * @return Lowest Y section position
+     * @return Y chunk position
      */
-    public int getY() {
+    public int getMinY() {
         return this.nbt.yPos;
     }
 
@@ -240,6 +380,19 @@ public abstract class Chunk {
      */
     public abstract int getLight(int blockX, int blockY, int blockZ);
 
+    /**
+     * Get pre-scanned block data at specified block coordinates.
+     *
+     * <p>This data can be reused by multiple renderers.
+     *
+     * @param blockX X block coordinate
+     * @param blockZ Z block coordinate
+     * @return Block's pre-scanned data
+     */
+    public @Nullable BlockData getData(int blockX, int blockZ) {
+        return this.data[((blockZ & 0xF) << 4) + (blockX & 0xF)];
+    }
+
     @Override
     public boolean equals(@Nullable Object o) {
         if (this == o) {
@@ -275,33 +428,54 @@ public abstract class Chunk {
     /**
      * Represents raw NBT data for chunks.
      */
-    @SuppressWarnings("CanBeFinal")
+    @SuppressWarnings("FieldMayBeFinal")
     public static class NBT {
         @NBTName("DataVersion")
-        int version = 0;
+        private int version = 0;
 
         @NBTName("xPos")
-        int xPos;
+        private int xPos;
 
         @NBTName("yPos")
-        int yPos;
+        private int yPos;
 
         @NBTName("zPos")
-        int zPos;
+        private int zPos;
     }
 
     /**
      * Represents a chunk section (16x16x16 blocks).
      */
-    @SuppressWarnings("CanBeFinal")
-    protected static class Section {
-        @SuppressWarnings("CanBeFinal")
-        static class NBT {
+    @SuppressWarnings("FieldMayBeFinal")
+    public static class Section {
+        /**
+         * Section NBT.
+         */
+        @SuppressWarnings({"FieldMayBeFinal", "FieldCanBeLocal"})
+        public static class NBT {
             @NBTName("Y")
-            int y = 0;
+            private int y = 0;
 
             @NBTName("BlockLight")
-            byte[] light = EMPTY_BYTE_ARRAY;
+            private byte[] light = EMPTY_BYTE_ARRAY;
+
+            /**
+             * Get the Y position of this section.
+             *
+             * @return Y position
+             */
+            public int getY() {
+                return this.y;
+            }
+
+            /**
+             * Get block light nibbles.
+             *
+             * @return Block light
+             */
+            public byte[] getLight() {
+                return this.light;
+            }
         }
     }
 
@@ -311,13 +485,13 @@ public abstract class Chunk {
      * @param <NBT> Chunk nbt type
      */
     public static final class Loader<NBT extends Chunk.NBT> {
-        private static final Loader<?>[] LOADERS = new Loader[] {
-            new Loader<>(EmptyChunk::new),
-            new Loader<>(Chunk_1_20::new),
-            new Loader<>(Chunk_1_18::new),
-            new Loader<>(Chunk_1_16::new),
-            new Loader<>(Chunk_1_15::new),
-            new Loader<>(Chunk_1_13::new)
+        private static final Loader<? extends Chunk.NBT>[] LOADERS = new Loader<?>[] {
+            new Loader<>(Chunk.NBT.class, EmptyChunk::new),
+            new Loader<>(Chunk_1_20.NBT.class, Chunk_1_20::new),
+            new Loader<>(Chunk_1_18.NBT.class, Chunk_1_18::new),
+            new Loader<>(Chunk_1_16.NBT.class, Chunk_1_16::new),
+            new Loader<>(Chunk_1_15.NBT.class, Chunk_1_15::new),
+            new Loader<>(Chunk_1_13.NBT.class, Chunk_1_13::new)
         };
 
         private static final BlueNBT BLUENBT = new BlueNBT();
@@ -360,12 +534,14 @@ public abstract class Chunk {
             // @formatter:on
         }
 
-        private final TypeToken<NBT> type;
+        /**
+         * Temp.
+         */
+        public final Class<NBT> type;
         private final Ctor<NBT> ctor;
 
-        private Loader(@NotNull Ctor<NBT> ctor) {
-            this.type = new TypeToken<>() {
-            };
+        private Loader(@NotNull Class<NBT> type, @NotNull Ctor<NBT> ctor) {
+            this.type = type;
             this.ctor = ctor;
         }
 
@@ -380,16 +556,157 @@ public abstract class Chunk {
         @NotNull
         public Chunk load(@NotNull Region region, @NotNull InputStream in) throws IOException {
             try {
-                return this.ctor.create(region, BLUENBT.read(in, this.type));
+                NBT nbt = BLUENBT.read(in, this.type);
+                return this.ctor.create(region, nbt);
             } catch (Exception e) {
                 throw new IOException("Failed to parse chunk-data (%s): %s"
-                    .formatted(this.type.getRawType().getSimpleName(), e), e);
+                    .formatted(this.type.getSimpleName(), e), e);
             }
         }
 
         private interface Ctor<NBT extends Chunk.NBT> {
             @NotNull
             Chunk create(@NotNull Region region, @NotNull NBT nbt);
+        }
+    }
+
+    /**
+     * Represents pre-scanned block data that can be reused by multiple renderers.
+     */
+    public static class BlockData {
+        protected final Chunk chunk;
+        protected final int blockX;
+        protected final int blockZ;
+
+        protected int blockY;
+        protected int fluidY;
+        protected BlockState blockstate;
+        protected BlockState fluidstate;
+        protected Biome biome;
+
+        /**
+         * Constructs a new instance of BlockData.
+         *
+         * @param chunk  Chunk this block data belongs to
+         * @param blockX X block coordinate
+         * @param blockZ Z block coordinate
+         */
+        public BlockData(@NotNull Chunk chunk, int blockX, int blockZ) {
+            this.chunk = chunk;
+            this.blockX = blockX;
+            this.blockZ = blockZ;
+        }
+
+        /**
+         * Get the chunk this block data belongs to.
+         *
+         * @return Owning chunk
+         */
+        @NotNull
+        public Chunk getChunk() {
+            return this.chunk;
+        }
+
+        /**
+         * Get the region this block data belongs to.
+         *
+         * @return Owning region
+         */
+        @NotNull
+        public Region getRegion() {
+            return this.chunk.region;
+        }
+
+        /**
+         * Get the world this block data belongs to.
+         *
+         * @return Owning world
+         */
+        @NotNull
+        public World getWorld() {
+            return this.chunk.region.getWorld();
+        }
+
+        /**
+         * Get block's X coordinate.
+         *
+         * @return X block coordinate
+         */
+        public int getBlockX() {
+            return this.blockX;
+        }
+
+        /**
+         * Get block's Y coordinate.
+         *
+         * @return Y block coordinate
+         */
+        public int getBlockY() {
+            return this.blockY;
+        }
+
+        /**
+         * Get block's Z coordinate.
+         *
+         * @return Z block coordinate
+         */
+        public int getBlockZ() {
+            return this.blockZ;
+        }
+
+        /**
+         * Get fluid's Y coordinate.
+         *
+         * @return Y fluid coordinate
+         */
+        public int getFluidY() {
+            return this.fluidY;
+        }
+
+        /**
+         * Get the stored block state.
+         *
+         * @return Block's state
+         */
+        @NotNull
+        public BlockState getBlockState() {
+            return this.blockstate;
+        }
+
+        /**
+         * Get the stored fluid state.
+         *
+         * @return Fluid's state, or null if no fluid
+         */
+        @Nullable
+        public BlockState getFluidState() {
+            return this.fluidstate;
+        }
+
+        /**
+         * Get the top stored state, fluid or block.
+         *
+         * @return The top state
+         */
+        @NotNull
+        public BlockState getTopState() {
+            return this.fluidstate != null ? this.fluidstate : this.blockstate;
+        }
+
+        /**
+         * Get the biome at this block.
+         *
+         * <p>This is lazy loaded the first time it is called.
+         *
+         * @return Block's biome
+         */
+        public @NotNull Biome getBiome() {
+            if (this.biome == null) {
+                // calculate real biome
+                this.biome = this.chunk.getRegion().getWorld().getBiomeRegistry()
+                    .getBiome(this.chunk.getRegion(), this.blockX, this.blockY, this.blockZ);
+            }
+            return this.biome;
         }
     }
 }

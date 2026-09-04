@@ -31,8 +31,8 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import net.pl3x.livemap.Logger;
+import net.pl3x.livemap.configuration.Config;
 import net.pl3x.livemap.render.image.io.IO;
 import net.pl3x.livemap.util.FileUtil;
 import net.pl3x.livemap.util.Unsafe;
@@ -44,14 +44,14 @@ import org.jetbrains.annotations.NotNull;
  * Represents a tile which holds all the important data that is saved
  * to disk per region. <em>(images, heightmaps, block/biome info, etc.)</em>
  */
-public class Tile implements ImageInt {
+public class TileCanvas implements ImageInt {
     private static final Map<@NotNull Path, @NotNull ReadWriteLock> FILE_LOCKS = new ConcurrentHashMap<>();
 
     public static final String DIR_PATH = "%d/%s/";
     public static final String FILE_PATH = "%d_%d.%s";
 
     private final Region region;
-    private final IO.Type io = IO.PNG;
+    private final IO.Type io;
 
     private final Map<String, Image> images = new ConcurrentHashMap<>();
 
@@ -59,12 +59,13 @@ public class Tile implements ImageInt {
     private boolean dirty;
 
     /**
-     * Create a new tile.
+     * Constructs a new instance of Tile.
      *
      * @param region Region this tile belongs to
      */
-    public Tile(@NotNull Region region) {
+    public TileCanvas(@NotNull Region region) {
         this.region = region;
+        this.io = IO.getType(Config.WEB_TILE_FORMAT);
     }
 
     /**
@@ -122,9 +123,11 @@ public class Tile implements ImageInt {
     }
 
     /**
-     * Save image to disk (if there is something to save).
+     * Save image data using in-memory consolidation.
+     *
+     * @param sharedCanvases Shared canvases for higher zoom levels
      */
-    public void save() {
+    public void save(@NotNull Map<Path, ActiveTileCanvas> sharedCanvases) {
         if (!this.dirty) {
             return;
         }
@@ -132,25 +135,47 @@ public class Tile implements ImageInt {
         int zoomMax = getWorld().getConfig().ZOOM_MAX_OUT;
 
         for (int zoom = 0; zoom <= zoomMax; zoom++) {
-            int x = getRegion().getX() >> zoom;
-            int z = getRegion().getZ() >> zoom;
+            final int curZoom = zoom;
 
-            Path dir = getWorld().getTilesDir().resolve(DIR_PATH.formatted(zoom, "basic"));
+            int x = getRegion().getX() >> curZoom;
+            int z = getRegion().getZ() >> curZoom;
+
+            Path dir = getWorld().getTilesDir().resolve(DIR_PATH.formatted(curZoom, "basic")); // todo - use renderer's id
             FileUtil.createDirs(dir);
-            Path file = dir.resolve(String.format("%d_%d.%s", x, z, getIO().getExtension()));
+            Path file = dir.resolve(FILE_PATH.formatted(x, z, getIO().getExtension()));
 
-            ReadWriteLock lock = FILE_LOCKS.computeIfAbsent(file, _ -> new ReentrantReadWriteLock(true));
-            lock.writeLock().lock();
-
-            try {
-                BufferedImage buffer = getOrCreateBuffer(file);
-                writePixels(buffer, zoom);
-                getIO().write(file, buffer);
-            } catch (Throwable t) {
-                Logger.error("Failed to read/write tile at path " + file, t);
+            if (curZoom == 0) {
+                try {
+                    BufferedImage buffer = getOrCreateBuffer(file);
+                    writePixels(buffer, curZoom);
+                    getIO().write(file, buffer);
+                } catch (Throwable t) {
+                    Logger.error("Failed writing base tile: " + file, t);
+                }
+                continue;
             }
 
-            lock.writeLock().unlock();
+            // for higher zoom levels (1, 2, 3), consolidate modifications in memory via CHM
+            // computeIfAbsent is atomic, ensuring all threads bind to the exact same shared image canvas instance
+            ActiveTileCanvas canvas = sharedCanvases.computeIfAbsent(file,
+                _ -> new ActiveTileCanvas(this, curZoom)
+            );
+
+            // Synchronize on the canvas to safely draw pixel matrices from multiple threads
+            synchronized (canvas) {
+                writePixels(canvas.getImageBuffer(), zoom);
+            }
+
+            // record this thread's contribution. the very last thread to finish writing
+            // its quadrant triggers true, removes the entry from the map, and saves it to the disk.
+            if (canvas.recordContribution()) {
+                sharedCanvases.remove(file); // purge from memory to prevent leaks
+                try {
+                    getIO().write(file, canvas.getImageBuffer());
+                } catch (Throwable t) {
+                    Logger.error("Failed flushing consolidated tile to disk: " + file, t);
+                }
+            }
         }
 
         this.dirty = false;
@@ -184,12 +209,12 @@ public class Tile implements ImageInt {
         // zoom level increments the number of regions in a single tile,
         // so we want to ensure we are only writing in this tile region's
         // section of the buffer
-        int baseX = (getRegion().getX() * (Tile.SIZE >> zoom)) & Tile.MASK;
-        int baseZ = (getRegion().getZ() * (Tile.SIZE >> zoom)) & Tile.MASK;
+        int baseX = (getRegion().getX() * (TileCanvas.SIZE >> zoom)) & TileCanvas.MASK;
+        int baseZ = (getRegion().getZ() * (TileCanvas.SIZE >> zoom)) & TileCanvas.MASK;
 
         // walk the pixels
-        for (int x = 0; x < Tile.SIZE; x += step) {
-            for (int z = 0; z < Tile.SIZE; z += step) {
+        for (int x = 0; x < TileCanvas.SIZE; x += step) {
+            for (int z = 0; z < TileCanvas.SIZE; z += step) {
                 int argb;
 
                 if (zoom == 0) {

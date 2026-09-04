@@ -25,7 +25,18 @@
 package net.pl3x.livemap.render.image.io;
 
 import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import javax.imageio.IIOImage;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageInputStream;
+import javax.imageio.stream.ImageOutputStream;
+import net.pl3x.livemap.Logger;
+import net.pl3x.livemap.util.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,10 +58,51 @@ public final class Png extends IO.Type {
     @Override
     @Nullable
     public BufferedImage read(@NotNull Path path) {
-        return null;
+        BufferedImage buffer = null;
+        ImageReader reader = null;
+        try (ImageInputStream in = ImageIO.createImageInputStream(Files.newInputStream(path))) {
+            reader = ImageIO.getImageReadersBySuffix(getExtension()).next();
+            reader.setInput(in, false, true);
+            buffer = reader.read(0);
+            in.flush();
+        } catch (IOException e) {
+            Logger.warn("Could not read tile image: " + path, e);
+        } finally {
+            if (reader != null) {
+                reader.dispose();
+            }
+        }
+        return buffer;
     }
 
     @Override
     public void write(@NotNull Path path, @NotNull BufferedImage buffer) {
+        Path tmp = FileUtil.tmp(path);
+        ImageWriter writer = null;
+        try (ImageOutputStream out = ImageIO.createImageOutputStream(tmp.toFile())) {
+            writer = ImageIO.getImageWritersBySuffix(getExtension()).next();
+            ImageWriteParam param = writer.getDefaultWriteParam();
+            if (param.canWriteCompressed()) {
+                param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+                if (param.getCompressionType() == null) {
+                    param.setCompressionType(param.getCompressionTypes()[0]);
+                }
+                param.setCompressionQuality(0.0F);
+            }
+            writer.setOutput(out);
+            writer.write(null, new IIOImage(buffer, null, null), param);
+            out.flush();
+        } catch (IOException e) {
+            Logger.warn("Could not write tile image: " + tmp, e);
+        } finally {
+            if (writer != null) {
+                writer.dispose();
+            }
+        }
+        try {
+            FileUtil.atomicMove(tmp, path);
+        } catch (IOException e) {
+            Logger.warn("Could not write tile image: " + path, e);
+        }
     }
 }

@@ -27,6 +27,7 @@ package net.pl3x.livemap.world;
 import io.papermc.paper.command.brigadier.argument.CustomArgumentType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.biome.BiomeManager;
 import net.pl3x.livemap.Logger;
 import net.pl3x.livemap.marker.Point;
 import net.pl3x.livemap.render.renderer.RendererRegistry;
@@ -43,8 +44,8 @@ public class PaperWorld extends World {
 
     private final ServerLevel level;
 
-    private final PaperBiomeRegistry biomeRegistry = new PaperBiomeRegistry(this);
-    private final RendererRegistry renderRegistry = new RendererRegistry(this);
+    private final PaperBiomeRegistry biomeRegistry;
+    private final RendererRegistry renderRegistry;
 
     public PaperWorld(@NotNull org.bukkit.World world) {
         this(((CraftWorld) world).getHandle());
@@ -59,6 +60,9 @@ public class PaperWorld extends World {
             level.getServer().storageSource.getDimensionPath(level.dimension()).resolve("region")
         );
         this.level = level;
+
+        this.biomeRegistry = new PaperBiomeRegistry(this, hashSeed(getSeed()));
+        this.renderRegistry = new RendererRegistry(this);
 
         Logger.info(" &7&l-&r Found &e%s&r (&3&o%s&r)".formatted(level.getTypeKey().identifier(), getName()));
 
@@ -115,6 +119,11 @@ public class PaperWorld extends World {
     @Override
     public double getBorderMaxZ() {
         return this.level.getWorldBorder().getMaxZ();
+    }
+
+    @Override
+    public long hashSeed(long seed) {
+        return BiomeManager.obfuscateSeed(seed);
     }
 
     @Override

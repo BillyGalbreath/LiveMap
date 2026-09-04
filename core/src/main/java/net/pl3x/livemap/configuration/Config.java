@@ -58,6 +58,18 @@ public final class Config extends AbstractConfig {
         the website files on startup. (Good for servers that
         customize these files)""")
     public static boolean WEB_DIR_READONLY = false;
+    @Key("settings.web-directory.tile-format")
+    @Comment("""
+        The image format for tile images.
+        Built in types: bmp, gif, jpg, jpeg, png, webp""")
+    public static String WEB_TILE_FORMAT = "png";
+    @Key("settings.web-directory.tile-quality")
+    @Comment("""
+        The quality for image tiles (0.0 - 1.0)
+        0.0 is low quality, high compression, small file size
+        1.0 is high quality, no compression, large file size
+        Note: Not all image formats honor this setting.""")
+    public static double WEB_TILE_QUALITY = 0.0D;
 
     @Key("settings.internal-webserver.enabled")
     @Comment("""

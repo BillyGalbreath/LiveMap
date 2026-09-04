@@ -25,6 +25,8 @@
 package net.pl3x.livemap.render.renderer;
 
 import net.pl3x.livemap.render.heightmap.Heightmap;
+import net.pl3x.livemap.render.image.TileCanvas;
+import net.pl3x.livemap.world.chunk.Chunk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,5 +45,10 @@ public class InhabitedRenderer extends Renderer {
      */
     public InhabitedRenderer(@NotNull String name, @NotNull String icon, @Nullable Heightmap heightmap, int biomeBlend, boolean translucentFluids) {
         super(Type.INHABITED, name, icon, heightmap, biomeBlend, translucentFluids);
+    }
+
+    @Override
+    protected void renderBlock(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data) {
+        //
     }
 }

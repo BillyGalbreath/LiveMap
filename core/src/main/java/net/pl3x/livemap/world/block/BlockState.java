@@ -25,7 +25,9 @@
 package net.pl3x.livemap.world.block;
 
 import java.util.Map;
+import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a state of a block.
@@ -68,6 +70,8 @@ public class BlockState {
     private final byte moisture;
     private final byte power;
 
+    private final int hash;
+
     /**
      * Constructs a new instance of BlockState with no properties.
      *
@@ -76,6 +80,8 @@ public class BlockState {
     public BlockState(@NotNull Block block) {
         this.block = block;
         this.age = this.moisture = this.power = -1;
+
+        this.hash = Objects.hash(block, this.age, this.moisture, this.power);
     }
 
     /**
@@ -86,9 +92,11 @@ public class BlockState {
      */
     public BlockState(@NotNull Block block, @NotNull Map<String, String> properties) {
         this.block = block;
-        this.age = parseProperty(properties.get("age"));
-        this.moisture = parseProperty(properties.get("moisture"));
-        this.power = parseProperty(properties.get("power"));
+        this.age = parseProperty(properties.getOrDefault("age", ""));
+        this.moisture = parseProperty(properties.getOrDefault("moisture", ""));
+        this.power = parseProperty(properties.getOrDefault("power", ""));
+
+        this.hash = Objects.hash(block, this.age, this.moisture, this.power);
     }
 
     /**
@@ -189,5 +197,39 @@ public class BlockState {
      */
     public boolean isFluid() {
         return getBlock().isFluid();
+    }
+
+    @Override
+    public boolean equals(@Nullable Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            return false;
+        }
+        if (this.getClass() != o.getClass()) {
+            return false;
+        }
+        BlockState other = (BlockState) o;
+        return getBlock().equals(other.getBlock())
+            && getAge() == other.getAge()
+            && getMoisture() == other.getMoisture()
+            && getPower() == other.getPower();
+    }
+
+    @Override
+    public int hashCode() {
+        return this.hash;
+    }
+
+    @Override
+    @NotNull
+    public String toString() {
+        return "BlockState["
+            + "block=" + getBlock()
+            + ",age=" + getAge()
+            + ",moisture=" + getMoisture()
+            + ",power=" + getPower()
+            + "]";
     }
 }

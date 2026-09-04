@@ -75,7 +75,10 @@ class Chunk_1_18 extends Chunk {
             this.sections = new Section[sectionsNBT.length];
             for (SectionNBT sectionNBT : sectionsNBT) {
                 Section section = new Section(getWorld(), sectionNBT);
-                this.sections[section.getY() - this.getY()] = section;
+                int index = section.getY() - getMinY();
+                if (index >= 0 && index < this.sections.length) {
+                    this.sections[index] = section;
+                }
             }
         }
     }
@@ -87,47 +90,44 @@ class Chunk_1_18 extends Chunk {
 
     @Override
     public long getInhabitedTime() {
-        return inhabitedTime;
+        return this.inhabitedTime;
     }
 
     @Override
     public int getHeight(int blockX, int blockZ) {
-        if (heightmap == null) {
-            return getWorld().getMinY();
+        if (this.heightmap == null) {
+            return getWorld().getMaxY();
         }
         return this.heightmap.get(((blockZ & 0xF) << 4) | (blockX & 0xF)) + getWorld().getMinY();
     }
 
     @Override
     @NotNull
-    public BlockState getBlockState(int x, int y, int z) {
-        int sectionY = y >> 4;
-        Section section = getSection(sectionY);
-        return section == null ? Block.AIR.getDefaultState() : section.getBlockState(x, y, z);
+    public BlockState getBlockState(int blockX, int blockY, int blockZ) {
+        Section section = getSection(blockY >> 4);
+        return section == null ? Block.AIR.getDefaultState() : section.getBlockState(blockX, blockY, blockZ);
     }
 
     @Override
     @NotNull
-    public Biome getBiome(int x, int y, int z) {
-        int sectionY = y >> 4;
-        Section section = getSection(sectionY);
-        return section == null ? Biome.DEFAULT : section.getBiome(x, y, z);
+    public Biome getBiome(int blockX, int blockY, int blockZ) {
+        Section section = getSection(blockY >> 4);
+        return section == null ? Biome.DEFAULT : section.getBiome(blockX, blockY, blockZ);
     }
 
     @Override
-    public int getLight(int x, int y, int z) {
-        int sectionY = y >> 4;
-        Section section = getSection(sectionY);
-        return section == null ? 15 : section.getLight(x, y, z);
+    public int getLight(int blockX, int blockY, int blockZ) {
+        Section section = getSection(blockY >> 4);
+        return section == null ? 15 : section.getLight(blockX, blockY, blockZ);
     }
 
     @Nullable
-    private Section getSection(int y) {
-        y -= getY();
-        if (y < 0 || y >= this.sections.length) {
+    private Section getSection(int chunkY) {
+        chunkY -= getMinY();
+        if (chunkY < 0 || chunkY >= this.sections.length) {
             return null;
         }
-        return this.sections[y];
+        return this.sections[chunkY];
     }
 
     private static class Section extends Chunk.Section {
@@ -149,11 +149,11 @@ class Chunk_1_18 extends Chunk {
             this.blocks = new PackedIntArrayAccess(nbt.blockStates.data, BLOCKS_PER_SECTION);
             this.biomes = new PackedIntArrayAccess(Math.max(MCAMath.ceilLog2(this.biomePalette.length), 1), nbt.biomes.data);
 
-            this.light = nbt.light;
+            this.light = nbt.getLight();
         }
 
         private int getY() {
-            return this.nbt.y;
+            return this.nbt.getY();
         }
 
         @NotNull
@@ -195,51 +195,51 @@ class Chunk_1_18 extends Chunk {
         }
     }
 
-    @SuppressWarnings("CanBeFinal")
-    static class NBT extends Chunk.NBT {
+    @SuppressWarnings("FieldMayBeFinal")
+    public static class NBT extends Chunk.NBT {
         @NBTName("Status")
-        String status = "minecraft:empty";
+        private String status = "minecraft:empty";
 
         @NBTName("InhabitedTime")
-        long inhabitedTime = 0;
+        private long inhabitedTime = 0;
 
         @NBTName("Heightmaps")
-        HeightmapsNBT heightmaps = EMPTY_HEIGHTMAPS_NBT;
+        private HeightmapsNBT heightmaps = EMPTY_HEIGHTMAPS_NBT;
 
         @NBTName("sections")
-        SectionNBT[] sections = EMPTY_SECTION_NBT_ARRAY;
+        private SectionNBT[] sections = EMPTY_SECTION_NBT_ARRAY;
     }
 
-    @SuppressWarnings("CanBeFinal")
-    private static class HeightmapsNBT {
+    @SuppressWarnings("FieldMayBeFinal")
+    public static class HeightmapsNBT {
         @NBTName("WORLD_SURFACE")
-        long[] worldSurface = EMPTY_LONG_ARRAY;
+        private long[] worldSurface = EMPTY_LONG_ARRAY;
     }
 
-    @SuppressWarnings("CanBeFinal")
-    private static class SectionNBT extends Chunk.Section.NBT {
+    @SuppressWarnings("FieldMayBeFinal")
+    public static class SectionNBT extends Chunk.Section.NBT {
         @NBTName("block_states")
-        BlockStatesNBT blockStates = EMPTY_BLOCKSTATES_NBT;
+        private BlockStatesNBT blockStates = EMPTY_BLOCKSTATES_NBT;
 
         @NBTName("biomes")
-        BiomesNBT biomes = EMPTY_BIOMES_NBT;
+        private BiomesNBT biomes = EMPTY_BIOMES_NBT;
     }
 
-    @SuppressWarnings("CanBeFinal")
-    private static class BlockStatesNBT {
+    @SuppressWarnings("FieldMayBeFinal")
+    public static class BlockStatesNBT {
         @NBTName("palette")
-        BlockState[] palette = EMPTY_BLOCKSTATE_ARRAY;
+        private BlockState[] palette = EMPTY_BLOCKSTATE_ARRAY;
 
         @NBTName("data")
-        long[] data = EMPTY_LONG_ARRAY;
+        private long[] data = EMPTY_LONG_ARRAY;
     }
 
-    @SuppressWarnings("CanBeFinal")
-    private static class BiomesNBT {
+    @SuppressWarnings("FieldMayBeFinal")
+    public static class BiomesNBT {
         @NBTName("palette")
-        String[] palette = EMPTY_STRING_ARRAY;
+        private String[] palette = EMPTY_STRING_ARRAY;
 
         @NBTName("data")
-        long[] data = EMPTY_LONG_ARRAY;
+        private long[] data = EMPTY_LONG_ARRAY;
     }
 }

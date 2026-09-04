@@ -79,12 +79,14 @@ public class Block {
         int glass = BlocksConfig.BLOCKS_GLASS.contains(id) ? FLAG_GLASS : 0;
         int grass = BlocksConfig.BLOCKS_GRASS.contains(id) ? FLAG_GRASS : 0;
         int water = BlocksConfig.BLOCKS_WATER.contains(id) ? FLAG_WATER : 0;
-        int fluid = water | ("minecraft:lava".equals(id) ? FLAG_FLUID : 0);
+        int fluid = (water > 0 || "minecraft:lava".equals(id)) ? FLAG_FLUID : 0;
 
         this.flags = flat | air | dryFoliage | foliage | glass | grass | water | fluid;
 
         this.defaultState = new BlockState(this);
 
+        // just the id alone should be enough,
+        // since the colors and flags are based on id
         this.hash = Objects.hash(getId());
     }
 
@@ -248,11 +250,25 @@ public class Block {
             return false;
         }
         Block other = (Block) o;
-        return Objects.equals(getId(), other.getId());
+        // just the id alone should be enough,
+        // since the colors and flags are based on id
+        return getId().equals(other.getId());
     }
 
     @Override
     public int hashCode() {
         return this.hash;
+    }
+
+    @Override
+    @NotNull
+    public String toString() {
+        return "Block["
+            + "id=" + getId()
+            + ",color=" + getColor()
+            + ",vanilla=" + getVanilla()
+            + ",flags=" + getFlags()
+            // do not output default blockstate (causes infinite recursion)
+            + "]";
     }
 }
