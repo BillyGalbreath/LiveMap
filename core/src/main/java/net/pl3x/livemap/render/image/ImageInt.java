@@ -36,7 +36,7 @@ public interface ImageInt extends Image {
      * @return Requested value
      */
     default int getPixel(int x, int z) {
-        return getPixel(getIndex(x, z));
+        return getPixel(Image.getIndex(x, z));
     }
 
     /**
@@ -57,7 +57,7 @@ public interface ImageInt extends Image {
      * @param value Value to set
      */
     default void setPixel(int x, int z, int value) {
-        setPixel(getIndex(x, z), value);
+        setPixel(Image.getIndex(x, z), value);
     }
 
     /**

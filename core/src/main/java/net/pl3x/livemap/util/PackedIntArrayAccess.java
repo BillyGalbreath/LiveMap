@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Packed integer array.
  */
-public class PackedIntArrayAccess {
+public class PackedIntArrayAccess implements Pool.Reusable {
     private static final int[] INDEX_PARAMETERS = new int[] {
         -1, -1, 0,
         Integer.MIN_VALUE, 0, 0,
@@ -108,7 +108,6 @@ public class PackedIntArrayAccess {
      * No-args constructor specifically for thread-local caching phases.
      */
     public PackedIntArrayAccess() {
-        init(1, new long[1]);
     }
 
     /**
@@ -116,9 +115,11 @@ public class PackedIntArrayAccess {
      *
      * @param data         Raw data array
      * @param elementCount Number of elements in the raw data
+     * @return This PackedIntArrayAccess
      */
-    public void init(long @NotNull [] data, int elementCount) {
-        init(Math.max(data.length * Long.SIZE / elementCount, 1), data);
+    @NotNull
+    public PackedIntArrayAccess init(long @NotNull [] data, int elementCount) {
+        return init(Math.max(data.length * Long.SIZE / elementCount, 1), data);
     }
 
     /**
@@ -126,8 +127,10 @@ public class PackedIntArrayAccess {
      *
      * @param bitsPerElement Bits per element in the raw data
      * @param data           Raw data array
+     * @return This PackedIntArrayAccess
      */
-    public void init(int bitsPerElement, long @NotNull [] data) {
+    @NotNull
+    public PackedIntArrayAccess init(int bitsPerElement, long @NotNull [] data) {
         this.bitsPerElement = bitsPerElement;
         this.data = data;
 
@@ -138,6 +141,8 @@ public class PackedIntArrayAccess {
         this.indexScale = Integer.toUnsignedLong(INDEX_PARAMETERS[i]);
         this.indexOffset = Integer.toUnsignedLong(INDEX_PARAMETERS[i + 1]);
         this.indexShift = INDEX_PARAMETERS[i + 2] + 32;
+
+        return this;
     }
 
     /**

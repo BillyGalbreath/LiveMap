@@ -27,6 +27,7 @@ package net.pl3x.livemap.util;
 import it.unimi.dsi.fastutil.longs.Long2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.LongFunction;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -39,7 +40,8 @@ import org.jetbrains.annotations.NotNull;
 public class LongLoadingCache<V> {
     private final long ttlMillis;
     private final long maxEntries;
-    private final Loader<V> loader;
+
+    private final LongFunction<V> loader;
 
     private final Long2ObjectLinkedOpenHashMap<V> valueMap = new Long2ObjectLinkedOpenHashMap<>();
     private final Long2LongLinkedOpenHashMap timestampMap = new Long2LongLinkedOpenHashMap();
@@ -53,7 +55,7 @@ public class LongLoadingCache<V> {
      * @param maxEntries Maximum number of entries
      * @param loader     The cache loader used to obtain new values
      */
-    public LongLoadingCache(long ttlMillis, long maxEntries, @NotNull Loader<V> loader) {
+    public LongLoadingCache(long ttlMillis, long maxEntries, @NotNull LongFunction<V> loader) {
         this.ttlMillis = ttlMillis;
         this.maxEntries = maxEntries;
         this.loader = loader;
@@ -94,7 +96,7 @@ public class LongLoadingCache<V> {
             }
 
             // compute fresh value
-            value = this.loader.load(key);
+            value = this.loader.apply(key);
 
             // evict the oldest, if full
             if (this.valueMap.size() >= this.maxEntries && !this.valueMap.containsKey(key)) {
@@ -152,24 +154,5 @@ public class LongLoadingCache<V> {
         } finally {
             this.lock.unlock();
         }
-    }
-
-    /**
-     * Computes or retrieves values, based on a key.
-     *
-     * @param <V> the type of values.
-     */
-    @FunctionalInterface
-    public interface Loader<V> {
-        /**
-         * Computes or retrieves the value corresponding to {@code key}.
-         *
-         * <p><b>Warning:</b> loading <b>must not</b> attempt to update any mappings of this cache directly.
-         *
-         * @param key The key whose value should be loaded
-         * @return The value associated with {@code key}
-         */
-        @NotNull
-        V load(long key);
     }
 }

@@ -39,7 +39,6 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import net.pl3x.livemap.Logger;
 import net.pl3x.livemap.marker.Point;
-import net.pl3x.livemap.util.PackedIntArrayAccess;
 import net.pl3x.livemap.world.World;
 import net.pl3x.livemap.world.block.BlockState;
 import net.pl3x.livemap.world.block.BlockStateDeserializer;
@@ -53,69 +52,11 @@ import org.jetbrains.annotations.Nullable;
  * Represents a region in a world.
  */
 public class Region extends Point {
-    private static final ThreadLocal<byte[]> THREAD_LOCAL_PAYLOAD_BUFFER = ThreadLocal.withInitial(() -> new byte[1024 * 1024]);
-
-    private static final ThreadLocal<PackedIntArrayAccess> LOCAL_HEIGHTMAP_WRAPPER = ThreadLocal.withInitial(PackedIntArrayAccess::new);
-    private static final ThreadLocal<PackedIntArrayAccess[]> LOCAL_BLOCK_STACK = ThreadLocal.withInitial(() -> new PackedIntArrayAccess[0]);
-    private static final ThreadLocal<PackedIntArrayAccess[]> LOCAL_BIOME_STACK = ThreadLocal.withInitial(() -> new PackedIntArrayAccess[0]);
-
     private static final BlueNBT BLUENBT = new BlueNBT();
 
     static {
         BLUENBT.setNamingStrategy(NamingStrategy.lowerCaseWithDelimiter("_"));
         BLUENBT.register(TypeToken.of(BlockState.class), new BlockStateDeserializer());
-    }
-
-    /**
-     * Get current thread's shared heightmap.
-     *
-     * @return Shared heightmap
-     */
-    @NotNull
-    public static PackedIntArrayAccess getThreadLocalHeightmap() {
-        return LOCAL_HEIGHTMAP_WRAPPER.get();
-    }
-
-    /**
-     * Get thread local block stack.
-     *
-     * @param requiredSize Required size of stack
-     * @return Thread local block stack of at least required size
-     */
-    @NotNull
-    public static PackedIntArrayAccess @NotNull [] getThreadLocalBlockStack(int requiredSize) {
-        PackedIntArrayAccess[] current = LOCAL_BLOCK_STACK.get();
-        if (current.length < requiredSize) {
-            PackedIntArrayAccess[] expanded = new PackedIntArrayAccess[requiredSize];
-            System.arraycopy(current, 0, expanded, 0, current.length);
-            for (int i = current.length; i < requiredSize; i++) {
-                expanded[i] = new PackedIntArrayAccess();
-            }
-            LOCAL_BLOCK_STACK.set(expanded);
-            return expanded;
-        }
-        return current;
-    }
-
-    /**
-     * Get thread local biome stack.
-     *
-     * @param requiredSize Required size of stack
-     * @return Thread local biome stack of at least required size
-     */
-    @NotNull
-    public static PackedIntArrayAccess @NotNull [] getThreadLocalBiomeStack(int requiredSize) {
-        PackedIntArrayAccess[] current = LOCAL_BIOME_STACK.get();
-        if (current.length < requiredSize) {
-            PackedIntArrayAccess[] expanded = new PackedIntArrayAccess[requiredSize];
-            System.arraycopy(current, 0, expanded, 0, current.length);
-            for (int i = current.length; i < requiredSize; i++) {
-                expanded[i] = new PackedIntArrayAccess();
-            }
-            LOCAL_BIOME_STACK.set(expanded);
-            return expanded;
-        }
-        return current;
     }
 
     /**
@@ -325,7 +266,7 @@ public class Region extends Point {
         byte compressionTypeId = raf.readByte();
         CompressionType compression = CompressionType.byId(compressionTypeId);
 
-        byte[] compressedPayload = THREAD_LOCAL_PAYLOAD_BUFFER.get();
+        byte[] compressedPayload = new byte[1024 * 1024];
 
         int payloadLength = length - 1; // Subtract the 1 byte for compressionTypeId;
         if (payloadLength > compressedPayload.length) {
@@ -361,13 +302,10 @@ public class Region extends Point {
         for (int i = 0; i < this.chunks.length; i++) {
             Chunk chunk = this.chunks[i];
             if (chunk != null) {
-                chunk.recycle(); // clear the BlockData pools
+                chunk.recycle(); // recycle objects in object pools
                 this.chunks[i] = null; // break the heap reference chain
             }
         }
-        LOCAL_HEIGHTMAP_WRAPPER.remove();
-        LOCAL_BLOCK_STACK.remove();
-        LOCAL_BIOME_STACK.remove();
     }
 
     @Override

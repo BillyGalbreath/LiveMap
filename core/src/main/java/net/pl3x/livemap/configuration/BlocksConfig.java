@@ -25,7 +25,6 @@
 package net.pl3x.livemap.configuration;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import net.pl3x.livemap.LiveMap;
 
@@ -37,7 +36,8 @@ public final class BlocksConfig extends AbstractConfig {
     @Comment("""
         List of blocks that are considered air when it comes
         to coloring. Blocks listed here will not be rendered.""")
-    public static List<String> BLOCKS_AIR = new ArrayList<>() {{
+    @AutoSort
+    public static List<String> AIR = new ArrayList<>() {{
         add("minecraft:air");
         add("minecraft:cave_air");
         add("minecraft:void_air");
@@ -48,7 +48,8 @@ public final class BlocksConfig extends AbstractConfig {
         List of blocks that are considered dry foliage when it comes
         to coloring. Blocks listed here will use the biome's
         dry foliage color when rendering.""")
-    public static List<String> BLOCKS_DRY_FOLIAGE = new ArrayList<>() {{
+    @AutoSort
+    public static List<String> DRY_FOLIAGE = new ArrayList<>() {{
         add("minecraft:leaf_litter");
     }};
 
@@ -58,7 +59,8 @@ public final class BlocksConfig extends AbstractConfig {
         to coloring. Blocks listed here will use the biome's
         foliage color when rendering.
         Note: Birch and Spruce are intentionally absent by default.""")
-    public static List<String> BLOCKS_FOLIAGE = new ArrayList<>() {{
+    @AutoSort
+    public static List<String> FOLIAGE = new ArrayList<>() {{
         add("minecraft:acacia_leaves");
         // add("minecraft:birch_leaves"); // birch 0x80A755
         add("minecraft:dark_oak_leaves");
@@ -74,7 +76,8 @@ public final class BlocksConfig extends AbstractConfig {
         List of blocks that are considered glass when it comes
         to coloring. Blocks listed here will be translucent
         if the renderer is configured for it.""")
-    public static List<String> BLOCKS_GLASS = new ArrayList<>() {{
+    @AutoSort
+    public static List<String> GLASS = new ArrayList<>() {{
         add("minecraft:glass");
         add("minecraft:black_stained_glass");
         add("minecraft:blue_stained_glass");
@@ -117,7 +120,8 @@ public final class BlocksConfig extends AbstractConfig {
         List of blocks that are considered grass when it comes
         to coloring. Blocks listed here will use the biome's
         grass color modifier when rendering.""")
-    public static List<String> BLOCKS_GRASS = new ArrayList<>() {{
+    @AutoSort
+    public static List<String> GRASS = new ArrayList<>() {{
         add("minecraft:bush");
         add("minecraft:fern");
         add("minecraft:grass");
@@ -133,7 +137,8 @@ public final class BlocksConfig extends AbstractConfig {
         List of blocks that are considered water when it comes
         to coloring. Blocks listed here will use the biome's
         water color when rendering.""")
-    public static List<String> BLOCKS_WATER = new ArrayList<>() {{
+    @AutoSort
+    public static List<String> WATER = new ArrayList<>() {{
         add("minecraft:bubble_column");
         add("minecraft:kelp");
         add("minecraft:kelp_plant");
@@ -148,7 +153,8 @@ public final class BlocksConfig extends AbstractConfig {
         List of blocks that are considered "flat" when it comes
         to heightmaps. Blocks listed here will use the Y coordinate
         below them when rendering.""")
-    public static List<String> BLOCKS_FLAT = new ArrayList<>() {{
+    @AutoSort
+    public static List<String> FLAT = new ArrayList<>() {{
         add("minecraft:acacia_pressure_plate");
         add("minecraft:acacia_trapdoor");
         add("minecraft:bamboo_pressure_plate");
@@ -211,17 +217,5 @@ public final class BlocksConfig extends AbstractConfig {
      */
     public static void reload() {
         CONFIG.reload0();
-    }
-
-    @Override
-    protected void cleanup() {
-        // sort lists alphabetically
-        Collections.sort(BLOCKS_AIR);
-        Collections.sort(BLOCKS_DRY_FOLIAGE);
-        Collections.sort(BLOCKS_FOLIAGE);
-        Collections.sort(BLOCKS_GLASS);
-        Collections.sort(BLOCKS_GRASS);
-        Collections.sort(BLOCKS_WATER);
-        Collections.sort(BLOCKS_FLAT);
     }
 }

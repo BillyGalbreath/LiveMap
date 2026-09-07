@@ -39,18 +39,18 @@ world-settings:
     name: Overworld
     render:
       renderers:
-        - type: fancy
-          icon: overworld_fancy.png
-          name: Fancy
-          heightmap: fancy
-          biome-blend: 3
-          translucent-fluids: true
         - type: basic
           icon: overworld_basic.png
           name: Basic
           heightmap: basic
           biome-blend: 0
           translucent-fluids: false
+        - type: fancy
+          icon: overworld_fancy.png
+          name: Fancy
+          heightmap: fancy
+          biome-blend: 2
+          translucent-fluids: true
         - type: biomes
           icon: overworld_biomes.png
           name: Biomes
@@ -74,27 +74,27 @@ world-settings:
     display-name: The Nether
     render:
       renderers:
-        - type: fancy
-          icon: nether_fancy.png
-          name: Fancy
-          heightmap: fancy
-          biome-blend: 0
-          translucent-fluids: true
         - type: basic
           icon: nether_basic.png
           name: Basic
           heightmap: basic
           biome-blend: 0
           translucent-fluids: false
-        - type: nether_roof
-          icon: nether_roof.png
-          name: Roof
+        - type: fancy
+          icon: nether_fancy.png
+          name: Fancy
           heightmap: fancy
           biome-blend: 0
           translucent-fluids: false
         - type: biomes
           icon: nether_biomes.png
           name: Biomes
+          heightmap: fancy
+          biome-blend: 0
+          translucent-fluids: false
+        - type: nether_roof
+          icon: nether_roof.png
+          name: Roof
           heightmap: fancy
           biome-blend: 0
           translucent-fluids: false
@@ -106,9 +106,9 @@ world-settings:
         - type: basic
           icon: the_end_basic.png
           name: Basic
-          heightmap: fancy
+          heightmap: basic
           biome-blend: 0
-          translucent-fluids: true
+          translucent-fluids: false
         - type: biomes
           icon: the_end_biomes.png
           name: Biomes

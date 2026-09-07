@@ -47,19 +47,19 @@ public class RegionSpiralIterator extends SpiralIterator {
     /**
      * Constructs a new SpiralIterator for regions at the given center.
      *
-     * @param center  Center point
+     * @param center  Center block coordinate
      * @param regions Collection of regions to iterate
      * @param hasNext Supplier to determine if there is a next element
      */
     public RegionSpiralIterator(@NotNull Point center, @NotNull LongCollection regions, @Nullable BooleanSupplier hasNext) {
-        this(center.getX(), center.getZ(), regions, hasNext);
+        this(center.getX() >> 9, center.getZ() >> 9, regions, hasNext);
     }
 
     /**
      * Constructs a new SpiralIterator for regions at the given center.
      *
-     * @param regionX Center x coordinate
-     * @param regionZ Center z coordinate
+     * @param regionX X region center coordinate
+     * @param regionZ Z region center coordinate
      * @param regions Collection of regions to iterate
      * @param hasNext Supplier to determine if there is a next element
      */

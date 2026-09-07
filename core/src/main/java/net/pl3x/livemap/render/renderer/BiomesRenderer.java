@@ -24,11 +24,12 @@
 
 package net.pl3x.livemap.render.renderer;
 
+import java.util.concurrent.ThreadLocalRandom;
 import net.pl3x.livemap.render.heightmap.Heightmap;
 import net.pl3x.livemap.render.image.TileCanvas;
+import net.pl3x.livemap.util.Type;
 import net.pl3x.livemap.world.chunk.Chunk;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * A basic renderer.
@@ -39,16 +40,16 @@ public class BiomesRenderer extends Renderer {
      *
      * @param name              Display name for renderer
      * @param icon              Icon file for webmap
-     * @param heightmap         The heightmap to use
+     * @param heightmap         The heightmap type to use
      * @param biomeBlend        Number of blocks to blend biome tints
      * @param translucentFluids True to render fluids as translucent
      */
-    public BiomesRenderer(@NotNull String name, @NotNull String icon, @Nullable Heightmap heightmap, int biomeBlend, boolean translucentFluids) {
-        super(Type.BIOMES, name, icon, heightmap, biomeBlend, translucentFluids);
+    public BiomesRenderer(@NotNull String name, @NotNull String icon, @NotNull Type<Heightmap> heightmap, int biomeBlend, boolean translucentFluids) {
+        super(BIOMES, name, icon, heightmap, biomeBlend, translucentFluids);
     }
 
     @Override
-    protected void renderBlock(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data) {
+    protected void renderBlock(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data, @NotNull ThreadLocalRandom rand) {
         //
     }
 }

@@ -24,20 +24,24 @@
 
 package net.pl3x.livemap.render.renderer;
 
+import java.util.Arrays;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicBoolean;
 import net.pl3x.livemap.LiveMap;
-import net.pl3x.livemap.Logger;
 import net.pl3x.livemap.render.heightmap.Heightmap;
 import net.pl3x.livemap.render.image.Colors;
+import net.pl3x.livemap.render.image.Image;
 import net.pl3x.livemap.render.image.TileCanvas;
+import net.pl3x.livemap.util.MapBlurUtil;
 import net.pl3x.livemap.util.Mathf;
+import net.pl3x.livemap.util.Type;
 import net.pl3x.livemap.world.biome.Biome;
 import net.pl3x.livemap.world.block.Block;
 import net.pl3x.livemap.world.chunk.Chunk;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
- * A fancy renderer.
+ * A fancy custom colored map renderer.
  */
 public class FancyRenderer extends Renderer {
     /**
@@ -45,47 +49,129 @@ public class FancyRenderer extends Renderer {
      *
      * @param name              Display name for renderer
      * @param icon              Icon file for webmap
-     * @param heightmap         The heightmap to use
+     * @param heightmap         The heightmap type to use
      * @param biomeBlend        Number of blocks to blend biome tints
      * @param translucentFluids True to render fluids as translucent
      */
-    public FancyRenderer(@NotNull String name, @NotNull String icon, @Nullable Heightmap heightmap, int biomeBlend, boolean translucentFluids) {
-        super(Type.FANCY, name, icon, heightmap, biomeBlend, translucentFluids);
+    public FancyRenderer(@NotNull String name, @NotNull String icon, @NotNull Type<Heightmap> heightmap, int biomeBlend, boolean translucentFluids) {
+        super(FANCY, name, icon, heightmap, biomeBlend, translucentFluids);
     }
 
     @Override
-    protected void renderBlock(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data) {
-        // calculate the base ground color
+    public boolean renderRegion(@NotNull TileCanvas tile, @NotNull ThreadLocalRandom rand, @NotNull AtomicBoolean cancelled) {
+        // setup shadowmap stuff (for heightmap)
+        byte[] heightmap = new byte[512 << 9];
+        Arrays.fill(heightmap, (byte) 0);
+
+        // copy logic from super.renderRegion()
+        int chunkStartX = tile.getRegion().getX() << 5;
+        int chunkStartZ = tile.getRegion().getZ() << 5;
+
+        // iterate each chunk in this region
+        for (int chunkX = chunkStartX; chunkX < chunkStartX + 32; chunkX++) {
+            int blockStartX = chunkX << 4;
+            for (int chunkZ = chunkStartZ; chunkZ < chunkStartZ + 32; chunkZ++) {
+                // check world state and interruptions, for instant responsiveness
+                if (tile.getWorld().isDiscarded() || cancelled.get()) {
+                    return false; // aborted
+                }
+
+                Chunk chunk = tile.getRegion().getChunk(chunkX, chunkZ);
+                if (!chunk.isFull()) {
+                    continue; // chunk not fully generated
+                }
+
+                int blockStartZ = chunkZ << 4;
+
+                for (int blockX = blockStartX; blockX < blockStartX + 16; blockX++) {
+                    for (int blockZ = blockStartZ; blockZ < blockStartZ + 16; blockZ++) {
+                        Chunk.BlockData data = chunk.getData(blockX, blockZ);
+                        if (data == null) {
+                            continue; // this shouldn't happen, but just in case
+                        }
+
+                        renderBlock(tile, data, rand);
+
+                        // handle heightmap
+                        float yDiff;
+                        if (data.getFluidState() == null) {
+                            // calculate actual heightmap if we're not in water
+                            yDiff = CalculateAltitudeDiff(chunk, blockX, blockZ, data.getBlockY());
+                        } else if (data.getFluidY() - data.getBlockY() <= 5) {
+                            // calculate heightmap and taper off the deeper we go in shallow water
+                            yDiff = CalculateAltitudeDiff(chunk, blockX, blockZ, data.getBlockY()) * 0.25F + 0.75F;
+                        } else {
+                            // water too deep so see heightmap detail, just use flat surface
+                            yDiff = 1F;
+                        }
+
+                        // add shadowmap stuff here
+                        heightmap[Image.getIndex(blockX, blockZ)] = (byte) (128 * yDiff - 127);
+                    }
+                }
+            }
+        }
+
+        //
+        byte[] copy = heightmap.clone();
+        MapBlurUtil.blur(heightmap);
+
+        // apply the shadowmap to the tile
+        for (int index = 0; index < heightmap.length; index++) {
+            int color = tile.getPixel(index);
+            if (color != 0) {
+                float shade = ((((int) ((heightmap[index] - 1) / 25.6F)) / 5F)
+                    + ((((copy[index] - 1) / 25.6F) % 1) / 5F))
+                    * 1.2F + 1F;
+                tile.setPixel(index & 511, index >> 9, Colors.mul(color & 0xFFFFFF, shade) | 0xFF000000);
+            }
+        }
+
+        return true;
+    }
+
+    @Override
+    protected void renderBlock(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data, @NotNull ThreadLocalRandom rand) {
         int pixelColor = 0;
 
         // get true block color, unless an opaque fluid is covering it
         if (data.getFluidState() == null || tile.getRenderer().isTranslucentFluids()) {
-            pixelColor = processBlockColor(tile, data);
-
-            if (pixelColor == 0) {
-                Logger.warn("No color: " + data.getBlock());
-            }
-
-            if (pixelColor != 0) {
-                pixelColor |= 0xFF000000;
-
-                // heightmap
-                // todo
-
-                // sprinkle the color so it looks less plain
-                boolean greenery = data.getBlock().hasFlag(Block.FLAG_GRASS | Block.FLAG_FOLIAGE);
-                pixelColor = Colors.sprinkle(pixelColor, greenery ? 50 : 20);
-            }
+            // either no fluid, or fluids are translucent. either way, we have to draw land
+            pixelColor = processBlockColor(data);
         }
 
-        // blend water color on top
+        /* heightmap handled differently - keeping this code for archive reasons (for now)
+        // check if anything is even there to render (we ignore transparent black)
+        if (pixelColor != 0) {
+            // calculate heightmap
+            int heightmap;
+            if (data.getFluidState() == null || data.getFluidY() - data.getBlockY() <= 5) {
+                // only calculate actual heightmap if we're in shallow enough water (or no water)
+                heightmap = getHeightmap().getAlpha(data.getChunk(), data.getBlockX(), data.getBlockZ());
+            } else {
+                // water too deep so see heightmap detail, just use flat surface
+                heightmap = getHeightmap().getMid();
+            }
+
+            // apply heightmap
+            pixelColor = Colors.shade(pixelColor, 0xFF - heightmap * 2);
+        }*/
+
+        // blend water color on top of land (if any is there)
         pixelColor = processFluidColor(tile, data, pixelColor);
 
-        // store on tile
+        // verify we have something to render, again
+        if (pixelColor != 0) {
+            // sprinkle the color so it looks less plain (idea from vintage story map)
+            boolean greenery = data.getTopState().getBlock().hasFlag(Block.FLAG_GRASS | Block.FLAG_FOLIAGE);
+            pixelColor = Colors.sprinkle(pixelColor, greenery ? 24 : 10);
+        }
+
+        // store pixel data on tile
         tile.setPixel(data.getBlockX(), data.getBlockZ(), pixelColor);
     }
 
-    private int processBlockColor(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data) {
+    private int processBlockColor(@NotNull Chunk.BlockData data) {
         int color = data.getBlock().getColor();
         if (color == 0) {
             // nothing to color
@@ -93,15 +179,11 @@ public class FancyRenderer extends Renderer {
         }
         // check most popular block types first for efficiency
         if (data.getBlock().hasFlag(Block.FLAG_GRASS)) {
-            return data.getBiome().getGrass();
-            // return data.getBiome().getGrassModifier().modify(data.getBlockX(), data.getBlockZ(), data.getBiome().getGrass());
-            // return sampleNeighbors(tile, data, (biome, x, z) -> biome.getGrassModifier().modify(x, z, biome.getGrass()));
+            return sampleNeighbors(data, (biome, x, z) -> biome.getGrassModifier().modify(x, z, biome.getGrass()));
         } else if (data.getBlock().hasFlag(Block.FLAG_FOLIAGE)) {
-            return data.getBiome().getFoliage();
-            // return sampleNeighbors(tile, data, (biome, x, z) -> biome.getFoliage());
+            return sampleNeighbors(data, (biome, _, _) -> biome.getFoliage());
         } else if (data.getBlock().hasFlag(Block.FLAG_DRY_FOLIAGE)) {
-            return data.getBiome().getDryFoliage();
-            // return sampleNeighbors(tile, data, (biome, x, z) -> biome.getDryFoliage());
+            return sampleNeighbors(data, (biome, _, _) -> biome.getDryFoliage());
         } else if (data.getBlockState().getMoisture() >= 0) {
             return data.getBlockState().getMoisture() >= 7 ? 0x512C0F : 0x8E6646; // from textures
         } else if (data.getBlockState().getPower() >= 0) {
@@ -138,23 +220,24 @@ public class FancyRenderer extends Renderer {
         // get translucent fluid color
         if (tile.getRenderer().isTranslucentFluids()) {
             // translucent style
-            // float depthMod = fluidDepth / 60F;
+            float depthMod = fluidDepth * 0.025F;
             if (fluid.hasFlag(Block.FLAG_WATER)) {
                 // translucent water
-                fluidColor = sampleNeighbors(tile, data, (biome, _, _) -> biome.getWater());
-                fluidColor = Colors.lerpARGB(fluidColor, 0xFF000000, Math.clamp(Mathf.easeCubicOut(fluidDepth / 1.5F), 0, 0.45F));
-                fluidColor = fluidColor | (int) (0xBF + Mathf.easeQuinticOut(Math.clamp(fluidDepth * 5F, 0, 1)) * 0xFF);
+                fluidColor = sampleNeighbors(data, (biome, _, _) -> biome.getWater());
+                // make color lighter in shallower depths
+                fluidColor = Colors.lerpARGB(fluidColor, 0xFF000000, Math.clamp(Mathf.easeCubicOut(depthMod / 1.5F), 0, 0.45F));
+                // make color more translucent in shallower depths
+                fluidColor = (fluidColor & 0xFFFFFF) | ((int) (Mathf.easeQuinticOut(Math.clamp(depthMod * 5F, 0, 1)) * 0xFF) << 24);
             } else {
                 // opaque (but shaded) lava
-                fluidColor = Colors.lerpARGB(fluid.getColor(), 0xFF000000, Math.clamp(Mathf.easeCubicOut(fluidDepth / 1.5F), 0, 0.3F));
-                fluidColor = fluidColor | 0xFF000000;
+                fluidColor = 0xFF000000 | Colors.lerpRGB(fluid.getColor(), 0x000000, Math.clamp(Mathf.easeCubicOut(depthMod / 1.5F), 0, 0.3F));
             }
             return Colors.blend(fluidColor, pixelColor);
         }
 
         // get solid fluid color
-        if (fluid.hasFlag(Block.FLAG_WATER)) {
-            fluidColor = sampleNeighbors(tile, data, (biome, _, _) -> biome.getWater());
+        if (fluid.isWater()) {
+            fluidColor = sampleNeighbors(data, (biome, _, _) -> biome.getWater());
         } else {
             fluidColor = fluid.getColor();
         }
@@ -167,17 +250,16 @@ public class FancyRenderer extends Renderer {
     /**
      * Sample neighbor blocks in configured radius and mix their colors.
      *
-     * @param tile    The tile canvas being drawn on
      * @param data    Block data
      * @param sampler Biome color sampler
      * @return Merged color
      */
-    protected int sampleNeighbors(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data, @NotNull Sampler sampler) {
+    protected int sampleNeighbors(@NotNull Chunk.BlockData data, @NotNull Sampler sampler) {
         // get color of starting block
         int color = sampler.sample(data.getBiome(), data.getBlockX(), data.getBlockZ());
 
         // check if we should blend with neighbors
-        int apothem = tile.getRenderer().getBiomeBlend();
+        int apothem = getBiomeBlend();
         if (apothem < 1) {
             return color;
         }
@@ -196,18 +278,19 @@ public class FancyRenderer extends Renderer {
                     continue;
                 }
 
-                // neighbor might be in a different chunk
-                Chunk chunk2 = data.getChunk().getRegion().getChunkFast(data.getChunk(), x2 >> 4, z2 >> 4);
-                if (!chunk2.isFull()) {
-                    // chunk doesn't exist or isn't ready
+                // neighbor might be in a different chunk so we call World#getChunkFast
+                // so it can drill down into the correct region and chunk
+                // (hopefully the one we're in, for speed)
+                Chunk.BlockData data2 = data.getWorld()
+                    .getChunkFast(data.getChunk(), x2 >> 4, z2 >> 4)
+                    .getData(x2, z2);
+                if (data2 == null) {
+                    // chunk doesn't exist, so there's no data; skip
                     continue;
                 }
 
-                // chunk may not have been loaded (meaning no Block.Data scanned) so get biome directly from registry
-                Biome biome2 = data.getChunk().getBiome(x2, chunk2.getHeight(x2, z2), z2);
-
-                // add the neighbor block's color
-                int color2 = sampler.sample(biome2, x2, z2);
+                // add the neighbor block's biome adjusted color
+                int color2 = sampler.sample(data2.getBiome(), x2, z2);
                 if (color2 != 0) {
                     r += color2 >> 16 & 0xFF;
                     g += color2 >> 8 & 0xFF;
@@ -218,6 +301,28 @@ public class FancyRenderer extends Renderer {
         }
         // average the colors
         return ((r / c) << 16) | ((g / c) << 8) | (b / c);
+    }
+
+    private float CalculateAltitudeDiff(@NotNull Chunk chunk, int blockX, int blockZ, int blockY) {
+        Chunk.BlockData northwest = chunk.getWorld().getChunkFast(chunk, (blockX - 1) >> 4, (blockZ - 1) >> 4).getData(blockX - 1, blockZ - 1);
+        Chunk.BlockData northeast = chunk.getWorld().getChunkFast(chunk, blockX >> 4, (blockZ - 1) >> 4).getData(blockX, blockZ - 1);
+        Chunk.BlockData southwest = chunk.getWorld().getChunkFast(chunk, (blockX - 1) >> 4, blockZ >> 4).getData(blockX - 1, blockZ);
+
+        int leftTop = blockY - (northwest == null ? blockY : northwest.getBlockY());
+        int rightTop = blockY - (northeast == null ? blockY : northeast.getBlockY());
+        int leftBot = blockY - (southwest == null ? blockY : southwest.getBlockY());
+
+        int direction = Integer.signum(leftTop) + Integer.signum(rightTop) + Integer.signum(leftBot);
+        int steepness = Math.max(Math.max(Math.abs(leftTop), Math.abs(rightTop)), Math.abs(leftBot));
+        float slopeFactor = Math.min(0.5F, steepness / 10F) / 1.25F;
+
+        if (direction > 0) {
+            return 1.08F + slopeFactor;
+        }
+        if (direction < 0) {
+            return 0.92F - slopeFactor;
+        }
+        return 1;
     }
 
     /**
@@ -233,7 +338,6 @@ public class FancyRenderer extends Renderer {
          * @param z     Z coordinate
          * @return Color sampled
          */
-        @NotNull
-        Integer sample(@NotNull Biome biome, @NotNull Integer x, @NotNull Integer z);
+        int sample(@NotNull Biome biome, int x, int z);
     }
 }

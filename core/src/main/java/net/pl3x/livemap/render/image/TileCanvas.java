@@ -31,6 +31,7 @@ import java.nio.file.Path;
 import java.util.Map;
 import net.pl3x.livemap.Logger;
 import net.pl3x.livemap.configuration.Config;
+import net.pl3x.livemap.render.heightmap.Heightmap;
 import net.pl3x.livemap.render.image.io.IO;
 import net.pl3x.livemap.render.renderer.Renderer;
 import net.pl3x.livemap.util.FileUtil;
@@ -50,11 +51,13 @@ public class TileCanvas implements ImageInt {
     private final Renderer renderer;
     private final IO.Type io;
 
+    private final Heightmap heightmap;
+
     private final int[] pixels = new int[512 << 9];
     private boolean dirty;
 
     /**
-     * Constructs a new instance of Tile.
+     * Constructs a new instance of TileCanvas.
      *
      * @param region   Region this tile belongs to
      * @param renderer The renderer drawing on this tile
@@ -63,16 +66,8 @@ public class TileCanvas implements ImageInt {
         this.region = region;
         this.renderer = renderer;
         this.io = IO.getType(Config.WEB_TILE_FORMAT);
-    }
 
-    /**
-     * Get the region for this tile.
-     *
-     * @return Requested region
-     */
-    @NotNull
-    public Region getRegion() {
-        return this.region;
+        this.heightmap = renderer.getHeightmapType().create();
     }
 
     /**
@@ -86,13 +81,13 @@ public class TileCanvas implements ImageInt {
     }
 
     /**
-     * Get the IO mechanism that read/writes this tile from/to the disk.
+     * Get the region for this tile.
      *
-     * @return IO mechanism
+     * @return Requested region
      */
     @NotNull
-    public IO.Type getIO() {
-        return this.io;
+    public Region getRegion() {
+        return this.region;
     }
 
     /**
@@ -105,10 +100,24 @@ public class TileCanvas implements ImageInt {
         return this.renderer;
     }
 
-    @Override
-    public void setPixel(int index, int value) {
-        this.dirty = true;
-        ImageInt.super.setPixel(index, value);
+    /**
+     * Get the IO mechanism that read/writes this tile from/to the disk.
+     *
+     * @return IO mechanism
+     */
+    @NotNull
+    public IO.Type getIO() {
+        return this.io;
+    }
+
+    /**
+     * Get the heightmap.
+     *
+     * @return The heightmap
+     */
+    @NotNull
+    public Heightmap getHeightmap() {
+        return this.heightmap;
     }
 
     @Override
@@ -116,12 +125,18 @@ public class TileCanvas implements ImageInt {
         return this.pixels;
     }
 
+    @Override
+    public void setPixel(int index, int value) {
+        ImageInt.super.setPixel(index, value);
+        this.dirty = true;
+    }
+
     /**
      * Save image data using in-memory consolidation.
      *
-     * @param sharedCanvases Shared canvases for higher zoom levels
+     * @param zoomedCanvases Zoomed canvases for higher zoom levels
      */
-    public void save(@NotNull Map<Path, ActiveTileCanvas> sharedCanvases) {
+    public void save(@NotNull Map<Path, ZoomedCanvas> zoomedCanvases) {
         if (!this.dirty) {
             return;
         }
@@ -151,20 +166,20 @@ public class TileCanvas implements ImageInt {
 
             // for higher zoom levels (1, 2, 3), consolidate modifications in memory via CHM
             // computeIfAbsent is atomic, ensuring all threads bind to the exact same shared image canvas instance
-            ActiveTileCanvas canvas = sharedCanvases.computeIfAbsent(file,
-                _ -> new ActiveTileCanvas(this, curZoom)
+            ZoomedCanvas zoomedCanvas = zoomedCanvases.computeIfAbsent(file,
+                _ -> new ZoomedCanvas(this, curZoom)
             );
 
             // synchronize on the canvas to safely draw pixel matrices from multiple threads
-            synchronized (canvas) {
-                writePixels(canvas.getImageBuffer(), zoom);
+            synchronized (zoomedCanvas) {
+                writePixels(zoomedCanvas.getImageBuffer(), zoom);
 
                 // record this thread's contribution. the very last thread to finish writing
                 // its quadrant triggers true, removes the entry from the map, and saves it to the disk.
-                if (canvas.recordContribution()) {
-                    sharedCanvases.remove(file); // purge from memory to prevent leaks
+                if (zoomedCanvas.recordContribution()) {
+                    zoomedCanvases.remove(file); // purge from memory to prevent leaks
                     try {
-                        getIO().write(file, canvas.getImageBuffer());
+                        getIO().write(file, zoomedCanvas.getImageBuffer());
                     } catch (Throwable t) {
                         Logger.error("Failed flushing consolidated tile to disk: " + file, t);
                     }
@@ -203,12 +218,12 @@ public class TileCanvas implements ImageInt {
         // zoom level increments the number of regions in a single tile,
         // so we want to ensure we are only writing in this tile region's
         // section of the buffer
-        int baseX = (getRegion().getX() * (TileCanvas.SIZE >> zoom)) & TileCanvas.MASK;
-        int baseZ = (getRegion().getZ() * (TileCanvas.SIZE >> zoom)) & TileCanvas.MASK;
+        int baseX = (getRegion().getX() * (512 >> zoom)) & 511;
+        int baseZ = (getRegion().getZ() * (512 >> zoom)) & 511;
 
         // walk the pixels
-        for (int x = 0; x < TileCanvas.SIZE; x += step) {
-            for (int z = 0; z < TileCanvas.SIZE; z += step) {
+        for (int x = 0; x < 512; x += step) {
+            for (int z = 0; z < 512; z += step) {
                 int argb;
 
                 if (zoom == 0) {

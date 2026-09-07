@@ -59,11 +59,11 @@ public class Biome {
     public Biome(int index, @NotNull String id, int color, int dryFoliage, int foliage, int grass, int water, @NotNull GrassModifier grassModifier) {
         this.index = index;
         this.id = id;
-        this.color = color;
-        this.foliage = foliage;
-        this.dryFoliage = dryFoliage;
-        this.grass = grass;
-        this.water = water;
+        this.color = color == 0 ? 0 : (color | 0xFF000000);
+        this.foliage = foliage == 0 ? 0 : (foliage | 0xFF000000);
+        this.dryFoliage = dryFoliage == 0 ? 0 : (dryFoliage | 0xFF000000);
+        this.grass = grass == 0 ? 0 : (grass | 0xFF000000);
+        this.water = water == 0 ? 0 : (water | 0xFF000000);
         this.grassModifier = grassModifier;
     }
 

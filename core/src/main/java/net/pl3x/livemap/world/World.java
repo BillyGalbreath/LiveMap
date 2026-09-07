@@ -36,6 +36,7 @@ import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.Logger;
@@ -43,8 +44,8 @@ import net.pl3x.livemap.configuration.Lang;
 import net.pl3x.livemap.configuration.WorldConfig;
 import net.pl3x.livemap.marker.Point;
 import net.pl3x.livemap.render.renderer.RendererRegistry;
-import net.pl3x.livemap.util.ConcurrentLong2ObjectMap;
 import net.pl3x.livemap.util.LongDoubleBuffer;
+import net.pl3x.livemap.util.LongLoadingCache;
 import net.pl3x.livemap.world.biome.BiomeRegistry;
 import net.pl3x.livemap.world.chunk.Chunk;
 import net.pl3x.livemap.world.region.Region;
@@ -55,6 +56,13 @@ import org.jetbrains.annotations.Nullable;
  * Represents a renderable world.
  */
 public abstract class World {
+    public static final Runnable CACHE_CLEANUP_TASK = () -> LiveMap.api().getWorldRegistry()
+        // iterate all worlds
+        .forEach((_, world) -> {
+            Logger.debug("Cleaning up region cache on %s".formatted(world.getName()));
+            world.regionCache.cleanUp();
+        });
+
     private final String name;
     private final long seed;
     private final Point spawn;
@@ -65,7 +73,7 @@ public abstract class World {
 
     private final WorldConfig config;
 
-    private final ConcurrentLong2ObjectMap<Region> regionCache;
+    private final LongLoadingCache<Region> regionCache;
     private final LongDoubleBuffer pendingRegions = new LongDoubleBuffer();
 
     private final AtomicBoolean discarded = new AtomicBoolean(false);
@@ -90,7 +98,11 @@ public abstract class World {
 
         this.config = new WorldConfig(this);
 
-        this.regionCache = new ConcurrentLong2ObjectMap<>();
+        this.regionCache = new LongLoadingCache<>(
+            TimeUnit.SECONDS.toMillis(1),
+            LiveMap.api().getRenderScheduler().getParallelism(),
+            index -> new Region(this, index)
+        );
     }
 
     /**
@@ -192,7 +204,7 @@ public abstract class World {
      */
     @NotNull
     public Region getRegion(long index) {
-        return this.regionCache.computeIfAbsent(index, _ -> new Region(this, index));
+        return this.regionCache.get(index);
     }
 
     /**
@@ -216,14 +228,14 @@ public abstract class World {
     /**
      * Get chunk at specified chunk coordinates.
      *
-     * @param region Possible region (used as cache for faster lookups)
+     * @param chunk  Possible chunk (used as cache for faster lookups)
      * @param chunkX X chunk coordinate
      * @param chunkZ Z chunk coordinate
      * @return Requested chunk
      */
     @NotNull
-    public Chunk getChunk(@Nullable Region region, int chunkX, int chunkZ) {
-        return getRegionFast(region, chunkX >> 5, chunkZ >> 5).getChunk(chunkX, chunkZ);
+    public Chunk getChunkFast(@NotNull Chunk chunk, int chunkX, int chunkZ) {
+        return chunk.getRegion().getChunkFast(chunk, chunkX, chunkZ);
     }
 
     /**
@@ -388,7 +400,7 @@ public abstract class World {
 
         Logger.debug("World discarded, clearing data structures.");
 
-        this.regionCache.clear(); // .invalidateAll();
+        this.regionCache.invalidateAll();
         this.pendingRegions.clear();
         getBiomeRegistry().clear();
         getRendererRegistry().clear();

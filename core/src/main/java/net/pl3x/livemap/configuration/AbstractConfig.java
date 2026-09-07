@@ -31,11 +31,15 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import net.pl3x.livemap.Logger;
+import net.pl3x.livemap.util.Unsafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.simpleyaml.configuration.ConfigurationSection;
@@ -84,7 +88,7 @@ public abstract class AbstractConfig {
      * Reloads configuration from YAML file.
      */
     protected void reload0() {
-        // read YAML from file
+        // read YAML from disk
         try {
             getConfig().createOrLoadWithComments();
         } catch (InvalidConfigurationException e) {
@@ -94,7 +98,7 @@ public abstract class AbstractConfig {
             throw new RuntimeException(e);
         }
 
-        // populate keyed fields from yaml data
+        // populate keyed fields from YAML data
         yaml2Fields();
 
         // cleanup user input where needed
@@ -103,7 +107,7 @@ public abstract class AbstractConfig {
         // populate YAML data from keyed fields
         fields2Yaml();
 
-        // save YAML to disk
+        // save YAML back to disk
         try {
             getConfig().save();
         } catch (IOException e) {
@@ -145,7 +149,7 @@ public abstract class AbstractConfig {
     }
 
     /**
-     * Cleanup comments and user input (etc.) where needed.
+     * Cleanup comments, sanitize user input, etc. where needed.
      */
     protected void cleanup() {
     }
@@ -255,6 +259,7 @@ public abstract class AbstractConfig {
         private final Field field;
         private final String key;
         private final String comment;
+        private final boolean sort;
 
         /**
          * Try to create a new FieldKey for specific field and config.
@@ -271,14 +276,19 @@ public abstract class AbstractConfig {
                 return null;
             }
             Comment comment = field.getDeclaredAnnotation(Comment.class);
-            return new KeyedField<>(config, field, key.value(), comment == null ? null : comment.value());
+            AutoSort sort = field.getDeclaredAnnotation(AutoSort.class);
+            return new KeyedField<>(config, field, key.value(),
+                comment == null ? null : comment.value(),
+                sort != null && sort.value()
+            );
         }
 
-        private KeyedField(@NotNull T config, @NotNull Field field, @NotNull String key, @Nullable String comment) {
+        private KeyedField(@NotNull T config, @NotNull Field field, @NotNull String key, @Nullable String comment, boolean sort) {
             this.config = config;
             this.field = field;
             this.key = key;
             this.comment = comment;
+            this.sort = sort;
         }
 
         /**
@@ -310,7 +320,7 @@ public abstract class AbstractConfig {
          */
         @Nullable
         public Object value() throws IllegalAccessException {
-            return this.field.get(this.config);
+            return trySort(this.field.get(this.config));
         }
 
         /**
@@ -321,7 +331,42 @@ public abstract class AbstractConfig {
          *                                and the underlying field is either inaccessible or final
          */
         public void value(@Nullable Object value) throws IllegalAccessException {
-            this.field.set(this.config, value);
+            this.field.set(this.config, trySort(value));
+        }
+
+        @Nullable
+        private <K extends Comparable<? super K>, V> Object trySort(@Nullable Object obj) {
+            if (this.sort && obj != null) {
+                // sort lists
+                if (obj instanceof List<?> list && !list.isEmpty() && list.getFirst() instanceof Comparable<?>) {
+                    try {
+                        // ensure list is not immutable before sorting
+                        List<K> mutable = new ArrayList<>(Unsafe.cast(list));
+                        mutable.sort(Comparator.nullsLast(Comparator.naturalOrder()));
+                        return mutable;
+                    } catch (ClassCastException e) {
+                        // mixed type list, do not sort
+                        return list;
+                    }
+                }
+                // sort maps
+                if (obj instanceof Map<?, ?> map && !map.isEmpty()) {
+                    List<K> keys = new ArrayList<>(Unsafe.cast(map.keySet()));
+                    if (keys.getFirst() instanceof Comparable<?>) {
+                        Map<K, V> sorted = new LinkedHashMap<>();
+                        Map<K, V> casted = Unsafe.cast(map);
+                        try {
+                            keys.sort(Comparator.nullsLast(Comparator.naturalOrder()));
+                            keys.forEach(key -> sorted.put(key, casted.get(key)));
+                            return sorted;
+                        } catch (ClassCastException e) {
+                            // mixed type keys, do not sort
+                            return map;
+                        }
+                    }
+                }
+            }
+            return obj;
         }
     }
 
@@ -351,5 +396,19 @@ public abstract class AbstractConfig {
          * @return Comment value
          */
         String value();
+    }
+
+    /**
+     * Auto sort values of a YAML element.
+     */
+    @Target(ElementType.FIELD)
+    @Retention(RetentionPolicy.RUNTIME)
+    protected @interface AutoSort {
+        /**
+         * Auto sort elements.
+         *
+         * @return True to auto sort
+         */
+        boolean value() default true;
     }
 }

@@ -53,7 +53,7 @@ public class Block {
     private final int vanilla;
     private final int hash;
 
-    private int flags;
+    private final int flags;
 
     private final BlockState defaultState;
 
@@ -68,17 +68,16 @@ public class Block {
         this.index = index;
         this.id = id;
 
-        int color = ColorsConfig.BLOCK_COLORS.getOrDefault(id, vanilla);
-        this.color = color == 0 ? 0 : (color | 0xFF000000);
-        this.vanilla = vanilla == 0 ? 0 : (vanilla | 0xFF000000);
+        this.color = ColorsConfig.BLOCK_COLORS.getOrDefault(id, vanilla);
+        this.vanilla = vanilla;
 
-        int flat = BlocksConfig.BLOCKS_FLAT.contains(id) ? FLAG_FLAT : 0;
-        int air = BlocksConfig.BLOCKS_AIR.contains(id) ? FLAG_AIR : 0;
-        int dryFoliage = BlocksConfig.BLOCKS_DRY_FOLIAGE.contains(id) ? FLAG_DRY_FOLIAGE : 0;
-        int foliage = BlocksConfig.BLOCKS_FOLIAGE.contains(id) ? FLAG_FOLIAGE : 0;
-        int glass = BlocksConfig.BLOCKS_GLASS.contains(id) ? FLAG_GLASS : 0;
-        int grass = BlocksConfig.BLOCKS_GRASS.contains(id) ? FLAG_GRASS : 0;
-        int water = BlocksConfig.BLOCKS_WATER.contains(id) ? FLAG_WATER : 0;
+        int flat = BlocksConfig.FLAT.contains(id) ? FLAG_FLAT : 0;
+        int air = BlocksConfig.AIR.contains(id) ? FLAG_AIR : 0;
+        int dryFoliage = BlocksConfig.DRY_FOLIAGE.contains(id) ? FLAG_DRY_FOLIAGE : 0;
+        int foliage = BlocksConfig.FOLIAGE.contains(id) ? FLAG_FOLIAGE : 0;
+        int glass = BlocksConfig.GLASS.contains(id) ? FLAG_GLASS : 0;
+        int grass = BlocksConfig.GRASS.contains(id) ? FLAG_GRASS : 0;
+        int water = BlocksConfig.WATER.contains(id) ? FLAG_WATER : 0;
         int fluid = (water > 0 || "minecraft:lava".equals(id)) ? FLAG_FLUID : 0;
 
         this.flags = flat | air | dryFoliage | foliage | glass | grass | water | fluid;
@@ -145,15 +144,6 @@ public class Block {
      */
     public int getFlags() {
         return this.flags;
-    }
-
-    /**
-     * Replaces the flags with a new value.
-     *
-     * @param flags Short flag bits
-     */
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     /**

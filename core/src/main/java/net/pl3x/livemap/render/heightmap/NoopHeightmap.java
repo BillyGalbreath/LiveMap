@@ -22,39 +22,16 @@
  * SOFTWARE.
  */
 
-package net.pl3x.livemap.render.image;
-
-import java.util.function.Function;
-import org.jetbrains.annotations.NotNull;
+package net.pl3x.livemap.render.heightmap;
 
 /**
- * Represents a collection of pixel data for an image in memory.
+ * An empty heightmap.
  */
-public interface Image {
+public class NoopHeightmap extends Heightmap {
     /**
-     * Get pixel index from pixel coordinates.
-     *
-     * @param x X pixel
-     * @param z Z pixel
-     * @return Index of pixel
+     * Constructs a new instance of NoopHeightmap.
      */
-    static int getIndex(int x, int z) {
-        return ((z & 511) << 9) + (x & 511);
-    }
-
-    /**
-     * Represents a function that accepts one argument and produces a non-null result.
-     *
-     * <p>This is a {@link java.util.function functional interface}
-     * whose functional method is {@link #apply(Object)}.
-     *
-     * @param <T> the type of the input to the function
-     * @param <R> the type of the non-null result of the function
-     */
-    @FunctionalInterface
-    interface ImageFunction<T, R> extends Function<T, R> {
-        @Override
-        @NotNull
-        R apply(@NotNull T t);
+    public NoopHeightmap() {
+        super(NOOP);
     }
 }

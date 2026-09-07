@@ -24,14 +24,44 @@
 
 package net.pl3x.livemap.render.heightmap;
 
+import net.pl3x.livemap.world.chunk.Chunk;
+import org.jetbrains.annotations.NotNull;
+
 /**
- * A fancy heightmap.
+ * A fancy Vintage Story-like heightmap.
  */
 public class FancyHeightmap extends Heightmap {
     /**
      * Constructs a new instance of FancyHeightmap.
      */
     public FancyHeightmap() {
-        super(Type.FANCY);
+        super(FANCY);
+    }
+
+    @Override
+    public int getAlpha(@NotNull Chunk chunk, int blockX, int blockZ) {
+        // todo - temporarily copy the code from basic heightmap
+        // until we can figure out how to replicate vintage story's
+
+        Chunk.BlockData origin = chunk.getWorld()
+            .getChunkFast(chunk, blockX >> 4, blockZ >> 4)
+            .getData(blockX, blockZ);
+        if (origin == null) {
+            return getMid();
+        }
+
+        Chunk.BlockData north = chunk.getWorld()
+            .getChunkFast(chunk, blockX >> 4, (blockZ - 1) >> 4)
+            .getData(blockX, blockZ - 1);
+        if (north == null) {
+            return getMid();
+        }
+
+        return getAlpha(
+            origin.getBlockY(),
+            north.getBlockY(),
+            getMid(),
+            getMid()
+        );
     }
 }

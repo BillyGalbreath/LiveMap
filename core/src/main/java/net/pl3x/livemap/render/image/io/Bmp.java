@@ -26,7 +26,6 @@ package net.pl3x.livemap.render.image.io;
 
 import java.awt.image.BufferedImage;
 import java.nio.file.Path;
-import net.pl3x.livemap.render.image.TileCanvas;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,9 +38,9 @@ public final class Bmp extends IO.Type {
     }
 
     @Override
-    public @NotNull BufferedImage createBuffer() {
+    public int colorType() {
         // bmp does not support transparency
-        return new BufferedImage(TileCanvas.SIZE, TileCanvas.SIZE, BufferedImage.TYPE_INT_RGB);
+        return BufferedImage.TYPE_INT_RGB;
     }
 
     @Override

@@ -29,6 +29,7 @@ import java.util.Map;
 import net.pl3x.livemap.Logger;
 import net.pl3x.livemap.render.heightmap.Heightmap;
 import net.pl3x.livemap.util.Registry;
+import net.pl3x.livemap.util.Type;
 import net.pl3x.livemap.util.Unsafe;
 import net.pl3x.livemap.world.World;
 import org.jetbrains.annotations.NotNull;
@@ -50,28 +51,34 @@ public class RendererRegistry extends Registry<Renderer> {
 
     @Override
     public void rebuild() {
+        // just need to touch these so the static fields populate
+        // noinspection ResultOfMethodCallIgnored
+        Renderer.BASIC.toString();
+        // noinspection ResultOfMethodCallIgnored
+        Heightmap.BASIC.toString();
+
         clear();
 
         List<Map<String, Object>> list = this.world.getConfig().RENDERERS;
         for (Map<String, Object> map : list) {
             String typeStr = Unsafe.cast(map.get("type"));
-            Renderer.Type type = Renderer.Type.get(typeStr);
-            if (type == null) {
+            Type<Renderer> rendererType = Type.get(Renderer.class, typeStr);
+            if (rendererType == null) {
                 Logger.warn("   &7&l-&r Unknown renderer type&3: &f&o%s".formatted(typeStr));
                 continue;
             }
             Renderer renderer;
             try {
-                Heightmap.Type heightmap = Heightmap.Type.get(Unsafe.cast(map.get("heightmap")));
-                renderer = type.create(
+                Type<Heightmap> heightmapType = Type.get(Heightmap.class, Unsafe.cast(map.get("heightmap")));
+                renderer = rendererType.create(
                     Unsafe.cast(map.get("name")),
                     Unsafe.cast(map.get("icon")),
-                    heightmap == null ? null : heightmap.create(),
+                    heightmapType == null ? Heightmap.NOOP : heightmapType,
                     Unsafe.cast(map.getOrDefault("biome-blend", 0)),
                     Unsafe.cast(map.getOrDefault("translucent-fluids", false))
                 );
             } catch (RuntimeException e) {
-                Logger.error("   &7&l-&r Unable to create renderer type %s".formatted(type.getId()), e);
+                Logger.error("   &7&l-&r Unable to create renderer type %s".formatted(rendererType.getId()), e);
                 continue;
             }
             put(renderer.getType().getId(), renderer);

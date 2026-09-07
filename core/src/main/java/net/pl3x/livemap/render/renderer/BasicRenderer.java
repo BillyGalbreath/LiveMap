@@ -24,16 +24,16 @@
 
 package net.pl3x.livemap.render.renderer;
 
+import java.util.concurrent.ThreadLocalRandom;
 import net.pl3x.livemap.render.heightmap.Heightmap;
 import net.pl3x.livemap.render.image.Colors;
 import net.pl3x.livemap.render.image.TileCanvas;
-import net.pl3x.livemap.world.block.Block;
+import net.pl3x.livemap.util.Type;
 import net.pl3x.livemap.world.chunk.Chunk;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
- * A basic renderer.
+ * A basic vanilla colored map renderer.
  */
 public class BasicRenderer extends Renderer {
     /**
@@ -41,24 +41,46 @@ public class BasicRenderer extends Renderer {
      *
      * @param name              Display name for renderer
      * @param icon              Icon file for webmap
-     * @param heightmap         The heightmap to use
+     * @param heightmap         The heightmap type to use
      * @param biomeBlend        Number of blocks to blend biome tints
      * @param translucentFluids True to render fluids as translucent
      */
-    public BasicRenderer(@NotNull String name, @NotNull String icon, @Nullable Heightmap heightmap, int biomeBlend, boolean translucentFluids) {
-        super(Type.BASIC, name, icon, heightmap, biomeBlend, translucentFluids);
+    public BasicRenderer(@NotNull String name, @NotNull String icon, @NotNull Type<Heightmap> heightmap, int biomeBlend, boolean translucentFluids) {
+        super(BASIC, name, icon, heightmap, biomeBlend, translucentFluids);
     }
 
     @Override
-    protected void renderBlock(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data) {
+    protected void renderBlock(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data, @NotNull ThreadLocalRandom rand) {
+        // get vanilla style color
         int pixelColor = data.getTopState().getBlock().getVanilla();
-        int amount;
-        if (data.getFluidState() == null) {
-            boolean greenery = data.getBlock().hasFlag(Block.FLAG_GRASS | Block.FLAG_FOLIAGE);
-            amount = greenery ? 50 : 20;
-        } else {
-            amount = 15;
+
+        // check if anything is even there to render (we ignore transparent black)
+        if (pixelColor != 0) {
+            // calculate heightmap
+            int heightmap;
+            if (data.getFluid() == null) {
+                // dry land
+                heightmap = tile.getHeightmap().getAlpha(data.getChunk(), data.getBlockX(), data.getBlockZ());
+            } else {
+                // fluids get flat surface since opaque
+                heightmap = tile.getHeightmap().getMid();
+
+                // while we're here, lets setup vanilla style fluid (checkerboard)
+                int fluidDepth = data.getFluidY() - data.getBlockY();
+                double diffY = fluidDepth * 0.1D + (data.getBlockX() + data.getBlockZ() & 1) * 0.2D;
+                pixelColor = Colors.shade(pixelColor, diffY < 0.5D ? 0xFF : (diffY > 0.9D ? 0xB4 : 0xDC));
+            }
+
+            // apply heightmap
+            pixelColor = Colors.shade(pixelColor, 0xFF - heightmap);
         }
-        tile.setPixel(data.getBlockX(), data.getBlockZ(), pixelColor == 0 ? 0 : Colors.sprinkle(pixelColor, amount));
+
+        // store pixel data on tile
+        tile.setPixel(data.getBlockX(), data.getBlockZ(), pixelColor);
+    }
+
+    @Override
+    protected void postRender(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data, @NotNull ThreadLocalRandom rand) {
+        //
     }
 }

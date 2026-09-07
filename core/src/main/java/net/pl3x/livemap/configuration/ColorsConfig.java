@@ -25,12 +25,11 @@
 package net.pl3x.livemap.configuration;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.render.image.Colors;
+import net.pl3x.livemap.util.Unsafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +43,7 @@ public final class ColorsConfig extends AbstractConfig {
         pick your own color here for any blocks you want to change.
         Any blocks _not_ in this list will use Mojang's color.
         Setting a color to black (#000000) will make it invisible.""")
+    @AutoSort
     public static Map<String, Integer> BLOCK_COLORS = new LinkedHashMap<>() {{
         put("minecraft:acacia_button", 0x000000);
         put("minecraft:acacia_door", 0xA25B39);
@@ -1249,6 +1249,7 @@ public final class ColorsConfig extends AbstractConfig {
     @Comment("""
         Each biome has a specific color assigned to it. You can
         pick your own color here for any biomes you want to change.""")
+    @AutoSort
     public static Map<String, Integer> BIOME_COLORS = new LinkedHashMap<>() {{
         put("minecraft:badlands", 0xD94515);
         put("minecraft:bamboo_jungle", 0x768E14);
@@ -1321,6 +1322,7 @@ public final class ColorsConfig extends AbstractConfig {
     @Key("colors.foliage")
     @Comment("""
         Override foliage colors per biome.""")
+    @AutoSort
     public static Map<String, Integer> OVERRIDES_FOLIAGE = new LinkedHashMap<>() {{
         put("minecraft:badlands", 0x9E814D);
         put("minecraft:bamboo_jungle", 0x1F8907);
@@ -1338,6 +1340,7 @@ public final class ColorsConfig extends AbstractConfig {
     @Key("colors.dry-foliage")
     @Comment("""
         Override dry foliage colors per biome.""")
+    @AutoSort
     public static Map<String, Integer> OVERRIDES_DRY_FOLIAGE = new LinkedHashMap<>() {{
         put("minecraft:badlands", 0x9E814D);
         // todo pale_garden?
@@ -1347,6 +1350,7 @@ public final class ColorsConfig extends AbstractConfig {
     @Key("colors.grass")
     @Comment("""
         Override grass colors per biome.""")
+    @AutoSort
     public static Map<String, Integer> OVERRIDES_GRASS = new LinkedHashMap<>() {{
         put("minecraft:badlands", 0x90814D);
         put("minecraft:eroded_badlands", 0x90814D);
@@ -1358,6 +1362,7 @@ public final class ColorsConfig extends AbstractConfig {
     @Key("colors.water")
     @Comment("""
         Override water colors per biome.""")
+    @AutoSort
     public static Map<String, Integer> OVERRIDES_WATER = new LinkedHashMap<>() /*{{
         // todo pale_garden?
         // todo sulfur_caves?
@@ -1377,38 +1382,22 @@ public final class ColorsConfig extends AbstractConfig {
     }
 
     @Override
-    protected void cleanup() {
-        // sort map keys alphabetically
-        sort(BLOCK_COLORS);
-        sort(BIOME_COLORS);
-        sort(OVERRIDES_FOLIAGE);
-        sort(OVERRIDES_DRY_FOLIAGE);
-        sort(OVERRIDES_GRASS);
-        sort(OVERRIDES_WATER);
-    }
-
-    private static void sort(@NotNull Map<String, Integer> map) {
-        List<String> keys = new ArrayList<>(map.keySet());
-        Collections.sort(keys);
-        LinkedHashMap<String, Integer> temp = new LinkedHashMap<>(map.size());
-        keys.forEach(key -> temp.put(key, map.get(key)));
-        map.clear();
-        map.putAll(temp);
-    }
-
-    @Override
     @NotNull
     protected Object string2Object(@NotNull String rawValue) {
+        // hex string to int
         return Colors.fromHex(rawValue);
     }
 
     @Override
     protected void set(@NotNull String path, @Nullable Object value) {
         if (value instanceof Map<?, ?> map && !map.isEmpty()) {
-            map.forEach((key, rawValue) -> {
-                // int to hex
-                getConfig().set(path + "." + key, Colors.toHex((int) rawValue));
-            });
+            Map<String, String> converted = new LinkedHashMap<>();
+            new ArrayList<String>(Unsafe.cast(map.keySet()))
+                .forEach(key -> {
+                    // int to hex string
+                    converted.put(key, Colors.toHex((int) map.get(key)));
+                });
+            getConfig().set(path, converted);
         } else {
             getConfig().set(path, value);
         }

@@ -42,8 +42,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.Logger;
 import net.pl3x.livemap.configuration.Config;
-import net.pl3x.livemap.render.image.ActiveTileCanvas;
 import net.pl3x.livemap.render.image.TileCanvas;
+import net.pl3x.livemap.render.image.ZoomedCanvas;
 import net.pl3x.livemap.render.image.io.IO;
 import net.pl3x.livemap.render.iterator.RegionSpiralIterator;
 import net.pl3x.livemap.render.renderer.Renderer;
@@ -75,7 +75,7 @@ public class RenderScheduler {
     private volatile AtomicBoolean currentCancellation; // Run-scoped token
     private final Object renderMutex = new Object();
 
-    private final Map<Path, ActiveTileCanvas> activeCanvases = new ConcurrentHashMap<>();
+    private final Map<Path, ZoomedCanvas> zoomedCanvases = new ConcurrentHashMap<>();
 
     /**
      * Constructs a new instance of RenderScheduler.
@@ -283,7 +283,7 @@ public class RenderScheduler {
         }
 
         // purge the object pool references so the GC can reclaim the memory
-        Chunk.clearPool();
+        Chunk.clearPools();
 
         // nudge the jvm to run gc
         System.gc();
@@ -358,10 +358,10 @@ public class RenderScheduler {
 
     private void cleanupCanvases() {
         // workers are done. anything left in the map is a partial tile on map borders
-        if (!this.activeCanvases.isEmpty()) {
+        if (!this.zoomedCanvases.isEmpty()) {
             debug("Flushing incomplete edge-of-the-map canvases to disk...");
 
-            this.activeCanvases.forEach((file, canvas) -> {
+            this.zoomedCanvases.forEach((file, canvas) -> {
                 if (canvas.hasContributions()) {
                     try {
                         IO.getType(Config.WEB_TILE_FORMAT).write(file, canvas.getImageBuffer());
@@ -371,7 +371,7 @@ public class RenderScheduler {
                 }
             });
 
-            this.activeCanvases.clear(); // wipe map entirely clean to drop memory footprints to 0
+            this.zoomedCanvases.clear(); // wipe map entirely clean to drop memory footprints to 0
         }
     }
 
@@ -397,14 +397,14 @@ public class RenderScheduler {
         for (Renderer renderer : renderers) {
             TileCanvas tile = new TileCanvas(region, renderer);
 
-            if (!renderer.renderRegion(region, tile, rand, cancelled)) {
+            if (!renderer.renderRegion(tile, rand, cancelled)) {
                 return false;
             }
 
             debug("Saving %s's render on %s for region %d,%d"
                 .formatted(renderer.getName(), region.getWorld().getName(), region.getX(), region.getZ())
             );
-            tile.save(this.activeCanvases);
+            tile.save(this.zoomedCanvases);
         }
 
         // aggressively wipe the entire region reference tree from memory

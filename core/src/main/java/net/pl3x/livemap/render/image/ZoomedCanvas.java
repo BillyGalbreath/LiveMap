@@ -29,20 +29,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents an image canvas containing pixel data from many regions at higher zoom levels.
+ * Represents an image canvas containing pixel data from multiple regions at higher zoom levels.
  */
-public class ActiveTileCanvas {
+public class ZoomedCanvas {
     private final BufferedImage imageBuffer;
     private final AtomicInteger contributionCount = new AtomicInteger(0);
     private final int totalExpectedContributions;
 
     /**
-     * Constructs a new instance of ActiveTileCanvas.
+     * Constructs a new instance of ZoomedTileCanvas.
      *
      * @param baseTile The base tile at zoom 0.
      * @param zoom     This image's zoom level
      */
-    public ActiveTileCanvas(@NotNull TileCanvas baseTile, int zoom) {
+    public ZoomedCanvas(@NotNull TileCanvas baseTile, int zoom) {
         // determine how many regions fit inside this tile at this zoom level
         // zoom 1 = 2x2 (4 regions), zoom 2 = 4x4 (16 regions), zoom 3 = 8x8 (64 regions)
         int sideLength = 1 << zoom;

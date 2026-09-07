@@ -65,7 +65,7 @@ class Chunk_1_18 extends Chunk {
         this.inhabitedTime = chunkNBT.inhabitedTime;
 
         int bitsPerHeightmapElement = MCAMath.ceilLog2(getWorld().getHeight() + 1);
-        this.heightmap = Region.getThreadLocalHeightmap();
+        this.heightmap = new PackedIntArrayAccess();
         this.heightmap.init(bitsPerHeightmapElement, chunkNBT.heightmaps.worldSurface);
         if (!this.heightmap.isExpectedSize(VALUES_PER_HEIGHTMAP)) {
             this.heightmap = null;
@@ -73,15 +73,11 @@ class Chunk_1_18 extends Chunk {
 
         SectionNBT[] sectionsNBT = chunkNBT.sections;
         if (sectionsNBT != null && sectionsNBT.length > 0) {
-            int worldSectionCount = getWorld().getHeight() >> 4;
-            PackedIntArrayAccess[] blockStack = Region.getThreadLocalBlockStack(worldSectionCount);
-            PackedIntArrayAccess[] biomeStack = Region.getThreadLocalBiomeStack(worldSectionCount);
-
             this.sections = new Section[sectionsNBT.length];
             for (SectionNBT sectionNBT : sectionsNBT) {
                 int index = sectionNBT.getY() - getMinY();
                 if (index >= 0 && index < this.sections.length) {
-                    this.sections[index] = new Section(getWorld(), blockStack[index], biomeStack[index], sectionNBT);
+                    this.sections[index] = new Section(getWorld(), sectionNBT);
                 }
             }
         }
@@ -116,7 +112,8 @@ class Chunk_1_18 extends Chunk {
     @NotNull
     public Biome getBiome(int blockX, int blockY, int blockZ) {
         Section section = getSection(blockY >> 4);
-        return section == null ? Biome.DEFAULT : section.getBiome(blockX, blockY, blockZ);
+        return section == null ? Biome.DEFAULT : section
+            .getBiome(blockX, blockY, blockZ);
     }
 
     @Override
@@ -142,12 +139,7 @@ class Chunk_1_18 extends Chunk {
         private final PackedIntArrayAccess biomes;
         private final byte[] light;
 
-        private Section(
-            @NotNull World world,
-            @NotNull PackedIntArrayAccess blocks,
-            @NotNull PackedIntArrayAccess biomes,
-            @NotNull SectionNBT nbt
-        ) {
+        private Section(@NotNull World world, @NotNull SectionNBT nbt) {
             this.y = nbt.getY();
 
             this.blockPalette = new BlockState[nbt.blockStates.palette.length];
@@ -158,10 +150,8 @@ class Chunk_1_18 extends Chunk {
                 this.biomePalette[i] = world.getBiomeRegistry().getOrDefault(nbt.biomes.palette[i], Biome.DEFAULT);
             }
 
-            this.blocks = blocks;
-            this.blocks.init(nbt.blockStates.data, BLOCKS_PER_SECTION);
-            this.biomes = biomes;
-            this.biomes.init(Math.max(MCAMath.ceilLog2(this.biomePalette.length), 1), nbt.biomes.data);
+            this.blocks = new PackedIntArrayAccess().init(nbt.blockStates.data, BLOCKS_PER_SECTION);
+            this.biomes = new PackedIntArrayAccess().init(Math.max(MCAMath.ceilLog2(this.biomePalette.length), 1), nbt.biomes.data);
 
             this.light = nbt.getLight();
         }

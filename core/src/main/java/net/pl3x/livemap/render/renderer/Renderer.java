@@ -24,29 +24,29 @@
 
 package net.pl3x.livemap.render.renderer;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
-import net.pl3x.livemap.Logger;
 import net.pl3x.livemap.render.heightmap.Heightmap;
 import net.pl3x.livemap.render.image.TileCanvas;
+import net.pl3x.livemap.util.Type;
 import net.pl3x.livemap.world.chunk.Chunk;
-import net.pl3x.livemap.world.region.Region;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a map renderer.
  */
 public abstract class Renderer {
-    private final Type type;
+    public static final Type<Renderer> BASIC = Type.register(new Type<>("basic", BasicRenderer.class));
+    public static final Type<Renderer> BIOMES = Type.register(new Type<>("biomes", BiomesRenderer.class));
+    public static final Type<Renderer> FANCY = Type.register(new Type<>("fancy", FancyRenderer.class));
+    public static final Type<Renderer> FLOWERMAP = Type.register(new Type<>("flowermap", FlowerMapRenderer.class));
+    public static final Type<Renderer> INHABITED = Type.register(new Type<>("inhabited", InhabitedRenderer.class));
+    public static final Type<Renderer> NETHER_ROOF = Type.register(new Type<>("nether_roof", NetherRoofRenderer.class));
+
+    private final Type<Renderer> type;
     private final String name;
     private final String icon;
-    private final Heightmap heightmap;
+    private final Type<Heightmap> heightmapType;
     private final int biomeBlend;
     private final boolean translucentFluids;
 
@@ -56,23 +56,23 @@ public abstract class Renderer {
      * @param type              The type of renderer
      * @param name              Display name for renderer
      * @param icon              Icon file for webmap
-     * @param heightmap         The heightmap to use
+     * @param heightmapType     The heightmap type to use
      * @param biomeBlend        Number of blocks to blend biome tints
      * @param translucentFluids True to render fluids as translucent
      *
      */
     public Renderer(
-        @NotNull Type type,
+        @NotNull Type<Renderer> type,
         @NotNull String name,
         @NotNull String icon,
-        @Nullable Heightmap heightmap,
+        @NotNull Type<Heightmap> heightmapType,
         int biomeBlend,
         boolean translucentFluids
     ) {
         this.type = type;
         this.name = name;
         this.icon = icon;
-        this.heightmap = heightmap;
+        this.heightmapType = heightmapType;
         this.biomeBlend = biomeBlend;
         this.translucentFluids = translucentFluids;
     }
@@ -83,7 +83,7 @@ public abstract class Renderer {
      * @return Type of renderer
      */
     @NotNull
-    public Type getType() {
+    public Type<Renderer> getType() {
         return this.type;
     }
 
@@ -108,13 +108,13 @@ public abstract class Renderer {
     }
 
     /**
-     * Get the heightmap for this renderer.
+     * Get the heightmap type for this renderer.
      *
-     * @return The heightmap
+     * @return The heightmap type
      */
-    @Nullable
-    public Heightmap getHeightmap() {
-        return this.heightmap;
+    @NotNull
+    public Type<Heightmap> getHeightmapType() {
+        return this.heightmapType;
     }
 
     /**
@@ -138,25 +138,24 @@ public abstract class Renderer {
     /**
      * Render the specified region.
      *
-     * @param region    Region to render
      * @param tile      Tile image to render to
      * @param rand      Random for RNG stuff
      * @param cancelled Cancellation token
      * @return True if the entire region was rendered, false if aborted
      */
-    public boolean renderRegion(@NotNull Region region, @NotNull TileCanvas tile, @NotNull ThreadLocalRandom rand, @NotNull AtomicBoolean cancelled) {
-        int chunkStartX = region.getX() << 5;
-        int chunkStartZ = region.getZ() << 5;
+    public boolean renderRegion(@NotNull TileCanvas tile, @NotNull ThreadLocalRandom rand, @NotNull AtomicBoolean cancelled) {
+        int chunkStartX = tile.getRegion().getX() << 5;
+        int chunkStartZ = tile.getRegion().getZ() << 5;
 
         for (int chunkX = chunkStartX; chunkX < chunkStartX + 32; chunkX++) {
             int blockStartX = chunkX << 4;
             for (int chunkZ = chunkStartZ; chunkZ < chunkStartZ + 32; chunkZ++) {
                 // check world state and interruptions, for instant responsiveness
-                if (region.getWorld().isDiscarded() || cancelled.get()) {
+                if (tile.getWorld().isDiscarded() || cancelled.get()) {
                     return false; // aborted
                 }
 
-                Chunk chunk = region.getChunk(chunkX, chunkZ);
+                Chunk chunk = tile.getRegion().getChunk(chunkX, chunkZ);
                 if (!chunk.isFull()) {
                     continue; // chunk not fully generated
                 }
@@ -167,10 +166,9 @@ public abstract class Renderer {
                     for (int blockZ = blockStartZ; blockZ < blockStartZ + 16; blockZ++) {
                         Chunk.BlockData data = chunk.getData(blockX, blockZ);
                         if (data == null) {
-                            Logger.debug("Null data at block %d,%d".formatted(blockX, blockZ));
                             continue; // this shouldn't happen, but just in case
                         }
-                        renderBlock(tile, data);
+                        renderBlock(tile, data, rand);
                     }
                 }
             }
@@ -180,122 +178,33 @@ public abstract class Renderer {
     }
 
     /**
+     * A chance to do things <em>before</em> the render has run.
+     *
+     * @param tile Tile image
+     * @param data Block data
+     * @param rand Random for RNG stuff
+     */
+    protected void preRender(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data, @NotNull ThreadLocalRandom rand) {
+        // optional override
+    }
+
+    /**
      * Render the block on the tile using the block data.
      *
      * @param tile Tile image
      * @param data Block data
+     * @param rand Random for RNG stuff
      */
-    protected abstract void renderBlock(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data);
+    protected abstract void renderBlock(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data, @NotNull ThreadLocalRandom rand);
 
     /**
-     * Represents a type of renderer.
+     * A chance to do things <em>after</em> the render has run.
      *
+     * @param tile Tile image
+     * @param data Block data
+     * @param rand Random for RNG stuff
      */
-    public static final class Type {
-        private static final Map<String, Type> BY_NAME = new HashMap<>();
-
-        public static final Type BASIC = register("basic", BasicRenderer.class);
-        public static final Type BIOMES = register("biomes", BiomesRenderer.class);
-        public static final Type FANCY = register("fancy", FancyRenderer.class);
-        public static final Type FLOWERMAP = register("flowermap", FlowerMapRenderer.class);
-        public static final Type INHABITED = register("inhabited", InhabitedRenderer.class);
-        public static final Type NETHER_ROOF = register("nether_roof", NetherRoofRenderer.class);
-
-        @NotNull
-        private static Type register(@NotNull String name, @NotNull Class<? extends Renderer> clazz) {
-            Type type = new Type(name, clazz);
-            BY_NAME.put(name.toLowerCase(Locale.ROOT), type);
-            return type;
-        }
-
-        private final @NotNull String id;
-        private final @NotNull Class<? extends Renderer> clazz;
-
-        /**
-         * Constructs a new instance of Type.
-         *
-         * @param id    Unique id for type
-         * @param clazz Renderer class this type represents
-         */
-        public Type(@NotNull String id, @NotNull Class<? extends Renderer> clazz) {
-            this.id = id;
-            this.clazz = clazz;
-        }
-
-        /**
-         * Get renderer type instance by name.
-         *
-         * @param name Name of renderer type
-         * @return Requested renderer type
-         */
-        @Nullable
-        public static Type get(@NotNull String name) {
-            return BY_NAME.get(name.toLowerCase(Locale.ROOT));
-        }
-
-        /**
-         * Create a new renderer of this type.
-         *
-         * @param name              Display name for renderer
-         * @param icon              Icon file for webmap
-         * @param heightmap         The heightmap to use
-         * @param biomeBlend        Number of blocks to blend biome tints
-         * @param translucentFluids True to render fluids as translucent
-         * @return A new renderer
-         */
-        @NotNull
-        public Renderer create(
-            @NotNull String name,
-            @NotNull String icon,
-            @Nullable Heightmap heightmap,
-            int biomeBlend,
-            boolean translucentFluids
-        ) {
-            try {
-                return this.clazz
-                    .getConstructor(String.class, String.class, Heightmap.class, int.class, boolean.class)
-                    .newInstance(name, icon, heightmap, biomeBlend, translucentFluids);
-            } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        /**
-         * Get unique id for this type.
-         *
-         * @return Unique type id
-         */
-        @NotNull
-        public String getId() {
-            return this.id;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj == this) {
-                return true;
-            }
-            if (obj == null) {
-                return false;
-            }
-            if (obj.getClass() != this.getClass()) {
-                return false;
-            }
-            var that = (Type) obj;
-            return Objects.equals(this.id, that.id)
-                && Objects.equals(this.clazz, that.clazz);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(this.id, this.clazz);
-        }
-
-        @Override
-        public String toString() {
-            return "Type["
-                + "id=" + this.id
-                + "]";
-        }
+    protected void postRender(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data, @NotNull ThreadLocalRandom rand) {
+        // optional override
     }
 }

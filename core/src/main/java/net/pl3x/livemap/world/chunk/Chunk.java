@@ -59,7 +59,7 @@ public abstract class Chunk {
     static final String[] EMPTY_STRING_ARRAY = new String[0];
     static final BlockState[] EMPTY_BLOCKSTATE_ARRAY = new BlockState[0];
 
-    private static final Pool<BlockData> BLOCK_DATA_POOL = new Pool<>(BlockData::new);
+    private static final Pool<BlockData> BLOCKDATA_POOL = new Pool<>(BlockData::new);
 
     // reusable 256-byte name cache buffer (Minecraft NBT keys never exceed 255 characters)
     private static final ThreadLocal<byte[]> THREAD_LOCAL_NAME_BUFFER = ThreadLocal.withInitial(() -> new byte[256]);
@@ -89,10 +89,10 @@ public abstract class Chunk {
     }
 
     /**
-     * Clear the block data pool entirely to release references after major runs.
+     * Clear the object pools entirely to release references.
      */
-    public static void clearPool() {
-        BLOCK_DATA_POOL.clear();
+    public static void clearPools() {
+        BLOCKDATA_POOL.clear();
     }
 
     /**
@@ -259,18 +259,21 @@ public abstract class Chunk {
 
         for (int blockX = blockStartX; blockX < blockStartX + 16; blockX++) {
             for (int blockZ = blockStartZ; blockZ < blockStartZ + 16; blockZ++) {
-                BlockData data = BLOCK_DATA_POOL.get();
+                BlockData data = BLOCKDATA_POOL.get();
                 data.setup(this, blockX, blockZ);
 
                 data.blockY = getHeight(blockX, blockZ) + 1;
 
-                // if world has a ceiling (i.e., nether), iterate down until we find air
+                // if world has a ceiling (i.e., nether)
+                // iterate down until we find air to skip ceiling
                 if (getWorld().hasCeiling()) {
-                    data.blockY = getWorld().getMaxY();
+                    // data.blockY = getWorld().getMaxY();
+                    data.blockY -= 1;
                     do {
                         data.blockY -= 1;
                         data.blockstate = getBlockState(blockX, data.blockY, blockZ);
                     } while (data.blockY > getWorld().getMinY() && !data.blockstate.getBlock().isAir());
+                    Logger.warn("y: " + data.blockY);
                 }
 
                 // iterate down from here until we find a renderable block
@@ -318,7 +321,7 @@ public abstract class Chunk {
         for (int i = 0; i < this.data.length; i++) {
             BlockData data = this.data[i];
             if (data != null) {
-                BLOCK_DATA_POOL.put(data);
+                BLOCKDATA_POOL.put(data);
                 this.data[i] = null;
             }
         }
@@ -443,9 +446,10 @@ public abstract class Chunk {
      *
      * @param blockX X block coordinate
      * @param blockZ Z block coordinate
-     * @return Block's pre-scanned data
+     * @return Block's pre-scanned data, or null if no block at coordinates
      */
-    public @Nullable BlockData getData(int blockX, int blockZ) {
+    @Nullable
+    public BlockData getData(int blockX, int blockZ) {
         return this.data[((blockZ & 0xF) << 4) + (blockX & 0xF)];
     }
 
@@ -640,6 +644,8 @@ public abstract class Chunk {
         protected BlockState fluidstate;
         protected Biome biome;
 
+        private int hash;
+
         /**
          * Constructs a new instance of BlockData.
          */
@@ -752,6 +758,15 @@ public abstract class Chunk {
         }
 
         /**
+         * Get highest Y coordinate, block or fluid.
+         *
+         * @return Y coordinate
+         */
+        public int getTopY() {
+            return this.fluidstate != null ? this.fluidY : this.blockY;
+        }
+
+        /**
          * Get the stored block state.
          *
          * @return Block's state
@@ -790,9 +805,9 @@ public abstract class Chunk {
          */
         public @NotNull Biome getBiome() {
             if (this.biome == null) {
-                // calculate real biome
-                this.biome = getChunk().getRegion().getWorld().getBiomeRegistry()
-                    .getBiome(getChunk().getRegion(), getBlockX(), getBlockY(), getBlockZ());
+                // calculate the real biome using voronoi tessellation,
+                // not the fast quart grid biome directly from the palette
+                this.biome = getWorld().getBiomeRegistry().getBiome(getChunk(), getBlockX(), getBlockY(), getBlockZ());
             }
             return this.biome;
         }

@@ -278,6 +278,20 @@ public final class Colors {
     }
 
     /**
+     * Multiply color by multiplier.
+     *
+     * @param color      Color to multiply
+     * @param multiplier Multiplier to use
+     * @return Multiplied color
+     */
+    public static int mul(int color, float multiplier) {
+        return (color & 0xFF000000)
+            | ((int) Math.clamp((color >> 16 & 0xFF) * multiplier, 0, 0xFF) << 16)
+            | ((int) Math.clamp((color >> 8 & 0xFF) * multiplier, 0, 0xFF) << 8)
+            | ((int) Math.clamp((color & 0xFF) * multiplier, 0, 0xFF));
+    }
+
+    /**
      * Apply a shade (dark or light) to a color.
      *
      * @param color Color to shade

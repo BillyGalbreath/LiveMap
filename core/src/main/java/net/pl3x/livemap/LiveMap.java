@@ -25,6 +25,7 @@
 package net.pl3x.livemap;
 
 import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
 import net.pl3x.livemap.command.argument.ArgumentParser;
 import net.pl3x.livemap.configuration.BlocksConfig;
 import net.pl3x.livemap.configuration.ColorsConfig;
@@ -34,7 +35,10 @@ import net.pl3x.livemap.httpd.HttpdServer;
 import net.pl3x.livemap.player.PlayerRegistry;
 import net.pl3x.livemap.render.RenderScheduler;
 import net.pl3x.livemap.scheduler.TickScheduler;
+import net.pl3x.livemap.thread.WorkerThreadFactory;
+import net.pl3x.livemap.thread.WorkerThreadPool;
 import net.pl3x.livemap.util.FileUtil;
+import net.pl3x.livemap.world.World;
 import net.pl3x.livemap.world.WorldRegistry;
 import net.pl3x.livemap.world.block.BlockRegistry;
 import org.jetbrains.annotations.NotNull;
@@ -57,6 +61,8 @@ public interface LiveMap {
         private static TickScheduler tickScheduler;
 
         private static Metrics metrics;
+
+        private static WorkerThreadPool cacheMaintenance;
 
         private Provider() {
         }
@@ -285,6 +291,9 @@ public interface LiveMap {
         // start tasks
         getRenderScheduler().start();
 
+        Provider.cacheMaintenance = WorkerThreadFactory.createExecutor("CacheMaintenance");
+        Provider.cacheMaintenance.scheduleAtFixedRate(World.CACHE_CLEANUP_TASK, 1, 1, TimeUnit.MINUTES);
+
         // bStats metrics
         Provider.metrics = new Metrics();
 
@@ -305,6 +314,11 @@ public interface LiveMap {
         if (Provider.renderScheduler != null) {
             Provider.renderScheduler.stop();
             Provider.renderScheduler = null;
+        }
+
+        if (Provider.cacheMaintenance != null) {
+            Provider.cacheMaintenance.shutdown();
+            Provider.cacheMaintenance = null;
         }
 
         // stop our tick scheduler

@@ -24,10 +24,8 @@
 
 package net.pl3x.livemap.render.heightmap;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import net.pl3x.livemap.util.Type;
+import net.pl3x.livemap.world.chunk.Chunk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,69 +33,109 @@ import org.jetbrains.annotations.Nullable;
  * Represents a heightmap.
  */
 public abstract class Heightmap {
-    private final Type type;
+    public static final Type<Heightmap> NOOP = Type.register(new Type<>("noop", NoopHeightmap.class));
+    public static final Type<Heightmap> BASIC = Type.register(new Type<>("basic", BasicHeightmap.class));
+    public static final Type<Heightmap> FANCY = Type.register(new Type<>("fancy", FancyHeightmap.class));
+
+    private final Type<Heightmap> type;
 
     /**
      * Constructs a new instance of Heightmap.
      *
-     * @param type The type of heightmap
+     * @param type The heightmap type
      */
-    public Heightmap(@NotNull Type type) {
+    public Heightmap(@NotNull Type<Heightmap> type) {
         this.type = type;
     }
 
     /**
-     * Get type of heightmap.
+     * Get heightmap's type.
      *
-     * @return Heightmap's type
+     * @return Type of heightmap
      */
     @NotNull
-    public Type getType() {
+    public Type<Heightmap> getType() {
         return this.type;
     }
 
     /**
-     * Represents a type of heightmap.
+     * The absolute minimum alpha this heightmap can produce.
      *
-     * @param id    Unique id for type
-     * @param clazz Heightmap class this type represents
+     * @return Minimum alpha
      */
-    public record Type(@NotNull String id, @NotNull Class<? extends Heightmap> clazz) {
-        private static final Map<String, Type> BY_NAME = new HashMap<>();
+    public int getMin() {
+        return 0x00;
+    }
 
-        @NotNull
-        private static Type register(@NotNull String name, @NotNull Class<? extends Heightmap> clazz) {
-            Type type = new Type(name, clazz);
-            BY_NAME.put(name.toLowerCase(Locale.ROOT), type);
-            return type;
+    /**
+     * The normal alpha for no height difference.
+     *
+     * @return Normal alpha
+     */
+    public int getMid() {
+        return 0x22;
+    }
+
+    /**
+     * The absolute maximum alpha this heightmap can produce.
+     *
+     * @return Maximum alpha
+     */
+    public int getMax() {
+        return 0x44;
+    }
+
+    /**
+     * Get heightmap alpha for specified block coordinates.
+     *
+     * @param chunk  Possible chunk (used as cache for faster lookups)
+     * @param blockX X block coordinate
+     * @param blockZ Z block coordinate
+     * @return The calculated heightmap alpha for block coordinates
+     */
+    public int getAlpha(@NotNull Chunk chunk, int blockX, int blockZ) {
+        return getMid();
+    }
+
+    /**
+     * Get heightmap alpha for height difference.
+     *
+     * @param y1    First Y coordinate
+     * @param y2    Second Y coordinate
+     * @param alpha Default height alpha (no difference)
+     * @param step  Alpha difference
+     * @return The calculated heightmap alpha for height difference
+     */
+    public int getAlpha(int y1, int y2, int alpha, int step) {
+        int direction = Integer.compare(y2, y1);
+        int newAlpha = alpha + (direction * step);
+        return Math.clamp(newAlpha, getMin(), getMax());
+    }
+
+    @Override
+    public boolean equals(@Nullable Object o) {
+        if (this == o) {
+            return true;
         }
-
-        public static final Type BASIC = register("basic", BasicHeightmap.class);
-        public static final Type FANCY = register("fancy", FancyHeightmap.class);
-
-        /**
-         * Get heightmap type instance by name.
-         *
-         * @param name Name of heightmap type
-         * @return Requested heightmap type
-         */
-        @Nullable
-        public static Type get(@NotNull String name) {
-            return BY_NAME.get(name.toLowerCase(Locale.ROOT));
+        if (o == null) {
+            return false;
         }
-
-        /**
-         * Create a new heightmap of this type.
-         *
-         * @return A new heightmap
-         */
-        @NotNull
-        public Heightmap create() {
-            try {
-                return clazz().getConstructor().newInstance();
-            } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
+        if (this.getClass() != o.getClass()) {
+            return false;
         }
+        Heightmap other = (Heightmap) o;
+        return getType().equals(other.getType());
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
+
+    @Override
+    public @NotNull String toString() {
+        return "Heightmap{"
+            + "type=" + getType()
+            + "}";
     }
 }

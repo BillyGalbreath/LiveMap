@@ -32,7 +32,6 @@ import javax.imageio.ImageReader;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
-import net.pl3x.livemap.render.image.TileCanvas;
 import net.pl3x.livemap.util.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,7 +95,7 @@ public final class IO extends Registry<IO.Type> {
          */
         @NotNull
         public BufferedImage createBuffer() {
-            return new BufferedImage(TileCanvas.SIZE, TileCanvas.SIZE, BufferedImage.TYPE_INT_ARGB);
+            return new BufferedImage(512, 512, colorType());
         }
 
         /**
@@ -107,6 +106,15 @@ public final class IO extends Registry<IO.Type> {
         @NotNull
         public String getExtension() {
             return this.extension;
+        }
+
+        /**
+         * Get the color type.
+         *
+         * @return Color type
+         */
+        public int colorType() {
+            return BufferedImage.TYPE_INT_ARGB;
         }
 
         /**

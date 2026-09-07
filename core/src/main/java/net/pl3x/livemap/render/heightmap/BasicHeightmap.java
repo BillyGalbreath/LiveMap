@@ -24,14 +24,41 @@
 
 package net.pl3x.livemap.render.heightmap;
 
+import net.pl3x.livemap.world.chunk.Chunk;
+import org.jetbrains.annotations.NotNull;
+
 /**
- * A basic heightmap.
+ * A basic Vanilla Minecraft-like heightmap.
  */
 public class BasicHeightmap extends Heightmap {
     /**
      * Constructs a new instance of BasicHeightmap.
      */
     public BasicHeightmap() {
-        super(Type.BASIC);
+        super(BASIC);
+    }
+
+    @Override
+    public int getAlpha(@NotNull Chunk chunk, int blockX, int blockZ) {
+        Chunk.BlockData origin = chunk.getWorld()
+            .getChunkFast(chunk, blockX >> 4, blockZ >> 4)
+            .getData(blockX, blockZ);
+        if (origin == null) {
+            return getMid();
+        }
+
+        Chunk.BlockData north = chunk.getWorld()
+            .getChunkFast(chunk, blockX >> 4, (blockZ - 1) >> 4)
+            .getData(blockX, blockZ - 1);
+        if (north == null) {
+            return getMid();
+        }
+
+        return getAlpha(
+            origin.getBlockY(),
+            north.getBlockY(),
+            getMid(),
+            getMid()
+        );
     }
 }
