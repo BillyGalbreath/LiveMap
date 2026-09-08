@@ -88,6 +88,8 @@ public class Region extends Point {
         ThreadLocal.withInitial(() -> new FastByteArrayOutputStream(256 * 1024));
     private static final ThreadLocal<byte[]> THREAD_LOCAL_COPY_BUFFER =
         ThreadLocal.withInitial(() -> new byte[16384]);
+    private static final ThreadLocal<byte[]> THREAD_LOCAL_HEADER_BUFFER =
+        ThreadLocal.withInitial(() -> new byte[4096]);
 
     private static byte[] getPayloadBuffer(int length) {
         byte[] buf = THREAD_LOCAL_PAYLOAD_BUFFER.get();
@@ -207,16 +209,31 @@ public class Region extends Point {
      * @throws IOException if an I/O error occurs
      */
     public void loadAllChunks(@NotNull AtomicBoolean cancelled) throws IOException {
-        if (!getFile().exists() || getFile().length() <= 0) {
+        if (!getFile().exists() || getFile().length() < 4096) {
             return;
         }
         try (RandomAccessFile raf = new RandomAccessFile(getFile(), "r")) {
+            byte[] headers = THREAD_LOCAL_HEADER_BUFFER.get();
+            raf.seek(0);
+            raf.readFully(headers);
+
             for (int index = 0; index < this.chunks.length; index++) {
                 if (getWorld().isDiscarded() || cancelled.get()) {
                     return; // aborted
                 }
 
-                loadChunk(raf, index);
+                // duplicate logic to reduce raf seek and reedFully 1024 times to only 1
+                int offset = index << 2;
+                if (headers[offset + 3] == 0) {
+                    this.chunks[index] = new EmptyChunk(this);
+                    continue;
+                }
+
+                // extract the 3-byte sector offset
+                this.chunks[index] = loadChunk(raf,
+                    ((headers[offset] & 0xFFL) << 28)
+                        | ((headers[offset + 1] & 0xFFL) << 20)
+                        | ((headers[offset + 2] & 0xFFL) << 12));
             }
         } catch (EOFException e) {
             if (Config.DEBUG_MODE) {
@@ -247,12 +264,10 @@ public class Region extends Point {
         }
 
         // extract the 3-byte sector offset
-        // @formatter:off
         return this.chunks[index] = loadChunk(raf,
             ((header[0] & 0xFFL) << 28)
                 | ((header[1] & 0xFFL) << 20)
                 | ((header[2] & 0xFFL) << 12));
-        // @formatter:on
     }
 
     /**
