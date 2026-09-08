@@ -24,8 +24,12 @@
 
 package net.pl3x.livemap.world.block;
 
-import java.util.Map;
+import de.bluecolored.bluenbt.NBTReader;
+import de.bluecolored.bluenbt.TypeDeserializer;
+import java.io.IOException;
 import java.util.Objects;
+import net.pl3x.livemap.LiveMap;
+import net.pl3x.livemap.util.ByteUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,38 +37,6 @@ import org.jetbrains.annotations.Nullable;
  * Represents a state of a block.
  */
 public class BlockState {
-    /**
-     * Parse property from string to byte without the overhead of try/catch NumberFormatException.
-     *
-     * <p>Note: This is oversimplified by not processing negative values.
-     *
-     * @param property String value to parse
-     * @return Property value as byte
-     */
-    private static byte parseProperty(@NotNull String property) {
-        if (property.isBlank()) {
-            return -1;
-        }
-
-        int len = property.length();
-        int result = 0;
-
-        // parse each digit
-        for (int i = 0; i < len; i++) {
-            char c = property.charAt(i);
-
-            // instantly reject non-digits (including '-')
-            if (c < '0' || c > '9') {
-                return -1;
-            }
-
-            // add to the next digit
-            result = result * 10 + (c - '0');
-        }
-
-        return (byte) result;
-    }
-
     private final Block block;
     private final byte age;
     private final byte moisture;
@@ -87,14 +59,16 @@ public class BlockState {
     /**
      * Constructs a new instance of BlockState with specified properties.
      *
-     * @param block      Block represented by this state
-     * @param properties Properties for this state
+     * @param block    Block represented by this state
+     * @param age      Age property for this state
+     * @param moisture Moisture property for this state
+     * @param power    Power property for this state
      */
-    public BlockState(@NotNull Block block, @NotNull Map<String, String> properties) {
+    public BlockState(@NotNull Block block, byte age, byte moisture, byte power) {
         this.block = block;
-        this.age = parseProperty(properties.getOrDefault("age", ""));
-        this.moisture = parseProperty(properties.getOrDefault("moisture", ""));
-        this.power = parseProperty(properties.getOrDefault("power", ""));
+        this.age = age;
+        this.moisture = moisture;
+        this.power = power;
 
         this.hash = Objects.hash(block, this.age, this.moisture, this.power);
     }
@@ -199,6 +173,24 @@ public class BlockState {
         return getBlock().isFluid();
     }
 
+    /**
+     * Get the custom block color.
+     *
+     * @return Custom color
+     */
+    public int getColor() {
+        return getBlock().getColor();
+    }
+
+    /**
+     * Get vanilla's map color.
+     *
+     * @return Vanilla color
+     */
+    public int getVanilla() {
+        return getBlock().getVanilla();
+    }
+
     @Override
     public boolean equals(@Nullable Object o) {
         if (this == o) {
@@ -231,5 +223,59 @@ public class BlockState {
             + ",moisture=" + getMoisture()
             + ",power=" + getPower()
             + "]";
+    }
+
+    /**
+     * Deserializer for block states.
+     */
+    public static class Deserializer implements TypeDeserializer<BlockState> {
+        /**
+         * Read blockstate from NBT.
+         *
+         * @param reader NBT reader
+         * @return New bock state instance
+         * @throws IOException if an I/O error occurs
+         */
+        @Override
+        @NotNull
+        public BlockState read(@NotNull NBTReader reader) throws IOException {
+            String id = null;
+            byte age = -1;
+            byte moisture = -1;
+            byte power = -1;
+
+            reader.beginCompound();
+
+            while (reader.hasNext()) {
+                switch (reader.name()) {
+                    case "Name" -> id = reader.nextString();
+                    case "Properties" -> {
+                        reader.beginCompound();
+                        while (reader.hasNext()) {
+                            switch (reader.name()) {
+                                case "age" -> age = ByteUtil.parsePropertyByte(reader.nextString());
+                                case "moisture" -> moisture = ByteUtil.parsePropertyByte(reader.nextString());
+                                case "power" -> power = ByteUtil.parsePropertyByte(reader.nextString());
+                                default -> reader.skip(); // needed to push the reader
+                            }
+                        }
+                        reader.endCompound();
+                    }
+                    default -> reader.skip();
+                }
+            }
+
+            reader.endCompound();
+
+            if (id == null) {
+                return Block.AIR.getDefaultState();
+            }
+
+            Block block = LiveMap.api().getBlockRegistry().getOrDefault(id, Block.AIR);
+            if ((age & moisture & power) == -1) {
+                return block.getDefaultState();
+            }
+            return new BlockState(block, age, moisture, power);
+        }
     }
 }

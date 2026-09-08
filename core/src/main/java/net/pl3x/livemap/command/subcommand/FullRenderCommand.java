@@ -82,7 +82,7 @@ public class FullRenderCommand<S> extends BaseCommand<S> {
         // add all regions to queue
         Collection<Path> paths = FileUtil.getRegionPaths(world);
         LongCollection regions = FileUtil.regionPathsToLongs(paths);
-        world.getPendingRegions().addAll(regions);
+        world.getPendingRegions().addAll(regions); // todo - dont dump until we can run
 
         // trigger render scheduler _now_
         ForkJoinTask<?> future = LiveMap.api().getRenderScheduler().trigger();

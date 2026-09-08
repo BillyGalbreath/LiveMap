@@ -52,7 +52,7 @@ public class BasicRenderer extends Renderer {
     @Override
     protected void renderBlock(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data, @NotNull ThreadLocalRandom rand) {
         // get vanilla style color
-        int pixelColor = data.getTopState().getBlock().getVanilla();
+        int pixelColor = data.getTopState().getVanilla();
 
         // check if anything is even there to render (we ignore transparent black)
         if (pixelColor != 0) {

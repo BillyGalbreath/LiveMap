@@ -41,7 +41,6 @@ import net.pl3x.livemap.world.World;
 import net.pl3x.livemap.world.biome.Biome;
 import net.pl3x.livemap.world.block.Block;
 import net.pl3x.livemap.world.block.BlockState;
-import net.pl3x.livemap.world.block.BlockStateDeserializer;
 import net.pl3x.livemap.world.region.Region;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -272,7 +271,7 @@ public abstract class Chunk {
                     do {
                         data.blockY -= 1;
                         data.blockstate = getBlockState(blockX, data.blockY, blockZ);
-                    } while (data.blockY > getWorld().getMinY() && !data.blockstate.getBlock().isAir());
+                    } while (data.blockY > getWorld().getMinY() && !data.blockstate.isAir());
                     Logger.warn("y: " + data.blockY);
                 }
 
@@ -280,7 +279,7 @@ public abstract class Chunk {
                 do {
                     data.blockY -= 1;
                     data.blockstate = getBlockState(blockX, data.blockY, blockZ);
-                    if (data.blockstate.getBlock().isFluid()) {
+                    if (data.blockstate.isFluid()) {
                         // if we found a fluid we need to store it and then
                         // continue iterating down until we hit a solid
                         if (data.fluidstate == null) {
@@ -295,13 +294,13 @@ public abstract class Chunk {
                     //
 
                     // test if block is renderable. we ignore blocks with black color
-                    if (data.blockstate.getBlock().getColor() != 0) {
+                    if (data.blockstate.getColor() != 0) {
                         break;
                     }
                 } while (data.blockY > getWorld().getMinY());
 
                 // if we found a flat block, render the block under it instead
-                if (data.blockstate.getBlock().isFlat()) {
+                if (data.blockstate.isFlat()) {
                     data.blockY--;
                 }
 
@@ -558,7 +557,7 @@ public abstract class Chunk {
 
         static {
             BLUENBT.setNamingStrategy(NamingStrategy.lowerCaseWithDelimiter("_"));
-            BLUENBT.register(TypeToken.of(BlockState.class), new BlockStateDeserializer());
+            BLUENBT.register(TypeToken.of(BlockState.class), new BlockState.Deserializer());
         }
 
         /**

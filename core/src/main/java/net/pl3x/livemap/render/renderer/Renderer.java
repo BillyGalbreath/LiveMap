@@ -279,13 +279,12 @@ public abstract class Renderer {
 
         // get translucent fluid color
         if (tile.getRenderer().isTranslucentFluids()) {
-            // translucent style
             float depthMod = fluidDepth * 0.025F;
             if (fluid.hasFlag(Block.FLAG_WATER)) {
                 // translucent water
                 fluidColor = sampleNeighbors(data, (biome, _, _) -> biome.getWater());
                 // make color lighter in shallower depths
-                fluidColor = Colors.lerpARGB(fluidColor, 0xFF000000, Math.clamp(Mathf.easeCubicOut(depthMod / 1.5F), 0, 0.45F));
+                fluidColor = Colors.lerpRGB(fluidColor, 0x000000, Math.clamp(Mathf.easeCubicOut(depthMod / 1.5F), 0, 0.45F));
                 // make color more translucent in shallower depths
                 fluidColor = (fluidColor & 0xFFFFFF) | ((int) (Mathf.easeQuinticOut(Math.clamp(depthMod * 5F, 0, 1)) * 0xFF) << 24);
             } else {

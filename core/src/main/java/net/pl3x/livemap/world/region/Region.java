@@ -24,9 +24,6 @@
 
 package net.pl3x.livemap.world.region;
 
-import de.bluecolored.bluenbt.BlueNBT;
-import de.bluecolored.bluenbt.NamingStrategy;
-import de.bluecolored.bluenbt.TypeToken;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.EOFException;
@@ -38,10 +35,9 @@ import java.io.RandomAccessFile;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import net.pl3x.livemap.Logger;
+import net.pl3x.livemap.configuration.Config;
 import net.pl3x.livemap.marker.Point;
 import net.pl3x.livemap.world.World;
-import net.pl3x.livemap.world.block.BlockState;
-import net.pl3x.livemap.world.block.BlockStateDeserializer;
 import net.pl3x.livemap.world.chunk.Chunk;
 import net.pl3x.livemap.world.chunk.CompressionType;
 import net.pl3x.livemap.world.chunk.EmptyChunk;
@@ -52,13 +48,6 @@ import org.jetbrains.annotations.Nullable;
  * Represents a region in a world.
  */
 public class Region extends Point {
-    private static final BlueNBT BLUENBT = new BlueNBT();
-
-    static {
-        BLUENBT.setNamingStrategy(NamingStrategy.lowerCaseWithDelimiter("_"));
-        BLUENBT.register(TypeToken.of(BlockState.class), new BlockStateDeserializer());
-    }
-
     /**
      * Packs a region's coordinates.
      *
@@ -182,8 +171,10 @@ public class Region extends Point {
         }
         try (RandomAccessFile raf = new RandomAccessFile(getFile(), "r")) {
             chunk = loadChunk(raf, index);
-        } catch (EOFException | FileNotFoundException ignore) {
-            ignore.printStackTrace();
+        } catch (EOFException | FileNotFoundException e) {
+            if (Config.DEBUG_MODE) {
+                Logger.error("Error while loading chunk", e);
+            }
         } catch (IOException e) {
             Logger.error("Failed to load chunk at region &3[&e%d&r, &e%d&3]".formatted(chunkX, chunkZ), e);
         }
@@ -211,8 +202,10 @@ public class Region extends Point {
 
                 loadChunk(raf, index);
             }
-        } catch (EOFException ignore) {
-            ignore.printStackTrace();
+        } catch (EOFException e) {
+            if (Config.DEBUG_MODE) {
+                Logger.error("Error while mass loading all chunks", e);
+            }
         }
     }
 
