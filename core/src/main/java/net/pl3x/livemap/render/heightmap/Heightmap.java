@@ -24,6 +24,9 @@
 
 package net.pl3x.livemap.render.heightmap;
 
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicBoolean;
+import net.pl3x.livemap.render.image.TileCanvas;
 import net.pl3x.livemap.util.Type;
 import net.pl3x.livemap.world.chunk.Chunk;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +47,7 @@ public abstract class Heightmap {
      *
      * @param type The heightmap type
      */
-    public Heightmap(@NotNull Type<Heightmap> type) {
+    protected Heightmap(@NotNull Type<Heightmap> type) {
         this.type = type;
     }
 
@@ -110,6 +113,39 @@ public abstract class Heightmap {
         int direction = Integer.compare(y2, y1);
         int newAlpha = alpha + (direction * step);
         return Math.clamp(newAlpha, getMin(), getMax());
+    }
+
+    /**
+     * A chance to do things <em>before</em> the render has run.
+     *
+     * @param tile      Tile image
+     * @param rand      Random for RNG stuff
+     * @param cancelled Cancellation token
+     */
+    public void preRender(@NotNull TileCanvas tile, @NotNull ThreadLocalRandom rand, @NotNull AtomicBoolean cancelled) {
+        // optional override
+    }
+
+    /**
+     * A chance to do things <em>after</em> the render has run.
+     *
+     * @param tile      Tile image
+     * @param rand      Random for RNG stuff
+     * @param cancelled Cancellation token
+     */
+    public void postRender(@NotNull TileCanvas tile, @NotNull ThreadLocalRandom rand, @NotNull AtomicBoolean cancelled) {
+        // optional override
+    }
+
+    /**
+     * A chance to do things <em>during</em> a block render.
+     *
+     * @param tile Tile image
+     * @param data Block data
+     * @param rand Random for RNG stuff
+     */
+    public void renderBlock(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data, @NotNull ThreadLocalRandom rand) {
+        // optional override
     }
 
     @Override

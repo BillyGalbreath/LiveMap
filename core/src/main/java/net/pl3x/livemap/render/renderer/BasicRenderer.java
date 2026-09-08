@@ -65,7 +65,7 @@ public class BasicRenderer extends Renderer {
                 // fluids get flat surface since opaque
                 heightmap = tile.getHeightmap().getMid();
 
-                // while we're here, lets setup vanilla style fluid (checkerboard)
+                // but let's alter for vanilla style heightmap (checkerboard)
                 int fluidDepth = data.getFluidY() - data.getBlockY();
                 double diffY = fluidDepth * 0.1D + (data.getBlockX() + data.getBlockZ() & 1) * 0.2D;
                 pixelColor = Colors.shade(pixelColor, diffY < 0.5D ? 0xFF : (diffY > 0.9D ? 0xB4 : 0xDC));
@@ -77,10 +77,5 @@ public class BasicRenderer extends Renderer {
 
         // store pixel data on tile
         tile.setPixel(data.getBlockX(), data.getBlockZ(), pixelColor);
-    }
-
-    @Override
-    protected void postRender(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data, @NotNull ThreadLocalRandom rand) {
-        //
     }
 }
