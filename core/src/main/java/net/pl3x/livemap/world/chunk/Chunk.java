@@ -28,7 +28,7 @@ import de.bluecolored.bluenbt.BlueNBT;
 import de.bluecolored.bluenbt.NBTName;
 import de.bluecolored.bluenbt.NamingStrategy;
 import de.bluecolored.bluenbt.TypeToken;
-import java.io.ByteArrayInputStream;
+import it.unimi.dsi.fastutil.io.FastByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
@@ -95,20 +95,17 @@ public abstract class Chunk {
     }
 
     /**
-     * Get chunk's data version early without loading the end nbt.
+     * Get chunk's data version early from an uncompressed NBT payload without full parsing.
      *
-     * @param compressedPayload The compressed payload for a chunk
-     * @param payloadLength     The length of the payload
-     * @param compression       The compression type
-     * @return The chunk's data version, or -1 if was unable to determine
+     * @param uncompressedPayload The uncompressed payload for a chunk
+     * @param payloadLength       The length of the uncompressed payload
+     * @return The chunk's data version, or -1 if unable to determine
      * @throws IOException if an I/O error occurs
      */
-    public static int getChunkDataVersion(byte[] compressedPayload, int payloadLength, @NotNull CompressionType compression) throws IOException {
-        // we need the chunk version to find correct loader
+    public static int getChunkDataVersion(byte[] uncompressedPayload, int payloadLength) throws IOException {
         int version;
-        try (ByteArrayInputStream vbais = new ByteArrayInputStream(compressedPayload, 0, payloadLength);
-             InputStream vcis = compression.decompress(vbais);
-             DataInputStream vdis = new DataInputStream(vcis)
+        try (FastByteArrayInputStream fbais = new FastByteArrayInputStream(uncompressedPayload, 0, payloadLength);
+             DataInputStream vdis = new DataInputStream(fbais)
         ) {
             // root compound envelope verification (0x0A)
             if (vdis.readByte() != 0x0A) {

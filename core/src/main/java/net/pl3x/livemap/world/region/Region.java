@@ -24,8 +24,8 @@
 
 package net.pl3x.livemap.world.region;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
+import it.unimi.dsi.fastutil.io.FastByteArrayInputStream;
+import it.unimi.dsi.fastutil.io.FastByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -80,6 +80,22 @@ public class Region extends Point {
     public static int unpackZ(long packed) {
         // upper 32 bits are z
         return (int) (packed >>> 32);
+    }
+
+    private static final ThreadLocal<byte[]> THREAD_LOCAL_PAYLOAD_BUFFER =
+        ThreadLocal.withInitial(() -> new byte[256 * 1024]);
+    private static final ThreadLocal<FastByteArrayOutputStream> THREAD_LOCAL_DECOMPRESS_BUFFER =
+        ThreadLocal.withInitial(() -> new FastByteArrayOutputStream(256 * 1024));
+    private static final ThreadLocal<byte[]> THREAD_LOCAL_COPY_BUFFER =
+        ThreadLocal.withInitial(() -> new byte[16384]);
+
+    private static byte[] getPayloadBuffer(int length) {
+        byte[] buf = THREAD_LOCAL_PAYLOAD_BUFFER.get();
+        if (buf.length < length) {
+            buf = new byte[length];
+            THREAD_LOCAL_PAYLOAD_BUFFER.set(buf);
+        }
+        return buf;
     }
 
     private final long packed;
@@ -259,28 +275,33 @@ public class Region extends Point {
         byte compressionTypeId = raf.readByte();
         CompressionType compression = CompressionType.byId(compressionTypeId);
 
-        byte[] compressedPayload = new byte[1024 * 1024];
-
-        int payloadLength = length - 1; // Subtract the 1 byte for compressionTypeId;
-        if (payloadLength > compressedPayload.length) {
-            // if an atypical oversized custom chunk exceeds 1MB,
-            // gracefully fall back to a manual allocation
-            compressedPayload = new byte[payloadLength];
-        }
-
+        int payloadLength = length - 1; // subtract the 1 byte for compressionTypeId;
+        byte[] compressedPayload = getPayloadBuffer(payloadLength);
         raf.readFully(compressedPayload, 0, payloadLength);
 
-        // we need the chunk version to find correct loader
-        int version = Chunk.getChunkDataVersion(compressedPayload, payloadLength, compression);
-        Chunk.Loader<Chunk.NBT> chunkLoader = Chunk.Loader.getForVersion(version);
+        FastByteArrayOutputStream uncompressed = THREAD_LOCAL_DECOMPRESS_BUFFER.get();
+        uncompressed.reset();
 
         try (
-            ByteArrayInputStream bais = new ByteArrayInputStream(compressedPayload, 0, payloadLength);
-            InputStream cis = compression.decompress(bais);
-            InputStream bis = new BufferedInputStream(cis)
+            FastByteArrayInputStream bais = new FastByteArrayInputStream(compressedPayload, 0, payloadLength);
+            InputStream cis = compression.decompress(bais)
         ) {
+            byte[] copyBuf = THREAD_LOCAL_COPY_BUFFER.get();
+            int read;
+            while ((read = cis.read(copyBuf, 0, copyBuf.length)) >= 0) {
+                uncompressed.write(copyBuf, 0, read);
+            }
+        }
+
+        int uncompressedLength = (int) uncompressed.position();
+
+        // we need the chunk version to find correct loader
+        int version = Chunk.getChunkDataVersion(uncompressed.array, uncompressedLength);
+        Chunk.Loader<Chunk.NBT> chunkLoader = Chunk.Loader.getForVersion(version);
+
+        try (FastByteArrayInputStream fbais = new FastByteArrayInputStream(uncompressed.array, 0, uncompressedLength)) {
             // load the chunk
-            Chunk chunk = chunkLoader.load(this, bis);
+            Chunk chunk = chunkLoader.load(this, fbais);
 
             // we only want full chunks
             return chunk.isFull() ? chunk.preScan() : new EmptyChunk(this);
