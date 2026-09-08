@@ -239,20 +239,22 @@ public class TileCanvas implements ImageInt {
         }
     }
 
-    private int downSample(int x, int z, int step, int count) {
+    private int downSample(int x, int z, int step, int zoom) {
         int rgb, a = 0, r = 0, g = 0, b = 0;
-        for (int i = 0; i < step; i++) {
-            for (int j = 0; j < step; j++) {
-                rgb = getPixel(x + i, z + j);
+        for (int j = 0; j < step; j++) {
+            int rowOffset = (z + j) << 9;
+            for (int i = 0; i < step; i++) {
+                rgb = this.pixels[rowOffset + (x + i)];
                 a += (rgb >>> 24);
                 r += (rgb >> 16 & 0xFF);
                 g += (rgb >> 8 & 0xFF);
                 b += (rgb & 0xFF);
             }
         }
-        return ((a / count) << 24)
-            | ((r / count) << 16)
-            | ((g / count) << 8)
-            | (b / count);
+        int shift = zoom << 1;
+        return ((a >> shift) << 24)
+            | ((r >> shift) << 16)
+            | ((g >> shift) << 8)
+            | (b >> shift);
     }
 }
