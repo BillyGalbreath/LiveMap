@@ -25,8 +25,7 @@
 package net.pl3x.livemap.render.image;
 
 import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.nio.file.Files;
+import java.awt.image.DataBufferInt;
 import java.nio.file.Path;
 import java.util.Map;
 import net.pl3x.livemap.Logger;
@@ -35,6 +34,7 @@ import net.pl3x.livemap.render.heightmap.Heightmap;
 import net.pl3x.livemap.render.image.io.IO;
 import net.pl3x.livemap.render.renderer.Renderer;
 import net.pl3x.livemap.util.FileUtil;
+import net.pl3x.livemap.util.Unsafe;
 import net.pl3x.livemap.world.World;
 import net.pl3x.livemap.world.region.Region;
 import org.jetbrains.annotations.NotNull;
@@ -203,11 +203,15 @@ public class TileCanvas implements ImageInt {
     }
 
     private void writePixels(@NotNull BufferedImage buffer, int zoom) {
+        int[] bufferPixels = Unsafe.<DataBufferInt>cast(buffer.getRaster().getDataBuffer()).getData();
+
+        if (zoom == 0) {
+            System.arraycopy(this.pixels, 0, bufferPixels, 0, 512 << 9);
+            return;
+        }
+
         // how many pixels to increment in each direction
         int step = 1 << zoom;
-
-        // number of colors to blend per step
-        int count = 1 << (zoom << 1);
 
         // calculate where in the buffer do we start writing pixels.
         // zoom level increments the number of regions in a single tile,
@@ -217,24 +221,13 @@ public class TileCanvas implements ImageInt {
         int baseZ = (getRegion().getZ() * (512 >> zoom)) & 511;
 
         // walk the pixels
-        for (int x = 0; x < 512; x += step) {
-            for (int z = 0; z < 512; z += step) {
-                int argb;
-
-                if (zoom == 0) {
-                    // current pixel as-is on base zoom level
-                    argb = getPixel(x, z);
-                } else {
-                    // downsample merge pixels if we are at higher zoom than base
-                    argb = downSample(x, z, step, count);
-                }
-
-                // write pixel to buffer for region at specified zoom
-                buffer.setRGB(
-                    baseX + (x >> zoom),
-                    baseZ + (z >> zoom),
-                    getIO().color(argb) // ensure we use a color format the image buffer supports
-                );
+        for (int z = 0; z < 512; z += step) {
+            int targetZ = baseZ + (z >> zoom);
+            int targetRowOffset = targetZ * 512;
+            for (int x = 0; x < 512; x += step) {
+                int targetX = baseX + (x >> zoom);
+                int argb = downSample(x, z, step, zoom);
+                bufferPixels[targetRowOffset + targetX] = getIO().color(argb);
             }
         }
     }
