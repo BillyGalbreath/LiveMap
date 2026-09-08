@@ -47,6 +47,8 @@ public class TileCanvas implements ImageInt {
     public static final String DIR_PATH = "%d/%s/";
     public static final String FILE_PATH = "%d_%d.%s";
 
+    private static final ThreadLocal<BufferedImage> THREAD_LOCAL_BASE_BUFFER = new ThreadLocal<>();
+
     private final Region region;
     private final Renderer renderer;
     private final IO.Type io;
@@ -155,7 +157,7 @@ public class TileCanvas implements ImageInt {
 
             if (curZoom == 0) {
                 try {
-                    BufferedImage buffer = getOrCreateBuffer(file);
+                    BufferedImage buffer = getBaseBuffer();
                     writePixels(buffer, curZoom);
                     getIO().write(file, buffer);
                 } catch (Throwable t) {
@@ -191,19 +193,12 @@ public class TileCanvas implements ImageInt {
     }
 
     @NotNull
-    private BufferedImage getOrCreateBuffer(@NotNull Path path) throws IOException {
-        BufferedImage buffer = null;
-
-        // try to read existing image
-        if (Files.exists(path) && Files.size(path) > 0) {
-            buffer = getIO().read(path);
-        }
-
-        // if not, create a new image
-        if (buffer == null) {
+    private BufferedImage getBaseBuffer() {
+        BufferedImage buffer = THREAD_LOCAL_BASE_BUFFER.get();
+        if (buffer == null || buffer.getType() != getIO().colorType()) {
             buffer = getIO().createBuffer();
+            THREAD_LOCAL_BASE_BUFFER.set(buffer);
         }
-
         return buffer;
     }
 
