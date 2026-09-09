@@ -44,7 +44,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.simpleyaml.configuration.ConfigurationSection;
 import org.simpleyaml.configuration.comments.CommentType;
+import org.simpleyaml.configuration.file.YamlConfigurationOptions;
 import org.simpleyaml.configuration.file.YamlFile;
+import org.simpleyaml.configuration.implementation.SimpleYamlImplementation;
+import org.simpleyaml.configuration.implementation.api.QuoteStyle;
+import org.simpleyaml.configuration.implementation.snakeyaml.lib.DumperOptions;
 import org.simpleyaml.exceptions.InvalidConfigurationException;
 
 /**
@@ -80,8 +84,26 @@ public abstract class AbstractConfig {
      */
     @NotNull
     public YamlFile getConfig() {
-        return Objects.requireNonNullElseGet(this.yaml,
-            () -> this.yaml = new YamlFile(this.path.toFile()));
+        return Objects.requireNonNullElseGet(this.yaml, () -> {
+            this.yaml = new YamlFile(this.path.toFile());
+            this.yaml.setImplementation(new CustomYamlConfiguration());
+            return this.yaml;
+        });
+    }
+
+    /**
+     * Custom snakeyaml options.
+     */
+    private static final class CustomYamlConfiguration extends SimpleYamlImplementation {
+        @Override
+        public void configure(@NotNull YamlConfigurationOptions yamlOptions) {
+            super.configure(yamlOptions);
+            DumperOptions dumperOptions = this.getDumperOptions();
+            dumperOptions.setSplitLines(false);
+            dumperOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+            dumperOptions.setDefaultScalarStyle(DumperOptions.ScalarStyle.DOUBLE_QUOTED);
+            yamlOptions.quoteStyleDefaults().setQuoteStyle(String.class, QuoteStyle.DOUBLE);
+        }
     }
 
     /**
