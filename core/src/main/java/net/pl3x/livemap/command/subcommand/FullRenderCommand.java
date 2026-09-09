@@ -29,13 +29,16 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.longs.LongCollection;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Collection;
-import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.command.BaseCommand;
 import net.pl3x.livemap.command.Player;
 import net.pl3x.livemap.command.Sender;
 import net.pl3x.livemap.command.Source;
+import net.pl3x.livemap.command.argument.ArgumentParser;
 import net.pl3x.livemap.configuration.Lang;
 import net.pl3x.livemap.util.FileUtil;
 import net.pl3x.livemap.world.World;
@@ -54,37 +57,38 @@ public class FullRenderCommand<S> extends BaseCommand<S> {
      */
     public FullRenderCommand(@NotNull Source.Converter<S> sourceConverter) {
         super("fullrender", sourceConverter);
-        then(LiveMap.api().getArgumentParser().<S>world().executes(ctx -> {
-            executeWorld(ctx);
-            return Command.SINGLE_SUCCESS;
-        }));
+        then(LiveMap.api().getArgumentParser().<S>world("world").executes(this::executeWorld));
     }
 
-    private void executeWorld(@NotNull CommandContext<S> context) throws CommandSyntaxException {
+    // executed with specified world
+    private int executeWorld(@NotNull CommandContext<S> context) {
         Sender sender = getSource(context).getSender();
         World world = context.getArgument("world", World.class);
-        execute(sender, world);
+        return execute(sender, world);
     }
 
     @Override
-    protected void execute(@NotNull CommandContext<S> context) throws CommandSyntaxException {
+    // executed without any args
+    protected int execute(@NotNull CommandContext<S> context) throws CommandSyntaxException {
         if (!(getSource(context).getSender() instanceof Player player)) {
             // console must specify world
-            throw World.Argument.ERROR_MISSING_WORLD.create();
+            throw ArgumentParser.ERROR_MUST_SPECIFY_WORLD.create();
         }
-        execute(player, player.getWorld());
+        return execute(player, player.getWorld());
     }
 
-    private void execute(@NotNull Sender sender, @NotNull World world) throws CommandSyntaxException {
+    private int execute(@NotNull Sender sender, @NotNull World world) {
         sender.sendMessage(Lang.FULLRENDER_STARTING
             .replace("<world>", world.getName()));
+
+        long started = System.nanoTime();
 
         // get all regions for world
         Collection<Path> paths = FileUtil.getRegionPaths(world);
         LongCollection regions = FileUtil.regionPathsToLongs(paths);
 
         // trigger render scheduler _now_
-        ForkJoinTask<?> future = LiveMap.api().getRenderScheduler().trigger(() -> {
+        CompletableFuture<Void> future = LiveMap.api().getRenderScheduler().trigger(() -> {
             // add all regions to the queue if and only if trigger is able to run
             // this prevents dumping the full list of regions to the queue on failed triggers
             world.getPendingRegions().addAll(regions);
@@ -93,11 +97,29 @@ public class FullRenderCommand<S> extends BaseCommand<S> {
         // check for failed trigger
         if (future == null) {
             sender.sendMessage("<red>Unable to start fullrender (is it already running?)");
-            return;
+            return 0;
         }
 
         sender.sendMessage(Lang.FULLRENDER_STARTED
             .replace("<count>", Integer.toString(regions.size()))
             .replace("<world>", world.getName()));
+
+        future.whenComplete((_, e) -> {
+            if (e != null) {
+                throw new RuntimeException(e);
+            }
+
+            long elapsed = System.nanoTime() - started;
+            int chunks = 400 * 1024; // todo
+            int cps = (int) (chunks / TimeUnit.NANOSECONDS.toSeconds(elapsed));
+
+            sender.sendMessage(Lang.FULLRENDER_FINISHED
+                .replace("<cps>", Integer.toString(cps))
+                .replace("<chunks>", Integer.toString(chunks))
+                .replace("<elapsed>", Duration.ofNanos(elapsed).toString())
+                .replace("<world>", world.getName()));
+        });
+
+        return Command.SINGLE_SUCCESS;
     }
 }

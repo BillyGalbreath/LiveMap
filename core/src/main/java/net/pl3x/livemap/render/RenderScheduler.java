@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
@@ -167,7 +166,7 @@ public class RenderScheduler {
      * @return Future scheduled to manually run now, or null
      */
     @Nullable
-    public ForkJoinTask<?> trigger(@Nullable Runnable runnable) {
+    public CompletableFuture<Void> trigger(@Nullable Runnable runnable) {
         // ensure executor is accepting new tasks
         if (this.worldExecutor.isShutdown()) {
             return null;
@@ -185,7 +184,7 @@ public class RenderScheduler {
         if (runnable != null) {
             runnable.run();
         }
-        return this.worldExecutor.submit(() -> run(true));
+        return CompletableFuture.runAsync(() -> run(true), this.worldExecutor);
     }
 
     /**

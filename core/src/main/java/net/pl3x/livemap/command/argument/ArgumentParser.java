@@ -24,8 +24,12 @@
 
 package net.pl3x.livemap.command.argument;
 
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+import net.pl3x.livemap.configuration.Lang;
+import net.pl3x.livemap.marker.Point;
 import net.pl3x.livemap.world.World;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,15 +37,60 @@ import org.jetbrains.annotations.NotNull;
  * Convenience methods to make using custom command arguments a little less painful.
  */
 public interface ArgumentParser {
+    SimpleCommandExceptionType ERROR_WORLD_NOT_FOUND = new SimpleCommandExceptionType(() -> Lang.ERROR_WORLD_NOT_FOUND);
+    SimpleCommandExceptionType ERROR_MUST_SPECIFY_CENTER = new SimpleCommandExceptionType(() -> Lang.ERROR_MUST_SPECIFY_CENTER);
+    SimpleCommandExceptionType ERROR_MUST_SPECIFY_RADIUS = new SimpleCommandExceptionType(() -> Lang.ERROR_MUST_SPECIFY_RADIUS);
+    SimpleCommandExceptionType ERROR_MUST_SPECIFY_WORLD = new SimpleCommandExceptionType(() -> Lang.ERROR_MUST_SPECIFY_WORLD);
+
     /**
-     * Create a new world argument with the name "world".
+     * Create a new point argument with the specified name.
      *
-     * @param <S> Command source type
-     * @return World argument
+     * @param name Name of the argument
+     * @param <S>  Command source type
+     * @return Point argument
      */
     @NotNull
-    default <S> ArgumentBuilder<S, RequiredArgumentBuilder<S, World>> world() {
-        return world("world");
+    default <S> ArgumentBuilder<S, RequiredArgumentBuilder<S, Point>> point(@NotNull String name) {
+        return RequiredArgumentBuilder.argument(name, PointArgumentType.point());
+    }
+
+    /**
+     * Create a new integer argument with the specified name.
+     *
+     * @param name Name of the argument
+     * @param <S>  Command source type
+     * @return Integer argument
+     */
+    @NotNull
+    default <S> ArgumentBuilder<S, RequiredArgumentBuilder<S, Integer>> integer(@NotNull String name) {
+        return RequiredArgumentBuilder.argument(name, IntegerArgumentType.integer());
+    }
+
+    /**
+     * Create a new integer argument with the specified name.
+     *
+     * @param name Name of the argument
+     * @param min  Minimum value allowed
+     * @param <S>  Command source type
+     * @return Integer argument
+     */
+    @NotNull
+    default <S> ArgumentBuilder<S, RequiredArgumentBuilder<S, Integer>> integer(@NotNull String name, int min) {
+        return RequiredArgumentBuilder.argument(name, IntegerArgumentType.integer(min));
+    }
+
+    /**
+     * Create a new integer argument with the specified name.
+     *
+     * @param name Name of the argument
+     * @param min  Minimum value allowed
+     * @param max  Maximum value allowed
+     * @param <S>  Command source type
+     * @return Integer argument
+     */
+    @NotNull
+    default <S> ArgumentBuilder<S, RequiredArgumentBuilder<S, Integer>> integer(@NotNull String name, int min, int max) {
+        return RequiredArgumentBuilder.argument(name, IntegerArgumentType.integer(min, max));
     }
 
     /**
@@ -52,5 +101,7 @@ public interface ArgumentParser {
      * @return World argument
      */
     @NotNull
-    <S> ArgumentBuilder<S, RequiredArgumentBuilder<S, World>> world(@NotNull String name);
+    default <S> ArgumentBuilder<S, RequiredArgumentBuilder<S, World>> world(@NotNull String name) {
+        return RequiredArgumentBuilder.argument(name, WorldArgumentType.world());
+    }
 }

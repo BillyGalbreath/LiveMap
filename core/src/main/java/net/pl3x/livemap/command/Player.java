@@ -25,6 +25,7 @@
 package net.pl3x.livemap.command;
 
 import java.util.UUID;
+import net.pl3x.livemap.marker.Point;
 import net.pl3x.livemap.world.World;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,4 +56,12 @@ public interface Player extends Sender {
      */
     @NotNull
     World getWorld();
+
+    /**
+     * Get the player's location in the world.
+     *
+     * @return Player's location
+     */
+    @NotNull
+    Point getLocation();
 }

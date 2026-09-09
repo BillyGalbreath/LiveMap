@@ -24,7 +24,6 @@
 
 package net.pl3x.livemap.world;
 
-import io.papermc.paper.command.brigadier.argument.CustomArgumentType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.biome.BiomeManager;
@@ -142,9 +141,5 @@ public class PaperWorld extends World {
     @NotNull
     public String toString() {
         return "Paper" + super.toString();
-    }
-
-    @SuppressWarnings("unused")
-    public static class Argument extends World.Argument implements CustomArgumentType<World, String> {
     }
 }

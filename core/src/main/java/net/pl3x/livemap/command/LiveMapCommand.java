@@ -24,6 +24,7 @@
 
 package net.pl3x.livemap.command;
 
+import com.mojang.brigadier.Command;
 import com.mojang.brigadier.context.CommandContext;
 import net.pl3x.livemap.command.subcommand.FullRenderCommand;
 import net.pl3x.livemap.command.subcommand.RadiusRenderCommand;
@@ -49,10 +50,12 @@ public class LiveMapCommand<S> extends BaseCommand<S> {
     }
 
     @Override
-    protected void execute(@NotNull CommandContext<S> context) {
+    protected int execute(@NotNull CommandContext<S> context) {
         Sender sender = getSource(context).getSender();
 
         sender.sendMessage("// todo (map)");
         // todo
+
+        return Command.SINGLE_SUCCESS;
     }
 }

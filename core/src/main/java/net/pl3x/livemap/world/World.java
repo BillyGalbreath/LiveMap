@@ -24,23 +24,13 @@
 
 package net.pl3x.livemap.world;
 
-import com.mojang.brigadier.StringReader;
-import com.mojang.brigadier.arguments.ArgumentType;
-import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
-import com.mojang.brigadier.suggestion.Suggestions;
-import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.Logger;
-import net.pl3x.livemap.configuration.Lang;
 import net.pl3x.livemap.configuration.WorldConfig;
 import net.pl3x.livemap.marker.Point;
 import net.pl3x.livemap.render.renderer.RendererRegistry;
@@ -404,50 +394,6 @@ public abstract class World {
         this.pendingRegions.clear();
         getBiomeRegistry().clear();
         getRendererRegistry().clear();
-    }
-
-    /**
-     * Represents a custom command argument for our world type.
-     */
-    public static class Argument implements ArgumentType<World> {
-        public static final SimpleCommandExceptionType ERROR_WORLD_NOT_FOUND = new SimpleCommandExceptionType(() -> Lang.ERROR_WORLD_NOT_FOUND);
-        public static final SimpleCommandExceptionType ERROR_MISSING_WORLD = new SimpleCommandExceptionType(() -> Lang.ERROR_MISSING_WORLD);
-
-        @Override
-        @NotNull
-        public World parse(@NotNull StringReader reader) throws CommandSyntaxException {
-            String input = StringArgumentType.greedyString().parse(reader);
-            World world = LiveMap.api().getWorldRegistry().get(input);
-            if (world == null) {
-                throw ERROR_WORLD_NOT_FOUND.create();
-            }
-            return world;
-        }
-
-        @Override
-        @NotNull
-        public <S> CompletableFuture<Suggestions> listSuggestions(@NotNull CommandContext<S> context, @NotNull SuggestionsBuilder builder) {
-            for (var entry : LiveMap.api().getWorldRegistry().entrySet()) {
-                if (entry.getKey().startsWith(builder.getRemainingLowerCase())) {
-                    builder.suggest(entry.getKey());
-                }
-                if (entry.getValue().getName().toLowerCase(Locale.ROOT).startsWith(builder.getRemainingLowerCase())) {
-                    builder.suggest(entry.getValue().getName());
-                }
-            }
-            return builder.buildFuture();
-        }
-
-        /**
-         * Gets the native type that this argument uses,
-         * the type that is sent to the client.
-         *
-         * @return native argument type
-         */
-        @NotNull
-        public ArgumentType<String> getNativeType() {
-            return StringArgumentType.greedyString();
-        }
     }
 
     /**

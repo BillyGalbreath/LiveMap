@@ -34,8 +34,12 @@ import net.pl3x.livemap.util.FileUtil;
 public final class Lang extends AbstractConfig {
     @Key("error-world-not-found")
     public static String ERROR_WORLD_NOT_FOUND = "World not found";
-    @Key("error-missing-world")
-    public static String ERROR_MISSING_WORLD = "You must enter a world name or id";
+    @Key("error-must-specify-center")
+    public static String ERROR_MUST_SPECIFY_CENTER = "You must specify center coordinates";
+    @Key("error-must-specify-radius")
+    public static String ERROR_MUST_SPECIFY_RADIUS = "You must specify radius";
+    @Key("error-must-specify-world")
+    public static String ERROR_MUST_SPECIFY_WORLD = "You must enter a world name or id";
 
     @Key("command-fullrender-starting")
     public static String FULLRENDER_STARTING = "Starting fullrender on <grey><world>";

@@ -27,6 +27,7 @@ package net.pl3x.livemap.command;
 import java.util.UUID;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.PaperLiveMap;
+import net.pl3x.livemap.marker.Point;
 import net.pl3x.livemap.world.World;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,5 +55,11 @@ public class PaperPlayer extends PaperSender implements Player {
     @NotNull
     public World getWorld() {
         return ((PaperLiveMap) LiveMap.api()).getWorldRegistry().get(this.player.getWorld());
+    }
+
+    @Override
+    @NotNull
+    public Point getLocation() {
+        return Point.of(this.player.getX(), this.player.getZ());
     }
 }

@@ -26,7 +26,8 @@ package net.pl3x.livemap.command.argument;
 
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
-import net.pl3x.livemap.world.PaperWorld;
+import io.papermc.paper.command.brigadier.argument.CustomArgumentType;
+import net.pl3x.livemap.marker.Point;
 import net.pl3x.livemap.world.World;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +39,19 @@ import org.jetbrains.annotations.NotNull;
 public class PaperArgumentParser implements ArgumentParser {
     @Override
     @NotNull
+    public <S> ArgumentBuilder<S, RequiredArgumentBuilder<S, Point>> point(@NotNull String name) {
+        return RequiredArgumentBuilder.argument(name, new PaperPointArgumentType());
+    }
+
+    @Override
+    @NotNull
     public <S> ArgumentBuilder<S, RequiredArgumentBuilder<S, World>> world(@NotNull String name) {
-        return RequiredArgumentBuilder.argument(name, new PaperWorld.Argument());
+        return RequiredArgumentBuilder.argument(name, new PaperWorldArgumentType());
+    }
+
+    public static class PaperPointArgumentType extends PointArgumentType implements CustomArgumentType<Point, String> {
+    }
+
+    public static class PaperWorldArgumentType extends WorldArgumentType implements CustomArgumentType<World, String> {
     }
 }

@@ -24,6 +24,7 @@
 
 package net.pl3x.livemap.command.subcommand;
 
+import com.mojang.brigadier.Command;
 import com.mojang.brigadier.context.CommandContext;
 import net.pl3x.livemap.command.BaseCommand;
 import net.pl3x.livemap.command.Sender;
@@ -46,7 +47,7 @@ public class ReloadCommand<S> extends BaseCommand<S> {
     }
 
     @Override
-    protected void execute(@NotNull CommandContext<S> context) {
+    protected int execute(@NotNull CommandContext<S> context) {
         Sender sender = getSource(context).getSender();
 
         sender.sendMessage("// todo (reload)");
@@ -55,5 +56,7 @@ public class ReloadCommand<S> extends BaseCommand<S> {
         // caution - v3 has issues reloading while render queue is running. need to
         // pay special attention to ensure all tasks are stopped before reloading.
         // whether or not to automatically restart them, I don't know, yet.
+
+        return Command.SINGLE_SUCCESS;
     }
 }

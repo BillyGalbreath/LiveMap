@@ -28,7 +28,6 @@ import java.util.Arrays;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import net.pl3x.livemap.render.image.Colors;
-import net.pl3x.livemap.render.image.Image;
 import net.pl3x.livemap.render.image.TileCanvas;
 import net.pl3x.livemap.util.MapBlurUtil;
 import net.pl3x.livemap.world.chunk.Chunk;
@@ -68,7 +67,7 @@ public class FancyHeightmap extends Heightmap {
                 float shade = ((((int) ((this.heightmap[index] - 1) / 25.6F)) / 5F)
                     + ((((copy[index] - 1) / 25.6F) % 1) / 5F))
                     * 1.2F + 1F;
-                tile.setPixel(index & 511, index >> 9, Colors.mul(color & 0xFFFFFF, shade) | 0xFF000000);
+                tile.setPixel(index, Colors.mul(color & 0xFFFFFF, shade) | 0xFF000000);
             }
         }
     }
@@ -87,7 +86,7 @@ public class FancyHeightmap extends Heightmap {
             yDiff = 1F;
         }
 
-        this.heightmap[Image.getIndex(data.getBlockX(), data.getBlockZ())] = (byte) (128 * yDiff - 127);
+        this.heightmap[((data.getBlockZ() & 511) << 9) | (data.getBlockX() & 511)] = (byte) (128 * yDiff - 127);
     }
 
     private float CalculateAltitudeDiff(@NotNull Chunk chunk, int blockX, int blockZ, int blockY) {
