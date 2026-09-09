@@ -1,0 +1,91 @@
+import {LiveMap} from "../LiveMap";
+import {World} from "../world/World";
+import {Renderer} from "../world/Renderer";
+import {Point} from "./Point";
+
+export class Url {
+  private readonly _livemap: LiveMap;
+  private readonly _basePath: string;
+  private readonly _world: string;
+  private readonly _renderer: string;
+  private readonly _zoom: number;
+  private readonly _point: Point;
+
+  constructor(livemap: LiveMap, url: string, worldId?: string | null, rendererId?: string | null, zoom?: string | number | null, x?: string | number | null, z?: string | number | null) {
+    this._livemap = livemap;
+
+    if (worldId) {
+      this._basePath = "/";
+    } else {
+      const match: RegExpExecArray | null = /^\/(.+?)(?:\/(.+?)?\/?(-?\d+)?\/?(-?\d+)?\/?(-?\d+)?(?:\/(.+)?)?)?$/.exec(url);
+      if (match) {
+        this._basePath = "/";
+        worldId = match[1];
+        rendererId = match[2] ?? "basic";
+        zoom = match[3] ?? 0;
+        x = match[4] ?? 0;
+        z = match[5] ?? 0;
+      } else {
+        this._basePath = window.location.pathname?.split("?")[0]?.replace("index.html", "") ?? "/";
+        const url: URLSearchParams = new URLSearchParams(window.location.search);
+        worldId = url.get("world");
+        rendererId = url.get("renderer");
+        zoom = url.get("zoom");
+        x = url.get("x");
+        z = url.get("z");
+      }
+    }
+
+    // verify world exists
+    let world: World | undefined = this._livemap.worlds.find((w: World): boolean => w.id === worldId);
+    if (!world) {
+      // fallback to first known world
+      world = this._livemap.worlds[0];
+    }
+
+    // verify renderer
+    let renderer: Renderer | undefined = world.renderers.find((r: Renderer): boolean => r.id === rendererId);
+    if (!renderer) {
+      // fallback to world's first renderer
+      renderer = world.renderers[0];
+    }
+
+    this._world = world.id;
+    this._renderer = renderer.id;
+    this._zoom = +(zoom ?? this._livemap.zooms.def);
+    this._point = Point.of(x ?? 0, z ?? 0);
+  }
+
+  get basePath(): string {
+    return this._basePath;
+  }
+
+  get world(): string {
+    return this._world;
+  }
+
+  get renderer(): string {
+    return this._renderer;
+  }
+
+  get zoom(): number {
+    return this._zoom;
+  }
+
+  get x(): number {
+    return this._point.x;
+  }
+
+  get z(): number {
+    return this._point.z;
+  }
+
+  get point(): Point {
+    return this._point;
+  }
+
+  public toString(): string {
+    return (this._livemap.friendly_urls ? `%s%s/%s/%i/%i/%i/` : `%s?world=%s&renderer=%s&zoom=%i&x=%i&z=%i`)
+      .formatted(this.basePath, this.world, this.renderer, this.zoom, this.point.x, this.point.z);
+  }
+}

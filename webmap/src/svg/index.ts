@@ -1,2 +1,14 @@
+import "./center.svg";
+import "./copy.svg";
+import "./danger.svg";
+import "./icon.svg";
+import "./info.svg";
+import "./layers.svg";
+import "./link.svg";
 import "./livemap.svg";
 import "./loading.svg";
+import "./marker.svg";
+import "./paste.svg";
+import "./pin.svg";
+import "./success.svg";
+import "./warning.svg";

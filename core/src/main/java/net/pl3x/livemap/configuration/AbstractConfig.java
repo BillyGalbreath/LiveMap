@@ -98,7 +98,7 @@ public abstract class AbstractConfig {
         @Override
         public void configure(@NotNull YamlConfigurationOptions yamlOptions) {
             super.configure(yamlOptions);
-            DumperOptions dumperOptions = this.getDumperOptions();
+            DumperOptions dumperOptions = getDumperOptions();
             dumperOptions.setSplitLines(false);
             dumperOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
             dumperOptions.setDefaultScalarStyle(DumperOptions.ScalarStyle.DOUBLE_QUOTED);

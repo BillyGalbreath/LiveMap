@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 25">
+    <defs>
+        <linearGradient id="c" x1="12" x2="12" y1="24" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#2e6c97"/>
+            <stop offset="1" stop-color="#3883b7"/>
+        </linearGradient>
+        <linearGradient id="d" x1="12" x2="12" y1="23" y2=".5" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#1975c8"/>
+            <stop offset="1" stop-color="#4899d0"/>
+        </linearGradient>
+        <linearGradient id="e" x1="12" x2="12" y1="23" y2=".5" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#3182ce"/>
+            <stop offset="1" stop-color="#60a7d7"/>
+        </linearGradient>
+        <linearGradient id="f" x1="12" x2="12" y1="10.8" y2="4.3" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#4a96d2"/>
+            <stop offset="1" stop-color="#59a2d5"/>
+        </linearGradient>
+        <linearGradient id="b" x1="8" x2="22" y1="24" y2="3" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-opacity=".8"/>
+            <stop offset="1" stop-opacity="0"/>
+        </linearGradient>
+        <filter id="a">
+            <feGaussianBlur stdDeviation=".5"/>
+        </filter>
+    </defs>
+    <g filter="url(#a)">
+        <path fill="url(#b)" d="M8 24.5S9.2 8.3 11.6 4.6c2.3-3.6 6.4-4 9.6-.8a10 10 0 0 1 1.4 12C20.2 19.5 8 24.5 8 24.5z"/>
+    </g>
+    <g transform="translate(-4 .5)">
+        <path stroke="url(#c)" stroke-width="1.5" d="M12 23S5 11.5 5 7.5s3-7 7-7 7 3 7 7S12 23 12 23z"/>
+        <path fill="url(#d)" stroke="url(#e)" stroke-width=".5" d="M12 23S5 11.5 5 7.5s3-7 7-7 7 3 7 7S12 23 12 23z"/>
+        <circle cx="12" cy="7.5" r="3.5" fill="url(#f)"/>
+        <circle cx="12" cy="7.5" r="3" fill="#30709d"/>
+        <circle cx="12" cy="7.5" r="2.5" fill="#dedede"/>
+    </g>
+</svg>
