@@ -163,10 +163,11 @@ public class RenderScheduler {
      * <p>If a manual run is already running, this method
      * will return null without interrupting the run.
      *
+     * @param runnable Task to run before trigger if trigger is able to run
      * @return Future scheduled to manually run now, or null
      */
     @Nullable
-    public ForkJoinTask<?> trigger() {
+    public ForkJoinTask<?> trigger(@Nullable Runnable runnable) {
         // ensure executor is accepting new tasks
         if (this.worldExecutor.isShutdown()) {
             return null;
@@ -181,6 +182,9 @@ public class RenderScheduler {
         cancelActiveRun();
 
         // manually run
+        if (runnable != null) {
+            runnable.run();
+        }
         return this.worldExecutor.submit(() -> run(true));
     }
 

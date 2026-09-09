@@ -79,13 +79,18 @@ public class FullRenderCommand<S> extends BaseCommand<S> {
         sender.sendMessage(Lang.FULLRENDER_STARTING
             .replace("<world>", world.getName()));
 
-        // add all regions to queue
+        // get all regions for world
         Collection<Path> paths = FileUtil.getRegionPaths(world);
         LongCollection regions = FileUtil.regionPathsToLongs(paths);
-        world.getPendingRegions().addAll(regions); // todo - dont dump until we can run
 
         // trigger render scheduler _now_
-        ForkJoinTask<?> future = LiveMap.api().getRenderScheduler().trigger();
+        ForkJoinTask<?> future = LiveMap.api().getRenderScheduler().trigger(() -> {
+            // add all regions to the queue if and only if trigger is able to run
+            // this prevents dumping the full list of regions to the queue on failed triggers
+            world.getPendingRegions().addAll(regions);
+        });
+
+        // check for failed trigger
         if (future == null) {
             sender.sendMessage("<red>Unable to start fullrender (is it already running?)");
             return;
