@@ -29,6 +29,8 @@ import com.mojang.brigadier.context.CommandContext;
 import net.pl3x.livemap.command.subcommand.FullRenderCommand;
 import net.pl3x.livemap.command.subcommand.RadiusRenderCommand;
 import net.pl3x.livemap.command.subcommand.ReloadCommand;
+import net.pl3x.livemap.configuration.Config;
+import net.pl3x.livemap.configuration.Lang;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -53,8 +55,8 @@ public class LiveMapCommand<S> extends BaseCommand<S> {
     protected int execute(@NotNull CommandContext<S> context) {
         Sender sender = getSource(context).getSender();
 
-        sender.sendMessage("// todo (map)");
-        // todo
+        sender.sendMessage(Lang.COMMAND_LIVEMAP
+            .replaceAll("<url>", Config.HTTPD_URL));
 
         return Command.SINGLE_SUCCESS;
     }

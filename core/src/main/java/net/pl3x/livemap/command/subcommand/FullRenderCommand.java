@@ -57,7 +57,7 @@ public class FullRenderCommand<S> extends BaseCommand<S> {
      */
     public FullRenderCommand(@NotNull Source.Converter<S> sourceConverter) {
         super("fullrender", sourceConverter);
-        then(LiveMap.api().getArgumentParser().<S>world("world").executes(this::executeWorld));
+        then(world("world").executes(this::executeWorld));
     }
 
     // executed with specified world

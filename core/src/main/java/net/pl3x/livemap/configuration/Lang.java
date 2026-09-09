@@ -41,6 +41,9 @@ public final class Lang extends AbstractConfig {
     @Key("error-must-specify-world")
     public static String ERROR_MUST_SPECIFY_WORLD = "You must enter a world name or id";
 
+    @Key("command-livemap")
+    public static String COMMAND_LIVEMAP = "View the LiveMap at <click:open_url:'<url>'><url>></click>";
+
     @Key("command-fullrender-starting")
     public static String FULLRENDER_STARTING = "Starting fullrender on <grey><world>";
     @Key("command-fullrender-started")

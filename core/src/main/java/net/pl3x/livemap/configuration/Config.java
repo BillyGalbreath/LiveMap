@@ -85,6 +85,11 @@ public final class Config extends AbstractConfig {
         The port the built-in web server listens to for http requests.
         Make sure the port is allocated if using a panel like Pterodactyl.""")
     public static int HTTPD_PORT = 8080;
+    @Key("settings.internal-webserver.url")
+    @Comment("""
+        The url that is displayed in the /map command to your players.
+        IMPORTANT: This is ONLY a display text. It does NOT configure anything.""")
+    public static String HTTPD_URL = "http://localhost:8080";
 
     @Key("settings.performance.render-threads")
     @Comment("""
