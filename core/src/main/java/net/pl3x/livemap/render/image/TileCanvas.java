@@ -43,7 +43,7 @@ import org.jetbrains.annotations.NotNull;
  * Represents a tile which holds all the important data that is saved
  * to disk per region. <em>(images, heightmaps, block/biome info, etc.)</em>
  */
-public class TileCanvas implements ImageInt {
+public class TileCanvas {
     public static final String DIR_PATH = "%d/%s/";
     public static final String FILE_PATH = "%d_%d.%s";
 
@@ -122,14 +122,35 @@ public class TileCanvas implements ImageInt {
         return this.heightmap;
     }
 
-    @Override
-    public int[] getPixels() {
-        return this.pixels;
+    /**
+     * Get value at specified pixel.
+     *
+     * @param index Pixel index
+     * @return Requested value
+     */
+    public int getPixel(int index) {
+        return this.pixels[index];
     }
 
-    @Override
+    /**
+     * Set pixel to specified value.
+     *
+     * @param x     X pixel
+     * @param z     Z pixel
+     * @param value Value to set
+     */
+    public void setPixel(int x, int z, int value) {
+        setPixel(((z & 511) << 9) | (x & 511), value);
+    }
+
+    /**
+     * Set pixel to specified value.
+     *
+     * @param index Pixel index
+     * @param value Value to set
+     */
     public void setPixel(int index, int value) {
-        ImageInt.super.setPixel(index, value);
+        this.pixels[index] = value;
         this.dirty = true;
     }
 
