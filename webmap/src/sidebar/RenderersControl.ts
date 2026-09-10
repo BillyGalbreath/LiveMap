@@ -22,44 +22,37 @@
  * SOFTWARE.
  */
 
-export class UI {
-  private readonly _link: string;
-  private readonly _coords: string;
-  private readonly _blockinfo: string;
-  private readonly _scale: string;
-  private readonly _sidebar: string;
-  private readonly _logo: string;
+import * as L from "leaflet";
+import {LiveMap} from "../LiveMap";
+import {Renderer} from "../world/Renderer";
 
-  constructor(ui: UI) {
-    this._link = ui.link;
-    this._coords = ui.coords;
-    this._blockinfo = ui.blockinfo;
-    this._scale = ui.scale;
-    this._sidebar = ui.sidebar;
-    this._logo = ui.logo;
+export class RenderersControl {
+  private readonly _livemap: LiveMap;
+  private readonly _dom: HTMLElement;
+
+  private _renderers: Renderer[] = [];
+
+  private _rendererType: string = "basic";
+
+  constructor(livemap: LiveMap) {
+    this._livemap = livemap;
+
+    this._dom = L.DomUtil.create("ul");
+
+    /*livemap.settings.renderers.forEach((renderer: Renderer): void => {
+        this._renderers.push(new Renderer(renderer))
+    });*/
   }
 
-  get link(): string {
-    return this._link;
+  get dom(): HTMLElement {
+    return this._dom;
   }
 
-  get coords(): string {
-    return this._coords;
+  get rendererType(): string {
+    return this._rendererType;
   }
 
-  get blockinfo(): string {
-    return this._blockinfo;
-  }
-
-  get scale(): string {
-    return this._scale;
-  }
-
-  get sidebar(): string {
-    return this._sidebar;
-  }
-
-  get logo(): string {
-    return this._logo;
+  set rendererType(renderer: string | null) {
+    this._rendererType = !renderer?.length ? this._renderers[0].id : renderer;
   }
 }

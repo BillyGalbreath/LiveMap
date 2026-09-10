@@ -22,44 +22,20 @@
  * SOFTWARE.
  */
 
-export class UI {
-  private readonly _link: string;
-  private readonly _coords: string;
-  private readonly _blockinfo: string;
-  private readonly _scale: string;
-  private readonly _sidebar: string;
-  private readonly _logo: string;
+export class Palette {
+  private readonly _index: string;
+  private readonly _value: string;
 
-  constructor(ui: UI) {
-    this._link = ui.link;
-    this._coords = ui.coords;
-    this._blockinfo = ui.blockinfo;
-    this._scale = ui.scale;
-    this._sidebar = ui.sidebar;
-    this._logo = ui.logo;
+  constructor(index: string, value: string) {
+    this._index = index;
+    this._value = value;
   }
 
-  get link(): string {
-    return this._link;
+  get index(): string {
+    return this._index
   }
 
-  get coords(): string {
-    return this._coords;
-  }
-
-  get blockinfo(): string {
-    return this._blockinfo;
-  }
-
-  get scale(): string {
-    return this._scale;
-  }
-
-  get sidebar(): string {
-    return this._sidebar;
-  }
-
-  get logo(): string {
-    return this._logo;
+  get value(): string {
+    return this._value
   }
 }

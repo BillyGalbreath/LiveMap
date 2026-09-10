@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.random.RandomGenerator;
+import java.util.regex.Pattern;
 import javax.imageio.ImageIO;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.util.Mathf;
@@ -64,6 +65,9 @@ public final class Colors {
      * Colormap from gradient image for foliage.
      */
     public static final int[] COLORMAP_FOLIAGE;
+
+    // `DOUBLE=` because simpleyaml seems to add that for the quote style for some reason
+    private static final Pattern HEX_PATTERN = Pattern.compile("(?i)^(DOUBLE=)?(0x|#)");
 
     static {
         for (int i = 0; i < 8; i++) {
@@ -331,7 +335,7 @@ public final class Colors {
      * @return Color
      */
     public static int fromHex(@NotNull String hex) {
-        return (int) Long.parseLong(hex.replaceAll("(?i)^(DOUBLE=)?(0x|#)", ""), 16);
+        return (int) Long.parseLong(HEX_PATTERN.matcher(hex).replaceFirst(""), 16);
     }
 
     /**

@@ -22,44 +22,37 @@
  * SOFTWARE.
  */
 
-export class UI {
-  private readonly _link: string;
-  private readonly _coords: string;
-  private readonly _blockinfo: string;
-  private readonly _scale: string;
-  private readonly _sidebar: string;
-  private readonly _logo: string;
+package net.pl3x.livemap.command.subcommand;
 
-  constructor(ui: UI) {
-    this._link = ui.link;
-    this._coords = ui.coords;
-    this._blockinfo = ui.blockinfo;
-    this._scale = ui.scale;
-    this._sidebar = ui.sidebar;
-    this._logo = ui.logo;
-  }
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.context.CommandContext;
+import net.pl3x.livemap.command.BaseCommand;
+import net.pl3x.livemap.command.Sender;
+import net.pl3x.livemap.command.Source;
+import org.jetbrains.annotations.NotNull;
 
-  get link(): string {
-    return this._link;
-  }
+/**
+ * The help command.
+ *
+ * @param <S> CommandSourceStack
+ */
+public class HelpCommand<S> extends BaseCommand<S> {
+    /**
+     * Constructs a new instance of HelpCommand.
+     *
+     * @param sourceConverter Stack to source converter
+     */
+    public HelpCommand(@NotNull Source.Converter<S> sourceConverter) {
+        super("help", sourceConverter);
+    }
 
-  get coords(): string {
-    return this._coords;
-  }
+    @Override
+    protected int execute(@NotNull CommandContext<S> context) {
+        Sender sender = getSource(context).getSender();
 
-  get blockinfo(): string {
-    return this._blockinfo;
-  }
+        sender.sendMessage("// todo (help)");
+        // todo - show comprehensive help
 
-  get scale(): string {
-    return this._scale;
-  }
-
-  get sidebar(): string {
-    return this._sidebar;
-  }
-
-  get logo(): string {
-    return this._logo;
-  }
+        return Command.SINGLE_SUCCESS;
+    }
 }

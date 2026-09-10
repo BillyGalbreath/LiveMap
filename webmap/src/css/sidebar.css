@@ -1,0 +1,219 @@
+/*
+ * This file is part of LiveMap, licensed under the MIT License (MIT).
+ *
+ * Copyright (c) 2020-2026 William Blake Galbreath
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+aside {
+  --bounce: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  position: fixed;
+  top: 0;
+  right: -320px;
+  width: 250px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 0 100px 0 0;
+  z-index: 1000000;
+  font-family: "Poppins", sans-serif;
+  border-left: var(--border);
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+  background: var(--background);
+  backdrop-filter: var(--blur);
+  color: var(--text-color);
+  text-shadow: var(--text-shadow);
+  transition: all 0.3s ease, right var(--bounce);
+  background-blend-mode: screen;
+
+  &:hover {
+    border-left: var(--border-hover);
+    background-color: var(--background-color-hover);
+  }
+
+  &.show {
+    right: -100px;
+
+    #pin {
+      opacity: 1;
+      transition: all .2s ease-in-out, opacity .6s ease-out;
+
+      svg {
+        rotate: 0deg;
+      }
+    }
+
+    div {
+      padding: 15px 0;
+
+      svg {
+        width: 40px;
+        height: 40px;
+        padding: 0;
+      }
+
+      div:not(:first-child) {
+        flex: 0;
+      }
+
+      span:not(:first-child) {
+        flex: 0;
+      }
+    }
+
+    ul li img {
+      width: 32px;
+      height: 32px;
+      margin: 0 10px;
+    }
+  }
+
+  div {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    padding: 15px 0 15px 3px;
+    line-height: 40px;
+    font-size: 1.15rem;
+    font-weight: 600;
+
+    > div, svg, span {
+      transition: all 0.3s ease;
+    }
+
+    > div {
+      padding: 0;
+      flex: 1;
+    }
+
+    a,
+    span {
+      display: flex;
+      color: var(--text-color);
+      text-decoration: none;
+    }
+
+    svg {
+      width: 24px;
+      height: 24px;
+      padding: 8px 0;
+      margin-right: 15px;
+      filter: var(--filter-shadow);
+    }
+
+    span:not(:first-child) {
+      flex: auto;
+    }
+  }
+
+  ul {
+    list-style-type: none;
+    overflow-y: auto;
+    scrollbar-width: none;
+    margin-bottom: 10px;
+    width: 320px;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+
+    li {
+      display: flex;
+      margin: 0 5px 0 2px;
+      padding: 2px 0;
+      height: 34px;
+      line-height: 34px;
+      border-radius: 5px;
+
+      &:hover {
+        cursor: pointer;
+        background-color: var(--background-color-hover);
+
+        img {
+          border: var(--border-hover);
+        }
+      }
+
+      img {
+        width: 24px;
+        height: 24px;
+        margin: 3px 28px 0 0;
+        border: var(--border);
+        border-radius: 5px;
+        box-shadow: var(--box-shadow);
+        transition: all 0.3s ease;
+      }
+
+      p {
+        color: var(--text-color);
+        font-weight: 500;
+        white-space: nowrap;
+      }
+    }
+  }
+
+  #pin {
+    width: 23px;
+    height: 23px;
+    margin: 5px 5px -32px 6px;
+    padding: 2px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    opacity: 0;
+    transition: all .2s ease-in-out, opacity .3s ease-out;
+    cursor: pointer;
+    z-index: 2;
+
+    svg {
+      margin: 0;
+      padding: 0;
+      width: 23px;
+      height: 23px;
+      rotate: 45deg;
+      transition: all 0.3s cubic-bezier(0.3, 2, 0.6, 1);
+    }
+
+    &.pinned {
+      svg {
+        filter: var(--sidebar-pinned-filter-shadow);
+        rotate: -55deg;
+      }
+
+      &:hover {
+        background: var(--sidebar-pinned-background);
+        border: var(--sidebar-pinned-border);
+      }
+    }
+
+    &.unpinned {
+      svg {
+        filter: var(--sidebar-unpinned-filter-shadow);
+      }
+
+      &:hover {
+        background: var(--sidebar-unpinned-background);
+        border: var(--sidebar-unpinned-border);
+      }
+    }
+  }
+}

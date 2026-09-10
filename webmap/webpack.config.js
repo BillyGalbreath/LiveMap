@@ -94,7 +94,7 @@ module.exports = {
         {
           from: "public",
           globOptions: {
-            ignore: ["**/tiles/**"]
+            // ignore: ["**/tiles/**"]
           }
         }
       ]

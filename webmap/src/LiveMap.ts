@@ -1,14 +1,42 @@
+/*
+ * This file is part of LiveMap, licensed under the MIT License (MIT).
+ *
+ * Copyright (c) 2020-2026 William Blake Galbreath
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 import * as L from "leaflet";
+import {BlockInfoControl} from "./control/BlockInfoControl";
 import {CoordsControl} from "./control/CoordsControl";
 import {LinkControl} from "./control/LinkControl";
 import {ScaleControl} from "./control/ScaleControl";
 import {Lang} from "./data/Lang";
 import {Point} from "./data/Point";
 import {UI} from "./data/UI";
-import {World} from "./world/World";
 import {Zooms} from "./data/Zooms";
+import {ContextMenu} from "./menu/ContextMenu";
+import {SidebarControl} from "./sidebar/SidebarControl";
+import {World} from "./world/World";
 import "./css/livemap.css";
 import "./svg"
+import {Palette} from "./palette/Palette";
 
 window.onload = function (): void {
   window.fetchJson<LiveMap>("tiles/settings.json")
@@ -25,10 +53,10 @@ export class LiveMap extends L.Map {
 
   private readonly _linkControl: LinkControl;
   private readonly _coordsControl: CoordsControl;
-  // private readonly _blockInfoControl: BlockInfoControl; // todo
+  private readonly _blockInfoControl: BlockInfoControl;
 
-  // private readonly _sidebarControl: SidebarControl; // todo
-  // private readonly _contextMenu: ContextMenu; // todo
+  private readonly _sidebarControl: SidebarControl;
+  private readonly _contextMenu: ContextMenu;
 
   private readonly _minecraft: string;
   private readonly _max_players: number;
@@ -99,7 +127,7 @@ export class LiveMap extends L.Map {
     this._ui = new UI(options.ui);
     this._lang = new Lang(this.minecraft, options.lang);
 
-    new ScaleControl(this); // todo
+    new ScaleControl(this);
     // manually add the zoom control below the scale control
     L.control.zoom().addTo(this);
 
@@ -119,15 +147,15 @@ export class LiveMap extends L.Map {
       document.title = window.lang("title");
     }
 
-    // set up the controllers
-    this._linkControl = new LinkControl(this);
+    // set up the controllers (order here matters)
     this._coordsControl = new CoordsControl(this);
-    // this._blockInfoControl = new BlockInfoControl(this); // todo
+    this._blockInfoControl = new BlockInfoControl(this);
+    this._linkControl = new LinkControl(this);
 
-    // this._sidebarControl = new SidebarControl(this); // todo
+    this._sidebarControl = new SidebarControl(this);
 
     // the fancy context menu and stuff
-    // this._contextMenu = new ContextMenu(this); // todo
+    this._contextMenu = new ContextMenu(this);
 
     // stuff to do after the map fully loads
     // but let loading screen show for at least 500ms
@@ -198,7 +226,7 @@ export class LiveMap extends L.Map {
     return this._coordsControl;
   }
 
-  /*get blockInfoControl(): BlockInfoControl {
+  get blockInfoControl(): BlockInfoControl {
     return this._blockInfoControl;
   }
 
@@ -208,7 +236,7 @@ export class LiveMap extends L.Map {
 
   get contextMenu(): ContextMenu {
     return this._contextMenu;
-  }*/
+  }
 
   public centerOn(point: Point, zoom?: number | string): void {
     if (zoom !== undefined) {
@@ -284,11 +312,34 @@ window.customEvent = <T>(event: keyof (WindowEventMap), detail: T): void => {
   window.dispatchEvent(new CustomEvent(event, {detail}));
 }
 
+window.fetchBytes = async <T>(url: string): Promise<T> => {
+  return fetch(url, {headers: {"Content-Disposition": "inline"}})
+    .then(async (res: Response): Promise<any> => {
+      if (res.ok) {
+        return await res.arrayBuffer();
+      }
+    });
+}
+
 window.fetchJson = async <T>(url: string, init?: RequestInit): Promise<T> => {
   return fetch(url, init).then(async (res: Response): Promise<any> => {
     if (res.ok) {
       return await res.json();
     }
+  });
+}
+
+window.fetchPalette = (url: string, type: string, palette: Map<number, string>): void => {
+  window.fetchJson<Palette>(url).then((json: Palette): void => {
+    Object.entries(json).forEach((data: [string, string]): void => {
+      let name: string = data[1];
+      const index: number = name.indexOf(':');
+      if (index !== -1) {
+        const namespace: string = name.substring(0, index);
+        name = window.lang(`${type}.${namespace}.${name.substring(index + 1)}`);
+      }
+      palette.set(Number(data[0]), name);
+    });
   });
 }
 

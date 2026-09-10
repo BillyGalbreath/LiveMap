@@ -52,6 +52,10 @@ final class TilesPathHandler extends io.undertow.server.handlers.PathHandler {
             // do not cache anything in the tiles directory (includes JSON files)
             exchange.getResponseHeaders().put(Headers.CACHE_CONTROL, "max-age=0, must-revalidate, no-cache");
         }
+        if (exchange.getRelativePath().endsWith(".gz")) {
+            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+            exchange.getResponseHeaders().put(Headers.CONTENT_ENCODING, "gzip");
+        }
         handler.handleRequest(exchange);
     }
 

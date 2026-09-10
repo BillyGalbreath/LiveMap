@@ -27,6 +27,7 @@ package net.pl3x.livemap.command;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.context.CommandContext;
 import net.pl3x.livemap.command.subcommand.FullRenderCommand;
+import net.pl3x.livemap.command.subcommand.HelpCommand;
 import net.pl3x.livemap.command.subcommand.RadiusRenderCommand;
 import net.pl3x.livemap.command.subcommand.ReloadCommand;
 import net.pl3x.livemap.configuration.Config;
@@ -47,6 +48,7 @@ public class LiveMapCommand<S> extends BaseCommand<S> {
     public LiveMapCommand(@NotNull Source.Converter<S> sourceConverter) {
         super("livemap", sourceConverter);
         then(new FullRenderCommand<>(sourceConverter));
+        then(new HelpCommand<>(sourceConverter));
         then(new RadiusRenderCommand<>(sourceConverter));
         then(new ReloadCommand<>(sourceConverter));
     }

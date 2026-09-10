@@ -22,44 +22,40 @@
  * SOFTWARE.
  */
 
-export class UI {
-  private readonly _link: string;
-  private readonly _coords: string;
-  private readonly _blockinfo: string;
-  private readonly _scale: string;
-  private readonly _sidebar: string;
-  private readonly _logo: string;
+import * as L from "leaflet";
+import {LiveMap} from "../LiveMap";
 
-  constructor(ui: UI) {
-    this._link = ui.link;
-    this._coords = ui.coords;
-    this._blockinfo = ui.blockinfo;
-    this._scale = ui.scale;
-    this._sidebar = ui.sidebar;
-    this._logo = ui.logo;
+export class PinControl {
+  private readonly _dom: HTMLElement;
+  private readonly _svg: SVGSVGElement;
+
+  private _pinned: boolean = false;
+
+  constructor(livemap: LiveMap, parent: HTMLElement) {
+    this._dom = L.DomUtil.create("div", "", parent);
+    this._dom.id = "pin";
+    this._dom.onclick = (): void => {
+      this.pin(!this.pinned);
+      localStorage.setItem("sidebar.pinned", this.pinned ? "pinned" : "unpinned");
+    };
+
+    this._dom.appendChild(window.createSVGIcon("pin"));
+    this._svg = this._dom.querySelector("svg")!;
+
+    this.pin(livemap.ui.sidebar == "pinned" || localStorage.getItem("sidebar.pinned") == "pinned");
   }
 
-  get link(): string {
-    return this._link;
+  public get pinned(): boolean {
+    return this._pinned;
   }
 
-  get coords(): string {
-    return this._coords;
-  }
+  public pin(pinned: boolean): void {
+    this._pinned = pinned;
 
-  get blockinfo(): string {
-    return this._blockinfo;
-  }
+    this._dom.className = pinned ? "pinned" : "unpinned";
+    const text: string = window.lang(`sidebar.${this._dom.className}`);
 
-  get scale(): string {
-    return this._scale;
-  }
-
-  get sidebar(): string {
-    return this._sidebar;
-  }
-
-  get logo(): string {
-    return this._logo;
+    this._svg.setAttribute("alt", text);
+    this._svg.setAttribute("title", text);
   }
 }

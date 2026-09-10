@@ -1,3 +1,27 @@
+/*
+ * This file is part of LiveMap, licensed under the MIT License (MIT).
+ *
+ * Copyright (c) 2020-2026 William Blake Galbreath
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 import * as L from "leaflet";
 import {LiveMap} from "../LiveMap";
 import {Point} from "../data/Point";
@@ -20,7 +44,7 @@ export class LinkControl extends ControlBox {
     this._dom.onclick = (e: MouseEvent): void => {
       e.preventDefault();
       window.history.replaceState({}, window.lang("title"), this._dom.href);
-      // this._livemap.contextMenu.share(Point.of(this._livemap.getCenter()).round()); // todo
+      this._livemap.contextMenu.share(Point.of(this._livemap.getCenter()).round());
     }
 
     // add to the map once we have a dom to add
@@ -33,7 +57,7 @@ export class LinkControl extends ControlBox {
     // this sets up the map after ctor and before load
     // onLoad will not call until this is finished
     setTimeout((): void => {
-      // this._livemap.sidebarControl.renderersControl.rendererType = this._url.renderer; // todo
+      this._livemap.sidebarControl.renderersControl.rendererType = this._url.renderer;
       this._livemap.centerOn(this._url.point, this._url.zoom);
     }, 0);
   }
@@ -64,7 +88,7 @@ export class LinkControl extends ControlBox {
       this._livemap,
       this._url.basePath,
       this._url.world,
-      "fancy", // this._livemap.sidebarControl.renderersControl.rendererType, // todo
+      this._livemap.sidebarControl.renderersControl.rendererType,
       this._livemap.currentZoom(),
       point.x,
       point.z

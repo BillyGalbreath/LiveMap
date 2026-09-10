@@ -1,0 +1,93 @@
+/*
+ * This file is part of LiveMap, licensed under the MIT License (MIT).
+ *
+ * Copyright (c) 2020-2026 William Blake Galbreath
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+.notifications {
+  position: absolute;
+  left: 12px;
+  bottom: 55px;
+  z-index: 9998;
+  margin-right: 12px;
+  max-width: 350px;
+
+  > div {
+    position: relative;
+    transform: translateX(-100%);
+    margin-top: 12px;
+    padding: 10px 0;
+    border-radius: 5px;
+    text-shadow: var(--text-shadow);
+    box-shadow: var(--box-shadow);
+    backdrop-filter: var(--blur);
+    transition: transform .2s ease-in, opacity .2s ease-in;
+    opacity: 0;
+
+    > svg {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      margin-left: 10px;
+      width: 32px;
+      height: 32px;
+      filter: drop-shadow(1px 1px 2px #000000E5);
+    }
+
+    > p {
+      margin-left: 55px;
+      padding: 0 20px 0 15px;
+      border-left: 1px solid #FFFFFF4C;
+      line-height: 1.2;
+      font-size: 16px;
+      text-align: justify;
+    }
+
+    &.show {
+      opacity: 1;
+      transform: translateX(0%);
+    }
+
+    &.info {
+      color: var(--notification-info-color);
+      border: var(--notification-info-border);
+      background: var(--notification-info-background);
+    }
+
+    &.success {
+      color: var(--notification-success-color);
+      border: var(--notification-success-border);
+      background: var(--notification-success-background);
+    }
+
+    &.warning {
+      color: var(--notification-warning-color);
+      border: var(--notification-warning-border);
+      background: var(--notification-warning-background);
+    }
+
+    &.danger {
+      color: var(--notification-danger-color);
+      border: var(--notification-danger-border);
+      background: var(--notification-danger-background);
+    }
+  }
+}
