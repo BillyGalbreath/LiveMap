@@ -331,7 +331,7 @@ public final class Colors {
      * @return Color
      */
     public static int fromHex(@NotNull String hex) {
-        return (int) Long.parseLong(hex.replaceAll("(?i)^0x|^#", ""), 16);
+        return (int) Long.parseLong(hex.replaceAll("(?i)^(DOUBLE=)?(0x|#)", ""), 16);
     }
 
     /**

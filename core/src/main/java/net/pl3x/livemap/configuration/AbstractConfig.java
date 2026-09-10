@@ -357,7 +357,7 @@ public abstract class AbstractConfig {
         }
 
         @Nullable
-        private <K extends Comparable<? super K>, V> Object trySort(@Nullable Object obj) {
+        private <K extends Comparable<? super K>> Object trySort(@Nullable Object obj) {
             if (this.sort && obj != null) {
                 // sort lists
                 if (obj instanceof List<?> list && !list.isEmpty() && list.getFirst() instanceof Comparable<?>) {
@@ -375,11 +375,10 @@ public abstract class AbstractConfig {
                 if (obj instanceof Map<?, ?> map && !map.isEmpty()) {
                     List<K> keys = new ArrayList<>(Unsafe.cast(map.keySet()));
                     if (keys.getFirst() instanceof Comparable<?>) {
-                        Map<K, V> sorted = new LinkedHashMap<>();
-                        Map<K, V> casted = Unsafe.cast(map);
+                        Map<K, Object> sorted = new LinkedHashMap<>();
                         try {
                             keys.sort(Comparator.nullsLast(Comparator.naturalOrder()));
-                            keys.forEach(key -> sorted.put(key, casted.get(key)));
+                            keys.forEach(key -> sorted.put(key, map.get(key)));
                             return sorted;
                         } catch (ClassCastException e) {
                             // mixed type keys, do not sort

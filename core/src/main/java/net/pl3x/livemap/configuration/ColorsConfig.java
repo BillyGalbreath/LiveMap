@@ -24,12 +24,10 @@
 
 package net.pl3x.livemap.configuration;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.render.image.Colors;
-import net.pl3x.livemap.util.Unsafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1384,22 +1382,21 @@ public final class ColorsConfig extends AbstractConfig {
     @Override
     @NotNull
     protected Object string2Object(@NotNull String rawValue) {
-        // hex string to int
+        // hex string -> int
         return Colors.fromHex(rawValue);
     }
 
     @Override
     protected void set(@NotNull String path, @Nullable Object value) {
-        if (value instanceof Map<?, ?> map && !map.isEmpty()) {
-            Map<String, String> converted = new LinkedHashMap<>();
-            new ArrayList<String>(Unsafe.cast(map.keySet()))
-                .forEach(key -> {
-                    // int to hex string
-                    converted.put(key, Colors.toHex((int) map.get(key)));
-                });
-            getConfig().set(path, converted);
-        } else {
+        if (!(value instanceof Map<?, ?> map) || map.isEmpty()) {
             getConfig().set(path, value);
+            return;
         }
+
+        // int -> hex string
+        map.forEach((key, val) -> {
+            // int to hex string
+            getConfig().set(path + "." + key, Colors.toHex((int) val));
+        });
     }
 }
