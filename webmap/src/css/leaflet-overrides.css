@@ -233,7 +233,7 @@ img.leaflet-tile {
     &.scale {
       border: var(--border-scale);
       border-style: solid;
-      border-width: 2px 2px 0 2px;
+      border-width: 2px 2px 0;
       border-radius: 0;
       background: transparent;
       backdrop-filter: none;

@@ -42,7 +42,7 @@
 
   .contextmenu {
     border: var(--border);
-    border-radius: 0 10px 10px 10px;
+    border-radius: 0 10px 10px;
     background: var(--background);
     backdrop-filter: var(--blur);
     color: var(--text-color);
