@@ -160,7 +160,7 @@ export class ContextMenu {
       .then((): void => {
         Notifications.success(window.lang("menu.notif.copy").replace("<point>", point.toString()));
       })
-      .catch((e): void => {
+      .catch((e: any): void => {
         console.error("Could not copy location\n", e);
         Notifications.danger(window.lang("menu.notif.copy.failed"));
       })
@@ -174,14 +174,14 @@ export class ContextMenu {
       .then((text: string): void => {
         const match: RegExpExecArray | null = this._pointRegex.exec(text.replace(/\s+/g, ""));
         if (match) {
-          const point = Point.of(parseInt(match[1]), parseInt(match[2]));
+          const point: Point = Point.of(parseInt(match[1]), parseInt(match[2]));
           Notifications.info(window.lang("menu.notif.paste").replace("<point>", point.toString("[{x},{z}]")));
           this._livemap.centerOn(Point.of(parseInt(match[1]), parseInt(match[2])));
         } else {
           Notifications.warning(window.lang("menu.notif.paste.invalid"));
         }
       })
-      .catch((e): void => {
+      .catch((e: any): void => {
         console.error("Could not paste location\n", e);
         Notifications.danger(window.lang("menu.notif.paste.failed"));
       })
@@ -197,7 +197,7 @@ export class ContextMenu {
       .then((): void => {
         Notifications.success(window.lang("menu.notif.share"));
       })
-      .catch((e): void => {
+      .catch((e: any): void => {
         console.error("Could not copy shareable url\n", e);
         Notifications.danger(window.lang("menu.notif.share.failed"));
       })

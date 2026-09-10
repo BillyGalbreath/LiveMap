@@ -39,7 +39,7 @@ export class Notifications {
     div.appendChild(window.createSVGIcon(type));
     div.appendChild(L.DomUtil.create("p")).innerText = text;
 
-    const handler = (): void => {
+    const handler: () => void = (): void => {
       div.removeEventListener("transitionend", handler);
       setTimeout((): void => {
         div.addEventListener("transitionend", (): void => {

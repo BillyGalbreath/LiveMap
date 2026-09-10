@@ -136,7 +136,7 @@ export class LiveMap extends L.Map {
 
     // sort, build, and add worlds
     options.worlds
-      .sort((w1: World, w2: World) => w1.order - w2.order)
+      .sort((w1: World, w2: World): number => w1.order - w2.order)
       .forEach((world: World): void => {
         this.worlds.push(new World(world));
         window.customEvent("worldAdded", world);
@@ -159,7 +159,7 @@ export class LiveMap extends L.Map {
 
     // stuff to do after the map fully loads
     // but let loading screen show for at least 500ms
-    let now = new Date().getMilliseconds();
+    let now: number = new Date().getMilliseconds();
     this.on("load", (): void => {
       const delay: number = Math.max(now + 500 - new Date().getMilliseconds(), 0);
       setTimeout((): void => this.onLoad(), delay);

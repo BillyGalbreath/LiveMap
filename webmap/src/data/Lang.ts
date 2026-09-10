@@ -23,7 +23,7 @@
  */
 
 export class Lang implements ArrayLike<string> {
-  private static readonly MCASSET_URL = `https://assets.mcasset.cloud/%s/assets/minecraft/lang/%s.json`
+  private static readonly MCASSET_URL: string = `https://assets.mcasset.cloud/%s/assets/minecraft/lang/%s.json`
 
   private readonly _assets: Map<string, string> = new Map();
 
@@ -45,7 +45,7 @@ export class Lang implements ArrayLike<string> {
     // too much. we'll check our storage first, and only download if it's
     // not there or if it's expired since last time we downloaded it.
     const key = `minecraft:${minecraft}:${locale}.json`;
-    const storedItem = localStorage.getItem(key);
+    const storedItem: string | null = localStorage.getItem(key);
     if (storedItem) {
       // got the data - lets check if its valid
       const storedLang: StoredLang = JSON.parse(storedItem);
@@ -71,7 +71,7 @@ export class Lang implements ArrayLike<string> {
     console.log(`Loading ${locale} lang from assets.mcasset.cloud`);
     // could not restore locally saved lang data for one reason
     // or another. so lets try to load fresh data from mcasset.cloud
-    const url = Lang.MCASSET_URL.formatted(minecraft, locale);
+    const url: string = Lang.MCASSET_URL.formatted(minecraft, locale);
     window.fetchJson<Lang>(url).then((json: Lang): void => {
       // add entries to local map
       window.iterate(json, (key: string, value: string): void => {

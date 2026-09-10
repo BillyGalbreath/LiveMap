@@ -192,7 +192,7 @@ export class Renderer extends L.TileLayer {
           reader.readAsDataURL(blob);
           reader.onload = (): string => tile.src = String(reader.result);
         });
-      }).catch((err) => this._tileOnError(done, tile, err));
+      }).catch((err: any) => this._tileOnError(done, tile, err));
 
     return tile;
   }
