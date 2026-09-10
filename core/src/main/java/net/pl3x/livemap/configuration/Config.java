@@ -70,6 +70,11 @@ public final class Config extends AbstractConfig {
         1.0 is high quality, no compression, large file size
         Note: Not all image formats honor this setting.""")
     public static double WEB_TILE_QUALITY = 0.0D;
+    @Key("settings.web-directory.tile-buffer")
+    @Comment("""
+        The buffer size when writing tile images to disk.
+        Default is 512kb (524288).""")
+    public static int WEB_TILE_BUFFER = 524288;
 
     @Key("settings.internal-webserver.enabled")
     @Comment("""

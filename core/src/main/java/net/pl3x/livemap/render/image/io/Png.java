@@ -25,6 +25,8 @@
 package net.pl3x.livemap.render.image.io;
 
 import java.awt.image.BufferedImage;
+import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,6 +38,7 @@ import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
 import net.pl3x.livemap.Logger;
+import net.pl3x.livemap.configuration.Config;
 import net.pl3x.livemap.util.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +82,11 @@ public final class Png extends IO.Type {
     public void write(@NotNull Path path, @NotNull BufferedImage buffer) {
         Path tmp = FileUtil.tmp(path);
         ImageWriter writer = null;
-        try (ImageOutputStream out = ImageIO.createImageOutputStream(tmp.toFile())) {
+        try (
+            FileOutputStream fos = new FileOutputStream(tmp.toFile());
+            BufferedOutputStream bos = new BufferedOutputStream(fos, Config.WEB_TILE_BUFFER);
+            ImageOutputStream out = ImageIO.createImageOutputStream(bos)
+        ) {
             writer = ImageIO.getImageWritersBySuffix(getExtension()).next();
             ImageWriteParam param = writer.getDefaultWriteParam();
             if (param.canWriteCompressed()) {
@@ -87,7 +94,7 @@ public final class Png extends IO.Type {
                 if (param.getCompressionType() == null) {
                     param.setCompressionType(param.getCompressionTypes()[0]);
                 }
-                param.setCompressionQuality(0.0F);
+                param.setCompressionQuality((float) Config.WEB_TILE_QUALITY);
             }
             writer.setOutput(out);
             writer.write(null, new IIOImage(buffer, null, null), param);
