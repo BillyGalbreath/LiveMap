@@ -43,7 +43,6 @@ import net.pl3x.livemap.Logger;
 import net.pl3x.livemap.configuration.Config;
 import net.pl3x.livemap.render.image.TileCanvas;
 import net.pl3x.livemap.render.image.ZoomedCanvas;
-import net.pl3x.livemap.render.image.io.IO;
 import net.pl3x.livemap.render.iterator.RegionSpiralIterator;
 import net.pl3x.livemap.render.renderer.Renderer;
 import net.pl3x.livemap.thread.WorkerThreadFactory;
@@ -364,15 +363,7 @@ public class RenderScheduler {
         if (!this.zoomedCanvases.isEmpty()) {
             debug("Flushing incomplete edge-of-the-map canvases to disk...");
 
-            this.zoomedCanvases.forEach((file, canvas) -> {
-                if (canvas.hasContributions()) {
-                    try {
-                        IO.getType(Config.WEB_TILE_FORMAT).write(file, canvas.getImageBuffer());
-                    } catch (Throwable t) {
-                        Logger.error("Failed to flush partial tile: " + file, t);
-                    }
-                }
-            });
+            this.zoomedCanvases.forEach((path, canvas) -> canvas.save(path));
 
             this.zoomedCanvases.clear(); // wipe map entirely clean to drop memory footprints to 0
         }
@@ -398,7 +389,7 @@ public class RenderScheduler {
 
         // render regions to tiles
         for (Renderer renderer : renderers) {
-            TileCanvas tile = new TileCanvas(region, renderer);
+            TileCanvas tile = renderer.createTileCanvas(region);
 
             if (!renderer.renderRegion(tile, rand, cancelled)) {
                 return false;

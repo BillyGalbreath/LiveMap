@@ -24,14 +24,52 @@
 
 package net.pl3x.livemap.world.block;
 
-import net.pl3x.livemap.util.Registry;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import java.nio.file.Path;
+import java.util.Comparator;
+import net.pl3x.livemap.LiveMap;
+import net.pl3x.livemap.Logger;
+import net.pl3x.livemap.configuration.ColorsConfig;
+import net.pl3x.livemap.render.image.Colors;
+import net.pl3x.livemap.util.PaletteRegistry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * A registry of all known blocks to be rendered.
  */
-public abstract class BlockRegistry extends Registry<Block> {
+public abstract class BlockRegistry extends PaletteRegistry<Block> {
+    @Override
+    public void rebuild() {
+        clear();
+
+        // load blocks from cache for persistent indexes (BlockInfo)
+        Path path = LiveMap.api().getTilesDir().resolve("blocks.gz");
+        loadPalette(path);
+
+        // get and sort the blocks by id
+        var entries = new ObjectArrayList<>(getBlocksAndColors().object2IntEntrySet());
+        entries.sort(Comparator.comparing(Object2IntMap.Entry::getKey));
+
+        // register the blocks (that are not already registered)
+        for (var entry : entries) {
+            String id = entry.getKey();
+            int vanilla = entry.getIntValue();
+
+            if (!ColorsConfig.BLOCK_COLORS.containsKey(id)) {
+                Logger.warn(" &7&l-&r block not in colors.yml&3:&7&o %s &r&3(&r%s&3)".formatted(id, Colors.toHex(vanilla)));
+            }
+
+            put(id, new Block(getNextIndex(id), id, vanilla));
+        }
+
+        savePalette(path);
+
+        Logger.info(" &7&l-&r Registered &3%d&r blocks".formatted(size()));
+    }
+
     @Override
     @NotNull
     public Block get(@NotNull Object key) {
@@ -52,4 +90,12 @@ public abstract class BlockRegistry extends Registry<Block> {
     public Block put(@NotNull Block block) {
         return super.put(block.getId(), block);
     }
+
+    /**
+     * Get the block ids and their vanilla map colors from the server platform.
+     *
+     * @return Block ids and their vanilla map colors
+     */
+    @NotNull
+    protected abstract Object2IntOpenHashMap<String> getBlocksAndColors();
 }

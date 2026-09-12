@@ -22,29 +22,29 @@
  * SOFTWARE.
  */
 
-package net.pl3x.livemap.world.block;
+package net.pl3x.livemap.render.image;
 
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import net.minecraft.core.registries.Registries;
-import org.bukkit.Bukkit;
-import org.bukkit.craftbukkit.CraftWorld;
+import java.awt.image.BufferedImage;
+import net.pl3x.livemap.render.image.io.IO;
 import org.jetbrains.annotations.NotNull;
 
-public class PaperBlockRegistry extends BlockRegistry {
+/**
+ * Represents a buffer containing blockinfo data from multiple regions at higher zoom levels.
+ */
+public class ZoomedBlockInfo extends ZoomedCanvas {
+    /**
+     * Constructs a new instance of ZoomedBlockInfo.
+     *
+     * @param imageBuffer The image buffer
+     * @param zoom        This zoom level
+     */
+    public ZoomedBlockInfo(@NotNull BufferedImage imageBuffer, int zoom) {
+        super(imageBuffer, zoom);
+    }
+
     @Override
     @NotNull
-    protected Object2IntOpenHashMap<String> getBlocksAndColors() {
-        Object2IntOpenHashMap<String> map = new Object2IntOpenHashMap<>();
-        ((CraftWorld) Bukkit.getWorlds().getFirst()).getHandle()
-            .registryAccess()
-            .lookupOrThrow(Registries.BLOCK)
-            .entrySet()
-            .forEach(entry ->
-                map.put(
-                    entry.getKey().identifier().toString(),
-                    entry.getValue().defaultMapColor().col
-                )
-            );
-        return map;
+    protected IO.Type getIO() {
+        return IO.getType("blockinfo");
     }
 }

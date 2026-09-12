@@ -53,6 +53,39 @@ public final class Lang extends AbstractConfig {
     @Key("command-fullrender-errored")
     public static String FULLRENDER_ERRORED = "<red>Fullrender errored on <grey><world>\n<red>Error: <error>";
 
+    @Key("ui.blockinfo.unknown.block")
+    public static String UI_BLOCKINFO_UNKNOWN_BLOCK = "Unknown Block";
+    @Key("ui.blockinfo.unknown.biome")
+    public static String UI_BLOCKINFO_UNKNOWN_BIOME = "Unknown Biome";
+    @Key("ui.blockinfo.label")
+    public static String UI_BLOCKINFO_LABEL = "BlockInfo";
+    @Key("ui.blockinfo.value")
+    public static String UI_BLOCKINFO_VALUE = "<block><br/><biome>";
+    @Key("ui.coords.label")
+    public static String UI_COORDS_LABEL = "Coordinates";
+    @Key("ui.coords.value")
+    public static String UI_COORDS_VALUE = "<x>, <y>, <z>";
+    @Key("ui.link.label")
+    public static String UI_LINK_LABEL = "Sharable Link";
+    @Key("ui.link.value")
+    public static String UI_LINK_VALUE = "";
+    @Key("ui.players.label")
+    public static String UI_PLAYERS_LABEL = "Players (<online>/<max>)";
+    @Key("ui.players.value")
+    public static String UI_PLAYERS_VALUE = "No players are currently online";
+    @Key("ui.worlds.label")
+    public static String UI_WORLDS_LABEL = "Worlds";
+    @Key("ui.worlds.value")
+    public static String UI_WORLDS_VALUE = "No worlds have been configured";
+    @Key("ui.layers.label")
+    public static String UI_LAYERS_LABEL = "Layers";
+    @Key("ui.layers.value")
+    public static String UI_LAYERS_VALUE = "No layers have been configured";
+    @Key("ui.markers.label")
+    public static String UI_MARKERS_LABEL = "Markers";
+    @Key("ui.markers.value")
+    public static String UI_MARKERS_VALUE = "No markers have been configured";
+
     private static final Lang CONFIG = new Lang();
 
     private Lang() {
@@ -61,7 +94,7 @@ public final class Lang extends AbstractConfig {
         // extract lang dir from jar
         FileUtil.extractDir("/lang/", dir, false);
 
-        super(dir.resolve(Config.LANGUAGE_FILE));
+        super(dir.resolve(Config.LANGUAGE_LOCALE + ".yml"));
     }
 
     /**

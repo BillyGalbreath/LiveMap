@@ -32,8 +32,15 @@ import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.FileSystems;
@@ -48,6 +55,9 @@ import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
+import java.util.zip.Deflater;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.Logger;
 import net.pl3x.livemap.configuration.Config;
@@ -60,7 +70,6 @@ import org.jetbrains.annotations.Nullable;
  * Utility class to handle file operations.
  */
 public final class FileUtil {
-    public static final PathMatcher JSON_MATCHER = FileSystems.getDefault().getPathMatcher("glob:**/*.json");
     public static final PathMatcher MCA_MATCHER = FileSystems.getDefault().getPathMatcher("glob:**/r.*.*.mca");
 
     private static Path jarPath;
@@ -180,6 +189,132 @@ public final class FileUtil {
             Logger.error("Error reading file&3:&r %s".formatted(e.getMessage()), e);
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Write string to disk.
+     *
+     * @param str  String to write
+     * @param path Path to file
+     */
+    public static void writeString(@NotNull String str, @NotNull Path path) {
+        Path tmp = tmp(path);
+        try (
+            OutputStream os = Files.newOutputStream(createDirsAndFile(tmp));
+            BufferedOutputStream bos = new BufferedOutputStream(os);
+            Writer writer = new OutputStreamWriter(bos)
+        ) {
+            writer.write(str);
+            writer.flush();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        try {
+            atomicMove(tmp, path);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Compress and save string to disk.
+     *
+     * @param path Path to file
+     * @param str  String to compress and write
+     * @throws IOException if an I/O error occurs
+     */
+    public static void saveGzip(@NotNull Path path, @NotNull String str) throws IOException {
+        Path tmp = tmp(path);
+        try (
+            OutputStream fileOut = Files.newOutputStream(createDirsAndFile(tmp));
+            GZIPOutputStream gzipOut = new GZIPOutputStream(fileOut) {{
+                this.def.setLevel(Deflater.BEST_COMPRESSION);
+            }};
+            Writer writer = new OutputStreamWriter(gzipOut)
+        ) {
+            writer.write(str);
+            writer.flush();
+        }
+        atomicMove(tmp, path);
+    }
+
+    /**
+     * Compress and save bytes to disk.
+     *
+     * @param path  Path to file
+     * @param bytes Bytes to compress and write
+     * @throws IOException if an I/O error occurs
+     */
+    public static void saveGzip(@NotNull Path path, byte[] bytes) throws IOException {
+        Path tmp = tmp(path);
+        try (
+            OutputStream fileOut = Files.newOutputStream(createDirsAndFile(tmp));
+            GZIPOutputStream gzipOut = new GZIPOutputStream(fileOut) {{
+                this.def.setLevel(Deflater.BEST_COMPRESSION);
+            }}
+        ) {
+            gzipOut.write(bytes);
+            gzipOut.flush();
+        }
+        atomicMove(tmp, path);
+    }
+
+    /**
+     * Read gzipped string from file into byte buffer.
+     *
+     * @param path   Path to file
+     * @param buffer Byte buffer to receive read data
+     * @throws IOException if an I/O error occurs
+     */
+    public static void readGzip(@NotNull Path path, @NotNull ByteBuffer buffer) throws IOException {
+        try (
+            InputStream fileIn = Files.newInputStream(path);
+            GZIPInputStream gzipIn = new GZIPInputStream(fileIn)
+        ) {
+            // try reading all bytes and closing stream _before_ putting into buffer
+            byte[] bytes = gzipIn.readAllBytes();
+            gzipIn.close();
+            buffer.put(bytes);
+        }
+    }
+
+    /**
+     * Read gzipped string from file.
+     *
+     * @param path Path to file
+     * @return Uncompressed string data
+     * @throws IOException if an I/O error occurs
+     */
+    @NotNull
+    public static String readGzip(@NotNull Path path) throws IOException {
+        try (
+            InputStream fileIn = Files.newInputStream(path);
+            GZIPInputStream gzipIn = new GZIPInputStream(fileIn);
+            Reader reader = new InputStreamReader(gzipIn, StandardCharsets.UTF_8);
+            Writer writer = new StringWriter()
+        ) {
+            char[] buffer = new char[4096];
+            for (int length; (length = reader.read(buffer)) > 0; ) {
+                writer.write(buffer, 0, length);
+            }
+            return writer.toString();
+        }
+    }
+
+    /**
+     * Create a file and it's parent directories if needed.
+     *
+     * @param file Path of file to create
+     * @return Path to created file
+     * @throws IOException if an I/O error occurs
+     */
+    @NotNull
+    public static Path createDirsAndFile(@NotNull Path file) throws IOException {
+        if (!Files.exists(file)) {
+            Files.createDirectories(file.getParent());
+            Files.createFile(file);
+        }
+        return file;
     }
 
     /**

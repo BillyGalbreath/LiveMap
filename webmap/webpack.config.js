@@ -19,6 +19,15 @@ module.exports = {
           to: "/404.html"
         }
       ]
+    },
+    compress: true,
+    setupMiddlewares: (middlewares, server) => {
+      server.app.get('*.gz', function (req, res, next) {
+        res.setHeader('Content-Encoding', 'gzip');
+        res.setHeader('Content-Type', 'application/json');
+        next();
+      });
+      return middlewares;
     }
   },
   devtool: "source-map", // comment out for production
@@ -81,8 +90,8 @@ module.exports = {
     path: path.resolve(__dirname, "dist")
   },
   performance: {
-    maxEntrypointSize: 1024000,
-    maxAssetSize: 1024000
+    maxEntrypointSize: 10485760,
+    maxAssetSize: 10485760
   },
   resolve: {
     extensions: [".ts", ".js", ".css"]
@@ -94,7 +103,7 @@ module.exports = {
         {
           from: "public",
           globOptions: {
-            // ignore: ["**/tiles/**"]
+            ignore: ["**/tiles/**"]
           }
         }
       ]

@@ -25,7 +25,7 @@
 package net.pl3x.livemap.world.biome;
 
 import net.pl3x.livemap.util.Mathf;
-import net.pl3x.livemap.util.Registry;
+import net.pl3x.livemap.util.PaletteRegistry;
 import net.pl3x.livemap.world.World;
 import net.pl3x.livemap.world.chunk.Chunk;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * A registry of all known biomes to be rendered.
  */
-public abstract class BiomeRegistry extends Registry<Biome> {
+public abstract class BiomeRegistry extends PaletteRegistry<Biome> {
     private final World world;
     private final long hashedSeed;
 

@@ -25,7 +25,6 @@
 package net.pl3x.livemap.render.renderer;
 
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicBoolean;
 import net.pl3x.livemap.render.heightmap.Heightmap;
 import net.pl3x.livemap.render.image.Colors;
 import net.pl3x.livemap.render.image.TileCanvas;
@@ -41,24 +40,24 @@ public class FancyRenderer extends Renderer {
     /**
      * Constructs a new instance of FancyRenderer.
      *
+     * @param id                Unique id (per world)
      * @param name              Display name for renderer
      * @param icon              Icon file for webmap
      * @param heightmap         The heightmap type to use
      * @param biomeBlend        Number of blocks to blend biome tints
      * @param translucentFluids True to render fluids as translucent
+     * @param sprinkles         True to "sprinkle" random color variations into image
      */
-    public FancyRenderer(@NotNull String name, @NotNull String icon, @NotNull Type<Heightmap> heightmap, int biomeBlend, boolean translucentFluids) {
-        super(FANCY, name, icon, heightmap, biomeBlend, translucentFluids);
-    }
-
-    @Override
-    protected void preRender(@NotNull TileCanvas tile, @NotNull ThreadLocalRandom rand, @NotNull AtomicBoolean cancelled) {
-        tile.getHeightmap().postRender(tile, rand, cancelled);
-    }
-
-    @Override
-    protected void postRender(@NotNull TileCanvas tile, @NotNull ThreadLocalRandom rand, @NotNull AtomicBoolean cancelled) {
-        tile.getHeightmap().postRender(tile, rand, cancelled);
+    public FancyRenderer(
+        @NotNull String id,
+        @NotNull String name,
+        @NotNull String icon,
+        @NotNull Type<Heightmap> heightmap,
+        int biomeBlend,
+        boolean translucentFluids,
+        boolean sprinkles
+    ) {
+        super(FANCY, id, name, icon, heightmap, biomeBlend, translucentFluids, sprinkles);
     }
 
     @Override
@@ -66,7 +65,7 @@ public class FancyRenderer extends Renderer {
         int pixelColor = 0;
 
         // get true block color, unless an opaque fluid is covering it
-        if (data.getFluidState() == null || tile.getRenderer().isTranslucentFluids()) {
+        if (!data.getTopState().isFluid() || tile.getRenderer().isTranslucentFluids()) {
             // either no fluid, or fluids are translucent. either way, we have to draw land
             pixelColor = processBlockColor(data);
         }
@@ -76,9 +75,11 @@ public class FancyRenderer extends Renderer {
 
         // verify we have something to render, again
         if (pixelColor != 0) {
-            // sprinkle the color so it looks less plain (idea from vintage story map)
-            boolean greenery = data.getTopState().getBlock().hasFlag(Block.FLAG_GRASS | Block.FLAG_FOLIAGE);
-            pixelColor = Colors.sprinkle(pixelColor, greenery ? 24 : 10);
+            if (isSprinkles()) {
+                // sprinkle the color so it looks less plain (idea from vintage story map)
+                boolean greenery = data.getTopState().getBlock().hasFlag(Block.FLAG_GRASS | Block.FLAG_FOLIAGE);
+                pixelColor = Colors.sprinkle(pixelColor, greenery ? 24 : 10);
+            }
 
             // since we have something to render lets calculate heightmap here, too
             tile.getHeightmap().renderBlock(tile, data, rand);

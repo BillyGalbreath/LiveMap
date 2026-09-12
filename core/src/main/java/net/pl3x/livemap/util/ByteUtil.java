@@ -64,4 +64,32 @@ public final class ByteUtil {
 
         return (byte) result;
     }
+
+    /**
+     * Convert a long into a byte array.
+     *
+     * @param value Long to convert
+     * @return Converted byte array
+     */
+    public static byte[] toBytes(long value) {
+        byte[] bytes = new byte[Long.BYTES];
+        for (int i = 0; i < Long.BYTES; i++) {
+            bytes[i] = (byte) (value >>> (Byte.SIZE * (Long.BYTES - 1 - i)));
+        }
+        return bytes;
+    }
+
+    /**
+     * Convert byte array into a long.
+     *
+     * @param bytes Bytes to convert
+     * @return Converted long
+     */
+    public static long toLong(byte[] bytes) {
+        long value = 0;
+        for (int i = 0; i < Long.BYTES; i++) {
+            value |= (bytes[i] & 0xFFL) << (Byte.SIZE * (Long.BYTES - 1 - i));
+        }
+        return value;
+    }
 }

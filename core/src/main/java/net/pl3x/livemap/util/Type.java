@@ -115,7 +115,12 @@ public class Type<T> {
     public T create() {
         try {
             return this.clazz.getConstructor().newInstance();
-        } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
+        } catch (
+            NoSuchMethodException
+            | InvocationTargetException
+            | InstantiationException
+            | IllegalAccessException e
+        ) {
             throw new RuntimeException(e);
         }
     }
@@ -123,27 +128,50 @@ public class Type<T> {
     /**
      * Create a new renderer of this type.
      *
+     * @param id                Unique id (per world)
      * @param name              Display name for renderer
      * @param icon              Icon file for webmap
      * @param heightmap         The heightmap to use
      * @param biomeBlend        Number of blocks to blend biome tints
      * @param translucentFluids True to render fluids as translucent
+     * @param sprinkles         True to "sprinkle" random color variations into image
      * @return A new renderer
      */
     @NotNull
     public T create(
+        @NotNull String id,
         @NotNull String name,
         @NotNull String icon,
         @Nullable Type<Heightmap> heightmap,
         int biomeBlend,
-        boolean translucentFluids
+        boolean translucentFluids,
+        boolean sprinkles
     ) {
         heightmap = heightmap == null ? Heightmap.NOOP : heightmap;
         try {
-            return this.clazz
-                .getConstructor(String.class, String.class, Type.class, int.class, boolean.class)
-                .newInstance(name, icon, heightmap, biomeBlend, translucentFluids);
-        } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
+            return this.clazz.getConstructor(
+                String.class,
+                String.class,
+                String.class,
+                Type.class,
+                int.class,
+                boolean.class,
+                boolean.class
+            ).newInstance(
+                id,
+                name,
+                icon,
+                heightmap,
+                biomeBlend,
+                translucentFluids,
+                sprinkles
+            );
+        } catch (
+            NoSuchMethodException
+            | InvocationTargetException
+            | InstantiationException
+            | IllegalAccessException e
+        ) {
             throw new RuntimeException(e);
         }
     }

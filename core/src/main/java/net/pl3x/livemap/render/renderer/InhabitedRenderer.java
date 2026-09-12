@@ -38,14 +38,24 @@ public class InhabitedRenderer extends Renderer {
     /**
      * Constructs a new instance of InhabitedRenderer.
      *
+     * @param id                Unique id (per world)
      * @param name              Display name for renderer
      * @param icon              Icon file for webmap
      * @param heightmap         The heightmap type to use
      * @param biomeBlend        Number of blocks to blend biome tints
      * @param translucentFluids True to render fluids as translucent
+     * @param sprinkles         True to "sprinkle" random color variations into image
      */
-    public InhabitedRenderer(@NotNull String name, @NotNull String icon, @NotNull Type<Heightmap> heightmap, int biomeBlend, boolean translucentFluids) {
-        super(INHABITED, name, icon, heightmap, biomeBlend, translucentFluids);
+    public InhabitedRenderer(
+        @NotNull String id,
+        @NotNull String name,
+        @NotNull String icon,
+        @NotNull Type<Heightmap> heightmap,
+        int biomeBlend,
+        boolean translucentFluids,
+        boolean sprinkles
+    ) {
+        super(INHABITED, id, name, icon, heightmap, biomeBlend, translucentFluids, sprinkles);
     }
 
     @Override

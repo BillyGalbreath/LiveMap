@@ -28,6 +28,7 @@ import {Point} from "../data/Point";
 import {BlockInfo} from "../palette/BlockInfo";
 import {Block} from "../palette/Block";
 import {ControlBox} from "./ControlBox";
+import {World} from "../world/World";
 
 export class BlockInfoControl extends ControlBox {
   private readonly _dom: HTMLElement;
@@ -62,11 +63,16 @@ export class BlockInfoControl extends ControlBox {
   }
 
   public update(point?: Point): void {
+    const world: World | undefined = this._livemap.currentWorld;
+    if (world == undefined) {
+      return;
+    }
+
     const x: number = point?.x ?? 0;
     const z: number = point?.z ?? 0;
     const regionX: number = x >> 9;
     const regionZ: number = z >> 9;
-    const zoom: number = this._livemap.currentZoom() < 0 ? 0 : this._livemap.currentZoom();
+    const zoom: number = world.currentZoom() < 0 ? 0 : world.currentZoom();
     const step: number = 1 << zoom;
     const fileX: number = Math.floor(regionX / step);
     const fileZ: number = Math.floor(regionZ / step);
@@ -77,15 +83,15 @@ export class BlockInfoControl extends ControlBox {
     let biomeName: string = window.lang("blockinfo.unknown.biome");
     let y: number | undefined;
 
-    const blockInfo: BlockInfo | undefined = this._livemap.currentWorld?.getBlockInfo(zoom, fileX, fileZ);
+    const blockInfo: BlockInfo | undefined = world.getBlockInfo(zoom, fileX, fileZ);
     if (blockInfo !== undefined) {
-      const block: Block = blockInfo.getBlock(tileZ * 512 + tileX);
+      const block: Block = blockInfo.getBlock(tileX, tileZ);
       if (block != null) {
         if (block.block != 0) {
           blockName = this._blockPalette.get(block.block) ?? blockName;
         }
         if (block.biome != 0) {
-          biomeName = this._livemap.currentWorld?.biomePalette.get(block.biome) ?? biomeName;
+          biomeName = world.biomePalette.get(block.biome) ?? biomeName;
         }
 
         if (block.block != 0) {

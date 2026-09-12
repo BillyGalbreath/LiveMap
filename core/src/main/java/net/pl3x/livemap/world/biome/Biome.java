@@ -25,17 +25,16 @@
 package net.pl3x.livemap.world.biome;
 
 import java.util.Objects;
+import net.pl3x.livemap.util.Indexed;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a Minecraft biome and its color and relevant properties.
  */
-@SuppressWarnings("ClassCanBeRecord")
-public class Biome {
+public class Biome extends Indexed {
     public static final Biome DEFAULT = new Biome(0, "minecraft:default", 0x000070, 0x9E814D, 0x73A74E, 0x8EB971, 0x3F76E4, (x, z, def) -> def);
 
-    private final int index;
     private final String id;
     private final int color;
     private final int foliage;
@@ -57,7 +56,7 @@ public class Biome {
      * @param grassModifier Color modifier to grass tint
      */
     public Biome(int index, @NotNull String id, int color, int dryFoliage, int foliage, int grass, int water, @NotNull GrassModifier grassModifier) {
-        this.index = index;
+        super(index);
         this.id = id;
         this.color = color == 0 ? 0 : (color | 0xFF000000);
         this.foliage = foliage == 0 ? 0 : (foliage | 0xFF000000);
@@ -65,26 +64,6 @@ public class Biome {
         this.grass = grass == 0 ? 0 : (grass | 0xFF000000);
         this.water = water == 0 ? 0 : (water | 0xFF000000);
         this.grassModifier = grassModifier;
-    }
-
-    /**
-     * Get the grass tint color after running through the grass modifier.
-     *
-     * @param blockX X block coordinate
-     * @param blockZ Z block coordinate
-     * @return Modified grass tint color
-     */
-    public int getModifiedGrassColor(int blockX, int blockZ) {
-        return getGrassModifier().modify(blockX, blockZ, getGrass());
-    }
-
-    /**
-     * Get unique index number.
-     *
-     * @return Unique index number
-     */
-    public int getIndex() {
-        return this.index;
     }
 
     /**
@@ -166,7 +145,7 @@ public class Biome {
             return false;
         }
         Biome other = (Biome) o;
-        return this.index == other.index
+        return getIndex() == other.getIndex()
             && this.id.equals(other.id)
             && this.color == other.color
             && this.dryFoliage == other.dryFoliage
@@ -177,20 +156,20 @@ public class Biome {
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.index, this.id, this.color, this.dryFoliage, this.foliage, this.grass, this.water);
+        return Objects.hash(getIndex(), this.id, this.color, this.dryFoliage, this.foliage, this.grass, this.water);
     }
 
     @Override
     @NotNull
     public String toString() {
         return "Biome["
-            + "index=" + index
+            + "index=" + getIndex()
             + ",key=" + this.id
-            + ",color=" + color
-            + ",dryFoliage=" + dryFoliage
-            + ",foliage=" + foliage
-            + ",grass=" + grass
-            + ",water=" + water
+            + ",color=" + this.color
+            + ",dryFoliage=" + this.dryFoliage
+            + ",foliage=" + this.foliage
+            + ",grass=" + this.grass
+            + ",water=" + this.water
             + "]";
     }
 

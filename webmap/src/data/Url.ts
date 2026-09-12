@@ -35,16 +35,16 @@ export class Url {
   private readonly _zoom: number;
   private readonly _point: Point;
 
-  constructor(livemap: LiveMap, url: string, worldId?: string | null, rendererId?: string | null, zoom?: string | number | null, x?: string | number | null, z?: string | number | null) {
+  constructor(livemap: LiveMap, url: string, worldName?: string | null, rendererId?: string | null, zoom?: string | number | null, x?: string | number | null, z?: string | number | null) {
     this._livemap = livemap;
 
-    if (worldId) {
+    if (worldName) {
       this._basePath = "/";
     } else {
       const match: RegExpExecArray | null = /^\/(.+?)(?:\/(.+?)?\/?(-?\d+)?\/?(-?\d+)?\/?(-?\d+)?(?:\/(.+)?)?)?$/.exec(url);
       if (match) {
         this._basePath = "/";
-        worldId = match[1];
+        worldName = match[1];
         rendererId = match[2] ?? "basic";
         zoom = match[3] ?? 0;
         x = match[4] ?? 0;
@@ -52,7 +52,7 @@ export class Url {
       } else {
         this._basePath = window.location.pathname?.split("?")[0]?.replace("index.html", "") ?? "/";
         const url: URLSearchParams = new URLSearchParams(window.location.search);
-        worldId = url.get("world");
+        worldName = url.get("world");
         rendererId = url.get("renderer");
         zoom = url.get("zoom");
         x = url.get("x");
@@ -61,22 +61,22 @@ export class Url {
     }
 
     // verify world exists
-    let world: World | undefined = this._livemap.worlds.find((w: World): boolean => w.id === worldId);
+    let world: World | undefined = this._livemap.worlds.find((w: World): boolean => w.name === worldName);
     if (!world) {
       // fallback to first known world
       world = this._livemap.worlds[0];
     }
 
     // verify renderer
-    let renderer: Renderer | undefined = world.renderers.find((r: Renderer): boolean => r.id === rendererId);
+    let renderer: Renderer | undefined = world.getRenderer(rendererId ?? "");
     if (!renderer) {
       // fallback to world's first renderer
       renderer = world.renderers[0];
     }
 
-    this._world = world.id;
+    this._world = world.name;
     this._renderer = renderer.id;
-    this._zoom = +(zoom ?? this._livemap.zooms.def);
+    this._zoom = +(zoom ?? world.zooms.default);
     this._point = Point.of(x ?? 0, z ?? 0);
   }
 

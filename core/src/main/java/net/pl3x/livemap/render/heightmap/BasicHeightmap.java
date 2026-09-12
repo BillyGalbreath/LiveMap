@@ -24,6 +24,8 @@
 
 package net.pl3x.livemap.render.heightmap;
 
+import java.util.concurrent.ThreadLocalRandom;
+import net.pl3x.livemap.render.image.TileCanvas;
 import net.pl3x.livemap.world.chunk.Chunk;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,23 +41,16 @@ public class BasicHeightmap extends Heightmap {
     }
 
     @Override
-    public int getAlpha(@NotNull Chunk chunk, int blockX, int blockZ) {
-        Chunk.BlockData origin = chunk.getWorld()
-            .getChunkFast(chunk, blockX >> 4, blockZ >> 4)
-            .getData(blockX, blockZ);
-        if (origin == null) {
-            return getMid();
-        }
-
-        Chunk.BlockData north = chunk.getWorld()
-            .getChunkFast(chunk, blockX >> 4, (blockZ - 1) >> 4)
-            .getData(blockX, blockZ - 1);
+    public int getAlpha(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data, @NotNull ThreadLocalRandom rand) {
+        Chunk.BlockData north = tile.getWorld()
+            .getChunkFast(data.getChunk(), data.getBlockX() >> 4, (data.getBlockZ() - 1) >> 4)
+            .getData(data.getBlockX(), data.getBlockZ() - 1);
         if (north == null) {
             return getMid();
         }
 
         return getAlpha(
-            origin.getBlockY(),
+            data.getBlockY(),
             north.getBlockY(),
             getMid(),
             getMid()

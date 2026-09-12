@@ -41,26 +41,26 @@ export class Renderer extends L.TileLayer {
   private readonly _name: string;
   private readonly _icon: string;
 
-  constructor(renderer: Renderer) {
+  constructor(world: World, renderer: Renderer) {
     super(`tiles/{world}/{zoom}/{renderer}/{x}_{z}.png`, {
       // tile sizes match regions sizes (512 blocks x 512 blocks)
       tileSize: 512,
       // dont wrap tiles at world edges
       noWrap: true,
       // set in LiveMap.ts now
-      minZoom: window.livemap.options.minZoom,
+      minZoom: 0, // window.livemap.options.minZoom,
       // set in LiveMap.ts now
-      maxZoom: window.livemap.options.maxZoom,
+      maxZoom: world.zooms.max_out + world.zooms.max_in,
       // the closest zoomed in possible (without stretching)
       // this is always 0. no exceptions!
       minNativeZoom: 0,
       // the farthest possible zoom out possible
-      maxNativeZoom: window.livemap.zooms.maxOut,
+      maxNativeZoom: world.zooms.max_out,
       // we need to counter effect the higher maxZoom here
       // zoomOffset = maxNativeZoom - maxZoom
       // zoomOffset = zoom.maxOut - (zoom.maxOut + (-zoom.maxIn))
       // zoomOffset = (-zoom.maxIn)
-      zoomOffset: window.livemap.zooms.maxIn,
+      zoomOffset: -world.zooms.max_in,
       // zoom stuff (this is a pita, btw)
       // this doesn't work right, so we leave it false and override _getZoomForUrl below
       zoomReverse: false
@@ -72,14 +72,14 @@ export class Renderer extends L.TileLayer {
 
     // when tiles load we need to load extra block info
     this.addEventListener("tileload", (event: L.TileEvent): void => {
-      const zoom: number = window.livemap.zooms.maxOut - event.coords.z;
+      const zoom: number = world.zooms.max_out - event.coords.z;
       window.livemap.currentWorld?.loadBlockInfo(zoom, event.coords.x, event.coords.y);
     });
 
     // when tiles unload we need to remove the extra block info from memory
     this.addEventListener("tileunload", (event: L.TileEvent): void => {
-      const zoom: number = window.livemap.zooms.maxOut - event.coords.z;
-      window.livemap.currentWorld?.unsetBlockInfo(zoom, event.coords.x, event.coords.y);
+      const zoom: number = world.zooms.max_out - event.coords.z;
+      world.unsetBlockInfo(zoom, event.coords.x, event.coords.y);
     });
 
     // push this layer to the back (leaflet defaults it to 1)
@@ -105,9 +105,9 @@ export class Renderer extends L.TileLayer {
 
   getTileUrl(coords: L.Coords): string {
     const world: World = window.livemap.currentWorld ?? window.livemap.worlds[0];
-    const rendererId: string = world.currentRenderer?.id ?? world.renderers[0].id;
+    const rendererId: string = world.currentRenderer.id;
     const data: { world: string; renderer: string; x: number; z: number; zoom: number } = {
-      world: world.id,
+      world: world.name,
       renderer: rendererId,
       x: coords.x,
       z: coords.y,

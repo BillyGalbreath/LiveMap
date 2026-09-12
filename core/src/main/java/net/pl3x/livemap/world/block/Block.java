@@ -27,13 +27,14 @@ package net.pl3x.livemap.world.block;
 import java.util.Objects;
 import net.pl3x.livemap.configuration.BlocksConfig;
 import net.pl3x.livemap.configuration.ColorsConfig;
+import net.pl3x.livemap.util.Indexed;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a minecraft block.
  */
-public class Block {
+public class Block extends Indexed {
     public static final Block AIR = new Block(0, "minecraft:air", 0x000000);
 
     // @formatter:off
@@ -47,7 +48,6 @@ public class Block {
     public static final int FLAG_FLUID       = 0b0000000010000000; // 0x80 // 128
     // @formatter:on
 
-    private final int index;
     private final String id;
     private final int color;
     private final int vanilla;
@@ -65,7 +65,7 @@ public class Block {
      * @param vanilla Vanilla's map color
      */
     public Block(int index, @NotNull String id, int vanilla) {
-        this.index = index;
+        super(index);
         this.id = id;
 
         this.color = ColorsConfig.BLOCK_COLORS.getOrDefault(id, vanilla);
@@ -87,15 +87,6 @@ public class Block {
         // just the id alone should be enough,
         // since the colors and flags are based on id
         this.hash = Objects.hash(getId());
-    }
-
-    /**
-     * Get the unique index number for this block.
-     *
-     * @return Index id
-     */
-    public int getIndex() {
-        return this.index;
     }
 
     /**
@@ -254,7 +245,8 @@ public class Block {
     @NotNull
     public String toString() {
         return "Block["
-            + "id=" + getId()
+            + "index=" + getIndex()
+            + ",id=" + getId()
             + ",color=" + getColor()
             + ",vanilla=" + getVanilla()
             + ",flags=" + getFlags()

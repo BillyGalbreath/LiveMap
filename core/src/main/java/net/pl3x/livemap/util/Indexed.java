@@ -22,29 +22,29 @@
  * SOFTWARE.
  */
 
-package net.pl3x.livemap.world.block;
+package net.pl3x.livemap.util;
 
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import net.minecraft.core.registries.Registries;
-import org.bukkit.Bukkit;
-import org.bukkit.craftbukkit.CraftWorld;
-import org.jetbrains.annotations.NotNull;
+/**
+ * Represent an object that contains an index.
+ */
+public abstract class Indexed {
+    private final int index;
 
-public class PaperBlockRegistry extends BlockRegistry {
-    @Override
-    @NotNull
-    protected Object2IntOpenHashMap<String> getBlocksAndColors() {
-        Object2IntOpenHashMap<String> map = new Object2IntOpenHashMap<>();
-        ((CraftWorld) Bukkit.getWorlds().getFirst()).getHandle()
-            .registryAccess()
-            .lookupOrThrow(Registries.BLOCK)
-            .entrySet()
-            .forEach(entry ->
-                map.put(
-                    entry.getKey().identifier().toString(),
-                    entry.getValue().defaultMapColor().col
-                )
-            );
-        return map;
+    /**
+     * Constructs a new instance of Indexed.
+     *
+     * @param index Unique index number
+     */
+    protected Indexed(int index) {
+        this.index = index;
+    }
+
+    /**
+     * Get unique index number.
+     *
+     * @return Unique index number
+     */
+    public int getIndex() {
+        return this.index;
     }
 }

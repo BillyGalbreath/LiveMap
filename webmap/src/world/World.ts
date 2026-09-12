@@ -25,13 +25,16 @@
 import {Point} from "../data/Point";
 import {BlockInfo} from "../palette/BlockInfo";
 import {Renderer} from "./Renderer";
+import {Zooms} from "../data/Zooms";
 
 export class World {
-  private readonly _id: string;
   private readonly _name: string;
+  private readonly _display_name: string;
   private readonly _type: string;
   private readonly _order: number;
   private readonly _spawn: Point;
+  private readonly _center: Point;
+  private readonly _zooms: Zooms;
   private readonly _renderers: Renderer[] = [];
 
   private _currentRenderer?: Renderer;
@@ -42,25 +45,27 @@ export class World {
   private _tickTimer?: NodeJS.Timeout;
 
   constructor(world: World) {
-    this._id = world.id;
     this._name = world.name;
+    this._display_name = world.display_name;
     this._type = world.type;
     this._order = world.order;
     this._spawn = Point.of(world.spawn);
+    this._center = Point.of(world.center);
+    this._zooms = new Zooms(world.zooms);
 
     world.renderers.forEach((renderer: Renderer): void => {
-      this.renderers.push(new Renderer(renderer));
+      this.renderers.push(new Renderer(this, renderer));
     });
 
-    window.fetchPalette(`tiles/${this.id}/biomes.gz`, "biome", this._biomePalette);
-  }
-
-  get id(): string {
-    return this._id;
+    window.fetchPalette(`tiles/${this.name}/biomes.gz`, "biome", this._biomePalette);
   }
 
   get name(): string {
     return this._name;
+  }
+
+  get display_name(): string {
+    return this._display_name;
   }
 
   get type(): string {
@@ -75,12 +80,24 @@ export class World {
     return this._spawn;
   }
 
+  get center(): Point {
+    return this._center;
+  }
+
+  get zooms(): Zooms {
+    return this._zooms;
+  }
+
   get renderers(): Renderer[] {
     return this._renderers;
   }
 
-  get currentRenderer(): Renderer | undefined {
-    return this._currentRenderer;
+  public getRenderer(id: string): Renderer | undefined {
+    return this.renderers.find((r: Renderer): boolean => r.id === id);
+  }
+
+  get currentRenderer(): Renderer {
+    return this._currentRenderer || this.renderers[0];
   }
 
   get blockInfo(): Map<number, Map<string, BlockInfo>> {
@@ -89,6 +106,17 @@ export class World {
 
   get biomePalette(): Map<number, string> {
     return this._biomePalette;
+  }
+
+  public centerOn(point: Point, zoom?: number | string): void {
+    if (zoom !== undefined) {
+      window.livemap.setZoom(this.zooms.max_out - +zoom);
+    }
+    window.livemap.setView(point.toLatLng());
+  }
+
+  public currentZoom(): number {
+    return this.zooms.max_out - window.livemap.getZoom();
   }
 
   get background(): string {
@@ -121,9 +149,16 @@ export class World {
     // remove old renderer tile layer from map
     this._currentRenderer?.remove();
 
+    // update min/max zoom limits
+    window.livemap.options.maxZoom = this.zooms.max_out + this.zooms.max_in;
+    window.livemap.setMaxZoom(this.zooms.max_out + this.zooms.max_in);
+
     // make sure we have a real renderer
     if (!renderer || this._renderers.indexOf(renderer) < 0) {
-      renderer = this.renderers[0];
+      renderer = this.getRenderer(window.livemap.linkControl.getUrlFromPoint(Point.ZERO).renderer);
+      if (renderer === undefined) {
+        renderer = this.renderers[0];
+      }
     }
 
     // set new renderer tiles layer and add to map
@@ -142,7 +177,7 @@ export class World {
     if (!window.livemap.ui.blockinfo) {
       return;
     }
-    window.fetchBytes<ArrayBuffer>(`tiles/${this.id}/${zoom}/blockinfo/${x}_${z}.pl3xmap.gz`) // todo - rename
+    window.fetchBytes<ArrayBuffer>(`tiles/${this.name}/${zoom}/blockinfo/${x}_${z}.livemap.gz`)
       .then((buffer?: ArrayBuffer): void => {
         this.setBlockInfo(zoom, x, z, buffer);
       });

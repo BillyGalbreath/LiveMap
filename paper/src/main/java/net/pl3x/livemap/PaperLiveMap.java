@@ -124,6 +124,11 @@ public final class PaperLiveMap extends JavaPlugin implements LiveMap {
     }
 
     @Override
+    public int getMaxPlayers() {
+        return Bukkit.getMaxPlayers();
+    }
+
+    @Override
     @NotNull
     public Path getDataPath() {
         return super.getDataPath();

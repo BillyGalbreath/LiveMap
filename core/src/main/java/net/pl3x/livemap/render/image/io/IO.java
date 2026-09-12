@@ -75,6 +75,7 @@ public final class IO extends Registry<IO.Type> {
         put("jpeg", get("jpg"));
         put("png", new Png());
         put("webp", new WebP());
+        put("blockinfo", new BlockInfo());
     }
 
     /**

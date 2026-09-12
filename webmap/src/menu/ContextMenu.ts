@@ -176,7 +176,7 @@ export class ContextMenu {
         if (match) {
           const point: Point = Point.of(parseInt(match[1]), parseInt(match[2]));
           Notifications.info(window.lang("menu.notif.paste").replace("<point>", point.toString("[{x},{z}]")));
-          this._livemap.centerOn(Point.of(parseInt(match[1]), parseInt(match[2])));
+          this._livemap.currentWorld?.centerOn(Point.of(parseInt(match[1]), parseInt(match[2])));
         } else {
           Notifications.warning(window.lang("menu.notif.paste.invalid"));
         }
@@ -207,7 +207,7 @@ export class ContextMenu {
   }
 
   public center(): void {
-    this._livemap.centerOn(this._livemap.coordsControl.point);
+    this._livemap.currentWorld?.centerOn(this._livemap.coordsControl.point);
     this._livemap.coordsControl.update();
     this._livemap.linkControl.update();
     Notifications.success(window.lang("menu.notif.center"));

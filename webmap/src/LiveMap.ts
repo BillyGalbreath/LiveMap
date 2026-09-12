@@ -28,15 +28,13 @@ import {CoordsControl} from "./control/CoordsControl";
 import {LinkControl} from "./control/LinkControl";
 import {ScaleControl} from "./control/ScaleControl";
 import {Lang} from "./data/Lang";
-import {Point} from "./data/Point";
 import {UI} from "./data/UI";
-import {Zooms} from "./data/Zooms";
+import {Palette} from "./palette/Palette";
 import {ContextMenu} from "./menu/ContextMenu";
 import {SidebarControl} from "./sidebar/SidebarControl";
 import {World} from "./world/World";
 import "./css/livemap.css";
-import "./svg"
-import {Palette} from "./palette/Palette";
+import "./svg";
 
 window.onload = function (): void {
   window.fetchJson<LiveMap>("tiles/settings.json")
@@ -51,21 +49,21 @@ export class LiveMap extends L.Map {
   declare _controlContainer?: HTMLElement;
   declare _container?: HTMLElement;
 
-  private readonly _linkControl: LinkControl;
   private readonly _coordsControl: CoordsControl;
   private readonly _blockInfoControl: BlockInfoControl;
+  private readonly _linkControl: LinkControl;
 
   private readonly _sidebarControl: SidebarControl;
   private readonly _contextMenu: ContextMenu;
 
   private readonly _minecraft: string;
   private readonly _max_players: number;
-  private readonly _friendly_urls: boolean;
   private readonly _update_interval: number;
-  private readonly _attribution: string;
-  private readonly _zooms: Zooms;
-  private readonly _ui: UI;
+  private readonly _friendly_urls: boolean;
+  private readonly _format: string;
+
   private readonly _lang: Lang;
+  private readonly _ui: UI;
 
   private readonly _worlds: World[] = [];
 
@@ -104,11 +102,8 @@ export class LiveMap extends L.Map {
       zoomSnap: 1,
       zoomDelta: 1,
 
-      // for extra zoom in, make higher than maxNativeZoom
-      // this is the stretched tiles to zoom in further
-      // maxZoom = maxNativeZoom + extra
-      // maxZoom = zoom.maxOut - (-zoom.maxIn)
-      maxZoom: options.zooms.maxOut - options.zooms.maxIn,
+      // moved to World#setRenderer
+      maxZoom: 0,
       // the closest zoomed in possible (without stretching)
       // this is always 0. no exceptions!
       minZoom: 0
@@ -117,22 +112,13 @@ export class LiveMap extends L.Map {
     window.livemap = this;
 
     this._minecraft = options.minecraft;
-
     this._max_players = options.max_players;
-    this._friendly_urls = options.friendly_urls;
     this._update_interval = options.update_interval;
-    this._attribution = options.attribution;
+    this._friendly_urls = options.friendly_urls;
+    this._format = options.format;
 
-    this._zooms = new Zooms(options.zooms);
-    this._ui = new UI(options.ui);
     this._lang = new Lang(this.minecraft, options.lang);
-
-    new ScaleControl(this);
-    // manually add the zoom control below the scale control
-    L.control.zoom().addTo(this);
-
-    // replace leaflet's attribution with our own
-    this.attributionControl.setPrefix(this.attribution);
+    this._ui = new UI(options.ui);
 
     // sort, build, and add worlds
     options.worlds
@@ -147,11 +133,17 @@ export class LiveMap extends L.Map {
       document.title = window.lang("title");
     }
 
-    // set up the controllers (order here matters)
+    // set up the controls (order here matters)
+    new ScaleControl(this);
+    L.control.zoom().addTo(this); // must be after scale
     this._coordsControl = new CoordsControl(this);
-    this._blockInfoControl = new BlockInfoControl(this);
-    this._linkControl = new LinkControl(this);
+    this._blockInfoControl = new BlockInfoControl(this); // must be after coords
+    this._linkControl = new LinkControl(this); // must be after blockinfo
 
+    // replace leaflet's attribution with our own
+    this.attributionControl.setPrefix(this.lang.translate("attribution"));
+
+    // fancy sidebar
     this._sidebarControl = new SidebarControl(this);
 
     // the fancy context menu and stuff
@@ -218,16 +210,16 @@ export class LiveMap extends L.Map {
     this._controlCorners[`bottomright`] = L.DomUtil.create("div", `leaflet-bottom leaflet-right`, bottom);
   }
 
-  get linkControl(): LinkControl {
-    return this._linkControl
-  }
-
   get coordsControl(): CoordsControl {
     return this._coordsControl;
   }
 
   get blockInfoControl(): BlockInfoControl {
     return this._blockInfoControl;
+  }
+
+  get linkControl(): LinkControl {
+    return this._linkControl
   }
 
   get sidebarControl(): SidebarControl {
@@ -238,17 +230,6 @@ export class LiveMap extends L.Map {
     return this._contextMenu;
   }
 
-  public centerOn(point: Point, zoom?: number | string): void {
-    if (zoom !== undefined) {
-      this.setZoom(this.zooms.maxOut - +zoom);
-    }
-    this.setView(point.toLatLng());
-  }
-
-  public currentZoom(): number {
-    return this.zooms.maxOut - this.getZoom();
-  }
-
   public updateSizeToWindow(): void {
     const style: CSSStyleDeclaration = this.getContainer().style;
     style.width = `${window.innerWidth}px`;
@@ -256,13 +237,17 @@ export class LiveMap extends L.Map {
     this.invalidateSize();
   }
 
-  public setWorld(world: World): void {
-    world.setRenderer();
-    this._currentWorld = world;
-  }
-
   get worlds(): World[] {
     return this._worlds;
+  }
+
+  public getWorld(name: string): World | undefined {
+    return this.worlds.find((world: World) => world.name === name);
+  }
+
+  public setWorld(world: World): void {
+    this._currentWorld = world;
+    world.setRenderer();
   }
 
   get currentWorld(): World | undefined {
@@ -277,28 +262,24 @@ export class LiveMap extends L.Map {
     return this._max_players;
   }
 
-  get friendly_urls(): boolean {
-    return this._friendly_urls;
-  }
-
   get update_interval(): number {
     return this._update_interval;
   }
 
-  get attribution(): string {
-    return this._attribution;
+  get friendly_urls(): boolean {
+    return this._friendly_urls;
   }
 
-  get zooms(): Zooms {
-    return this._zooms;
-  }
-
-  get ui(): UI {
-    return this._ui;
+  get format(): string {
+    return this._format;
   }
 
   get lang(): Lang {
     return this._lang;
+  }
+
+  get ui(): UI {
+    return this._ui;
   }
 }
 
@@ -331,6 +312,9 @@ window.fetchJson = async <T>(url: string, init?: RequestInit): Promise<T> => {
 
 window.fetchPalette = (url: string, type: string, palette: Map<number, string>): void => {
   window.fetchJson<Palette>(url).then((json: Palette): void => {
+    if (json == undefined) {
+      return;
+    }
     Object.entries(json).forEach((data: [string, string]): void => {
       let name: string = data[1];
       const index: number = name.indexOf(':');

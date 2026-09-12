@@ -26,17 +26,24 @@ package net.pl3x.livemap.render.renderer;
 
 import java.util.concurrent.ThreadLocalRandom;
 import net.pl3x.livemap.render.heightmap.Heightmap;
+import net.pl3x.livemap.render.image.BlockInfoCanvas;
 import net.pl3x.livemap.render.image.TileCanvas;
+import net.pl3x.livemap.render.image.io.BlockInfo;
+import net.pl3x.livemap.util.ByteUtil;
 import net.pl3x.livemap.util.Type;
+import net.pl3x.livemap.util.Unsafe;
+import net.pl3x.livemap.world.biome.Biome;
+import net.pl3x.livemap.world.block.Block;
 import net.pl3x.livemap.world.chunk.Chunk;
+import net.pl3x.livemap.world.region.Region;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * A basic renderer.
+ * A basic vanilla colored map renderer.
  */
-public class FlowerMapRenderer extends Renderer {
+public class BlockInfoRenderer extends Renderer {
     /**
-     * Constructs a new instance of FlowerMapRenderer.
+     * Constructs a new instance of BlockInfoRenderer.
      *
      * @param id                Unique id (per world)
      * @param name              Display name for renderer
@@ -46,7 +53,7 @@ public class FlowerMapRenderer extends Renderer {
      * @param translucentFluids True to render fluids as translucent
      * @param sprinkles         True to "sprinkle" random color variations into image
      */
-    public FlowerMapRenderer(
+    public BlockInfoRenderer(
         @NotNull String id,
         @NotNull String name,
         @NotNull String icon,
@@ -55,11 +62,35 @@ public class FlowerMapRenderer extends Renderer {
         boolean translucentFluids,
         boolean sprinkles
     ) {
-        super(FLOWERMAP, id, name, icon, heightmap, biomeBlend, translucentFluids, sprinkles);
+        super(BLOCKINFO, id, name, icon, heightmap, biomeBlend, translucentFluids, sprinkles);
+    }
+
+    @Override
+    @NotNull
+    public TileCanvas createTileCanvas(@NotNull Region region) {
+        return new BlockInfoCanvas(region, this);
     }
 
     @Override
     protected void renderBlock(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data, @NotNull ThreadLocalRandom rand) {
-        //
+        int topY = data.getTopY() - tile.getWorld().getMinY();
+
+        Block block = data.getTopState().getBlock();
+        Biome biome = data.getBiome();
+
+        long blockIndex = block.getIndex() == -1 ? Block.AIR.getIndex() : block.getIndex();
+        long biomeIndex = biome.getIndex() == -1 ? Biome.DEFAULT.getIndex() : biome.getIndex();
+
+        // 11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 - 64 bits -        (18446744073709551615)
+        // 11111111 11111111                                                       - 16 bits - unused (65535)
+        //                   11111111 11111111                                     - 16 bits - block  (65535)
+        //                                     11111111 11111111                   - 16 bits - biome  (65535)
+        //                                                       11111111 11111111 - 16 bits - yPos   (65535)
+        long packed = ((blockIndex & 65535) << 32) | ((biomeIndex & 65535) << 16) | (topY & 65535);
+
+        int index = ((data.getBlockZ() & 511) << 9) | (data.getBlockX() & 511);
+        int offset = BlockInfo.HEADER_SIZE + index * Long.BYTES;
+
+        Unsafe.<BlockInfoCanvas>cast(tile).setBytes(offset, ByteUtil.toBytes(packed));
     }
 }

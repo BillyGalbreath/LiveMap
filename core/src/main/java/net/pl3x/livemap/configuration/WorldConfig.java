@@ -79,24 +79,26 @@ public final class WorldConfig extends AbstractConfig {
         Each additional level requires a new set of tiles
         to be rendered, so don't go too wild here.""")
     public int ZOOM_MAX_OUT = 3;
-    @Key("render.zoom.min-out")
+    @Key("render.zoom.max-in")
     @Comment("""
         Extra zoom in layers will stretch the original
         tile images so you can zoom in further without
         the extra cost of rendering more tiles.""")
-    public int ZOOM_MIN_OUT = 2;
+    public int ZOOM_MAX_IN = 2;
 
     @Key("render.renderers")
     @Comment("""
         List of renderers to use. Each renderer will draw a different type of map.""")
     public List<Map<String, Object>> RENDERERS = new ArrayList<>() {{
         add(new LinkedHashMap<>() {{
+            put("id", "fancy");
             put("type", "fancy");
             put("name", "Fancy");
             put("icon", "overworld_fancy.png");
             put("heightmap", "fancy");
-            put("biome-blend", 3);
+            put("biome-blend", 2);
             put("translucent-fluids", true);
+            put("sprinkles", true);
         }});
     }};
 
@@ -131,6 +133,8 @@ public final class WorldConfig extends AbstractConfig {
             the tile images are stored on disk.
             Warning: Changing these values will require a map reset.""");
         // todo https://github.com/Carleslc/Simple-YAML/issues/84
+        setComment("render.renderers[0].id", """
+            A unique id (per world) for this renderer.""");
         setComment("render.renderers[0].type", """
             The built-in types include: basic, biomes, fancy, flowermap, inhabited, nether_roof.""");
         setComment("render.renderers[0].name", """
@@ -147,6 +151,10 @@ public final class WorldConfig extends AbstractConfig {
             Enable translucent fluids.
             This will make the fluids look fancier and translucent,
             so you can see the blocks below in shallow fluids.""");
+        setComment("render.renderers[0].translucent-fluids", """
+            "Sprinkle" color variations on foliage and grass to make them look less flat.
+            Note: This can raise the filesize of tile images by x5 or more since
+            compression will be more difficult with the added color variations.""");
 
         // call directly on parent config because these nodes are outside the world's scope
         getConfig().setComment("world-settings", """

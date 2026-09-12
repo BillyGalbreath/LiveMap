@@ -89,14 +89,14 @@ public abstract class Heightmap {
     }
 
     /**
-     * Get heightmap alpha for specified block coordinates.
+     * Get heightmap alpha for specified block data.
      *
-     * @param chunk  Possible chunk (used as cache for faster lookups)
-     * @param blockX X block coordinate
-     * @param blockZ Z block coordinate
+     * @param tile Tile image
+     * @param data Block data
+     * @param rand Random for RNG stuff
      * @return The calculated heightmap alpha for block coordinates
      */
-    public int getAlpha(@NotNull Chunk chunk, int blockX, int blockZ) {
+    public int getAlpha(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data, @NotNull ThreadLocalRandom rand) {
         return getMid();
     }
 

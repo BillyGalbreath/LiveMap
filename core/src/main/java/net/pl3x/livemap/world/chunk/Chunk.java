@@ -269,7 +269,6 @@ public abstract class Chunk {
                         data.blockY -= 1;
                         data.blockstate = getBlockState(blockX, data.blockY, blockZ);
                     } while (data.blockY > getWorld().getMinY() && !data.blockstate.isAir());
-                    Logger.warn("y: " + data.blockY);
                 }
 
                 // iterate down from here until we find a renderable block
@@ -803,7 +802,7 @@ public abstract class Chunk {
             if (this.biome == null) {
                 // calculate the real biome using voronoi tessellation,
                 // not the fast quart grid biome directly from the palette
-                this.biome = getWorld().getBiomeRegistry().getBiome(getChunk(), getBlockX(), getBlockY(), getBlockZ());
+                this.biome = getWorld().getBiomeRegistry().getBiome(getChunk(), getBlockX(), getTopY(), getBlockZ());
             }
             return this.biome;
         }

@@ -24,6 +24,7 @@
 
 package net.pl3x.livemap.world.biome;
 
+import java.nio.file.Path;
 import java.util.Objects;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
@@ -41,6 +42,10 @@ public class PaperBiomeRegistry extends BiomeRegistry {
     public void rebuild() {
         clear();
 
+        // load biomes from cache for persistent indexes (BlockInfo)
+        Path path = getWorld().getTilesDir().resolve("biomes.gz");
+        loadPalette(path);
+
         var entries = getWorld().<ServerLevel>getLevel()
             .registryAccess().lookupOrThrow(Registries.BIOME).entrySet();
         for (var entry : entries) {
@@ -54,7 +59,7 @@ public class PaperBiomeRegistry extends BiomeRegistry {
             float temperature = Math.clamp(biome.getBaseTemperature(), 0.0F, 1.0F);
             float humidity = Math.clamp(biome.climateSettings.downfall(), 0.0F, 1.0F);
             put(id, new Biome(
-                0,// todo - index (saved to disk for persistent BlockInfo)
+                getNextIndex(id),
                 id,
                 ColorsConfig.BIOME_COLORS.getOrDefault(id, 0),
                 Objects.requireNonNullElseGet(ColorsConfig.OVERRIDES_DRY_FOLIAGE.get(id),            // custom
@@ -71,6 +76,8 @@ public class PaperBiomeRegistry extends BiomeRegistry {
                 (x, z, color) -> biome.getSpecialEffects().grassColorModifier().modifyColor(x, z, color)
             ));
         }
+
+        savePalette(path);
 
         Logger.info("   &7&l-&r Registered &3%d&r biomes".formatted(size()));
     }

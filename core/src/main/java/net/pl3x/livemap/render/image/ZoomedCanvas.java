@@ -25,7 +25,11 @@
 package net.pl3x.livemap.render.image;
 
 import java.awt.image.BufferedImage;
+import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
+import net.pl3x.livemap.Logger;
+import net.pl3x.livemap.configuration.Config;
+import net.pl3x.livemap.render.image.io.IO;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -39,17 +43,16 @@ public class ZoomedCanvas {
     /**
      * Constructs a new instance of ZoomedTileCanvas.
      *
-     * @param baseTile The base tile at zoom 0.
-     * @param zoom     This image's zoom level
+     * @param imageBuffer The image buffer
+     * @param zoom        This zoom level
      */
-    public ZoomedCanvas(@NotNull TileCanvas baseTile, int zoom) {
+    public ZoomedCanvas(@NotNull BufferedImage imageBuffer, int zoom) {
+        this.imageBuffer = imageBuffer;
+
         // determine how many regions fit inside this tile at this zoom level
         // zoom 1 = 2x2 (4 regions), zoom 2 = 4x4 (16 regions), zoom 3 = 8x8 (64 regions)
         int sideLength = 1 << zoom;
         this.totalExpectedContributions = sideLength * sideLength;
-
-        // initialize a clean, blank image canvas for this pooled tile path
-        this.imageBuffer = baseTile.getIO().createBuffer();
     }
 
     /**
@@ -78,5 +81,30 @@ public class ZoomedCanvas {
      */
     public boolean hasContributions() {
         return this.contributionCount.get() > 0;
+    }
+
+    /**
+     * Get the IO type for reading/writing to disk.
+     *
+     * @return The IO type
+     */
+    @NotNull
+    protected IO.Type getIO() {
+        return IO.getType(Config.WEB_TILE_FORMAT);
+    }
+
+    /**
+     * Save canvas data to disk at specified path.
+     *
+     * @param path Path to write to
+     */
+    public void save(@NotNull Path path) {
+        if (hasContributions()) {
+            try {
+                getIO().write(path, getImageBuffer());
+            } catch (Throwable t) {
+                Logger.error("Failed to flush partial tile: " + path, t);
+            }
+        }
     }
 }

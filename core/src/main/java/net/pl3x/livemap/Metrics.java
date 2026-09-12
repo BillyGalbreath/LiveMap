@@ -76,7 +76,7 @@ class Metrics {
         );
 
         addCustomChart(new SimplePie("unfiltered_server_software", () -> LiveMap.api().getPlatformName()));
-        addCustomChart(new SimplePie("language_used", () -> Config.LANGUAGE_FILE.replace(".yml", "")));
+        addCustomChart(new SimplePie("language_used", () -> Config.LANGUAGE_LOCALE));
         addCustomChart(new SimplePie("internal_web_server", () -> Boolean.toString(Config.HTTPD_ENABLED)));
         addCustomChart(new AdvancedPie("renderers_used", () -> new HashMap<>() {{
             // loop over worlds

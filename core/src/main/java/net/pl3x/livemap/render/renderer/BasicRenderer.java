@@ -29,6 +29,7 @@ import net.pl3x.livemap.render.heightmap.Heightmap;
 import net.pl3x.livemap.render.image.Colors;
 import net.pl3x.livemap.render.image.TileCanvas;
 import net.pl3x.livemap.util.Type;
+import net.pl3x.livemap.world.block.Block;
 import net.pl3x.livemap.world.chunk.Chunk;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,14 +40,24 @@ public class BasicRenderer extends Renderer {
     /**
      * Constructs a new instance of BasicRenderer.
      *
+     * @param id                Unique id (per world)
      * @param name              Display name for renderer
      * @param icon              Icon file for webmap
      * @param heightmap         The heightmap type to use
      * @param biomeBlend        Number of blocks to blend biome tints
      * @param translucentFluids True to render fluids as translucent
+     * @param sprinkles         True to "sprinkle" random color variations into image
      */
-    public BasicRenderer(@NotNull String name, @NotNull String icon, @NotNull Type<Heightmap> heightmap, int biomeBlend, boolean translucentFluids) {
-        super(BASIC, name, icon, heightmap, biomeBlend, translucentFluids);
+    public BasicRenderer(
+        @NotNull String id,
+        @NotNull String name,
+        @NotNull String icon,
+        @NotNull Type<Heightmap> heightmap,
+        int biomeBlend,
+        boolean translucentFluids,
+        boolean sprinkles
+    ) {
+        super(BASIC, id, name, icon, heightmap, biomeBlend, translucentFluids, sprinkles);
     }
 
     @Override
@@ -60,7 +71,7 @@ public class BasicRenderer extends Renderer {
             int heightmap;
             if (data.getFluid() == null) {
                 // dry land
-                heightmap = tile.getHeightmap().getAlpha(data.getChunk(), data.getBlockX(), data.getBlockZ());
+                heightmap = tile.getHeightmap().getAlpha(tile, data, rand);
             } else {
                 // fluids get flat surface since opaque
                 heightmap = tile.getHeightmap().getMid();
@@ -69,6 +80,12 @@ public class BasicRenderer extends Renderer {
                 int fluidDepth = data.getFluidY() - data.getBlockY();
                 double diffY = fluidDepth * 0.1D + (data.getBlockX() + data.getBlockZ() & 1) * 0.2D;
                 pixelColor = Colors.shade(pixelColor, diffY < 0.5D ? 0xFF : (diffY > 0.9D ? 0xB4 : 0xDC));
+            }
+
+            if (isSprinkles()) {
+                // sprinkle the color so it looks less plain (idea from vintage story map)
+                boolean greenery = data.getTopState().getBlock().hasFlag(Block.FLAG_GRASS | Block.FLAG_FOLIAGE);
+                pixelColor = Colors.sprinkle(pixelColor, greenery ? 24 : 10);
             }
 
             // apply heightmap

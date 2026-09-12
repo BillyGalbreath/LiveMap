@@ -35,6 +35,7 @@ import net.pl3x.livemap.util.Type;
 import net.pl3x.livemap.world.biome.Biome;
 import net.pl3x.livemap.world.block.Block;
 import net.pl3x.livemap.world.chunk.Chunk;
+import net.pl3x.livemap.world.region.Region;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -43,43 +44,52 @@ import org.jetbrains.annotations.NotNull;
 public abstract class Renderer {
     public static final Type<Renderer> BASIC = Type.register(new Type<>("basic", BasicRenderer.class));
     public static final Type<Renderer> BIOMES = Type.register(new Type<>("biomes", BiomesRenderer.class));
+    public static final Type<Renderer> BLOCKINFO = Type.register(new Type<>("blockinfo", BlockInfoRenderer.class));
     public static final Type<Renderer> FANCY = Type.register(new Type<>("fancy", FancyRenderer.class));
     public static final Type<Renderer> FLOWERMAP = Type.register(new Type<>("flowermap", FlowerMapRenderer.class));
     public static final Type<Renderer> INHABITED = Type.register(new Type<>("inhabited", InhabitedRenderer.class));
     public static final Type<Renderer> NETHER_ROOF = Type.register(new Type<>("nether_roof", NetherRoofRenderer.class));
 
     private final Type<Renderer> type;
+    private final String id;
     private final String name;
     private final String icon;
     private final Type<Heightmap> heightmapType;
     private final int biomeBlend;
     private final boolean translucentFluids;
+    private final boolean sprinkles;
 
     /**
      * Constructs a new instance of Renderer.
      *
      * @param type              The type of renderer
+     * @param id                Unique id (per world) for this renderer
      * @param name              Display name for renderer
      * @param icon              Icon file for webmap
      * @param heightmapType     The heightmap type to use
      * @param biomeBlend        Number of blocks to blend biome tints
      * @param translucentFluids True to render fluids as translucent
+     * @param sprinkles         True to "sprinkle" fluctuations in the foliage and grass colors so they look less flat
      *
      */
     public Renderer(
         @NotNull Type<Renderer> type,
+        @NotNull String id,
         @NotNull String name,
         @NotNull String icon,
         @NotNull Type<Heightmap> heightmapType,
         int biomeBlend,
-        boolean translucentFluids
+        boolean translucentFluids,
+        boolean sprinkles
     ) {
         this.type = type;
+        this.id = id;
         this.name = name;
         this.icon = icon;
         this.heightmapType = heightmapType;
         this.biomeBlend = biomeBlend;
         this.translucentFluids = translucentFluids;
+        this.sprinkles = sprinkles;
     }
 
     /**
@@ -90,6 +100,16 @@ public abstract class Renderer {
     @NotNull
     public Type<Renderer> getType() {
         return this.type;
+    }
+
+    /**
+     * Get the unique id (per world) for this renderer.
+     *
+     * @return Unique id
+     */
+    @NotNull
+    public String getId() {
+        return this.id;
     }
 
     /**
@@ -138,6 +158,26 @@ public abstract class Renderer {
      */
     public boolean isTranslucentFluids() {
         return this.translucentFluids;
+    }
+
+    /**
+     * Check if foliage and grass colors are "sprinkled" with variations to make them look less flat.
+     *
+     * @return True for sprinkles
+     */
+    public boolean isSprinkles() {
+        return this.sprinkles;
+    }
+
+    /**
+     * Create a new TileCanvas for specified region.
+     *
+     * @param region Region for TileCanvas
+     * @return A new TileCanvas
+     */
+    @NotNull
+    public TileCanvas createTileCanvas(@NotNull Region region) {
+        return new TileCanvas(region, this);
     }
 
     /**
@@ -194,7 +234,7 @@ public abstract class Renderer {
      * @param cancelled Cancellation token
      */
     protected void preRender(@NotNull TileCanvas tile, @NotNull ThreadLocalRandom rand, @NotNull AtomicBoolean cancelled) {
-        // optional override
+        tile.getHeightmap().preRender(tile, rand, cancelled);
     }
 
     /**
@@ -205,7 +245,7 @@ public abstract class Renderer {
      * @param cancelled Cancellation token
      */
     protected void postRender(@NotNull TileCanvas tile, @NotNull ThreadLocalRandom rand, @NotNull AtomicBoolean cancelled) {
-        // optional override
+        tile.getHeightmap().postRender(tile, rand, cancelled);
     }
 
     /**

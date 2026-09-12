@@ -33,10 +33,11 @@ export class Lang implements ArrayLike<string> {
 
   constructor(minecraft: string, lang: Lang) {
     // add all our custom lang assets
-    window.iterate(lang, (key: string, value: string): void => {
-      this._assets.set(key, value);
-      this.length = this._assets.size;
-    });
+    this.flatMap(Object.entries(lang))
+      .forEach((value: string, key: string) => {
+        this._assets.set(key, value);
+        this.length = this._assets.size;
+      });
 
     // what locale are we using?
     const locale: string = this.translate("locale") ?? "en_us";
@@ -98,6 +99,24 @@ export class Lang implements ArrayLike<string> {
 
   public translate(key?: string): string {
     return key ? (this._assets.get(key) ?? key) : "";
+  }
+
+  public flatMap(
+    nestedMap: [string, unknown][],
+    parentKey: string = '',
+    resultMap: Map<string, string> = new Map()
+  ): Map<string, string> {
+    for (const [key, value] of nestedMap) {
+      const currentKey: string = parentKey ? `${parentKey}.${key}` : key;
+      if (Array.isArray(value)) {
+        this.flatMap(value, currentKey, resultMap);
+      } else if (typeof value === "object" && value !== null && value !== undefined) {
+        this.flatMap(Object.entries(value), currentKey, resultMap);
+      } else {
+        resultMap.set(currentKey, String(value));
+      }
+    }
+    return resultMap;
   }
 }
 

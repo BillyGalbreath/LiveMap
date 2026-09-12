@@ -38,14 +38,24 @@ public class BiomesRenderer extends Renderer {
     /**
      * Constructs a new instance of BiomesRenderer.
      *
+     * @param id                Unique id (per world)
      * @param name              Display name for renderer
      * @param icon              Icon file for webmap
      * @param heightmap         The heightmap type to use
      * @param biomeBlend        Number of blocks to blend biome tints
      * @param translucentFluids True to render fluids as translucent
+     * @param sprinkles         True to "sprinkle" random color variations into image
      */
-    public BiomesRenderer(@NotNull String name, @NotNull String icon, @NotNull Type<Heightmap> heightmap, int biomeBlend, boolean translucentFluids) {
-        super(BIOMES, name, icon, heightmap, biomeBlend, translucentFluids);
+    public BiomesRenderer(
+        @NotNull String id,
+        @NotNull String name,
+        @NotNull String icon,
+        @NotNull Type<Heightmap> heightmap,
+        int biomeBlend,
+        boolean translucentFluids,
+        boolean sprinkles
+    ) {
+        super(BIOMES, id, name, icon, heightmap, biomeBlend, translucentFluids, sprinkles);
     }
 
     @Override

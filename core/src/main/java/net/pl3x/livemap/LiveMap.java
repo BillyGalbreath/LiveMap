@@ -35,6 +35,7 @@ import net.pl3x.livemap.httpd.HttpdServer;
 import net.pl3x.livemap.player.PlayerRegistry;
 import net.pl3x.livemap.render.RenderScheduler;
 import net.pl3x.livemap.scheduler.TickScheduler;
+import net.pl3x.livemap.scheduler.task.UpdateSettingsTask;
 import net.pl3x.livemap.thread.WorkerThreadFactory;
 import net.pl3x.livemap.thread.WorkerThreadPool;
 import net.pl3x.livemap.util.FileUtil;
@@ -130,6 +131,13 @@ public interface LiveMap {
      * @return Online mode
      */
     boolean getOnlineMode();
+
+    /**
+     * Get the server's configured max amount of players allowed.
+     *
+     * @return Max players
+     */
+    int getMaxPlayers();
 
     /**
      * Get the path that LiveMap data files are located in.
@@ -290,6 +298,7 @@ public interface LiveMap {
 
         // start tasks
         getRenderScheduler().start();
+        getTickScheduler().addTask(new UpdateSettingsTask());
 
         Provider.cacheMaintenance = WorkerThreadFactory.createExecutor("CacheMaintenance");
         Provider.cacheMaintenance.scheduleAtFixedRate(World.CACHE_CLEANUP_TASK, 1, 1, TimeUnit.MINUTES);

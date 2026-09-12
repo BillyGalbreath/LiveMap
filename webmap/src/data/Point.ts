@@ -25,11 +25,13 @@
 import * as L from "leaflet";
 
 export class Point {
+  public static ZERO: Point = Point.of(0, 0);
+
   private static _SCALE: number;
 
   public static SCALE(): number {
     // lazy load the value
-    return Point._SCALE ??= (1 / Math.pow(2, window.livemap.zooms.maxOut));
+    return Point._SCALE ??= (1 / Math.pow(2, window.livemap.currentWorld!.zooms.max_out));
   }
 
   public static of(a: number | string | number[] | L.Point | L.LatLng | Point, b?: number | string): Point {

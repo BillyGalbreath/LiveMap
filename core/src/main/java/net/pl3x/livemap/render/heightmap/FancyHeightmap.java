@@ -91,15 +91,15 @@ public class FancyHeightmap extends Heightmap {
 
     private float CalculateAltitudeDiff(@NotNull Chunk chunk, int blockX, int blockZ, int blockY) {
         Chunk.BlockData northwest = chunk.getWorld().getChunkFast(chunk, (blockX - 1) >> 4, (blockZ - 1) >> 4).getData(blockX - 1, blockZ - 1);
-        Chunk.BlockData northeast = chunk.getWorld().getChunkFast(chunk, blockX >> 4, (blockZ - 1) >> 4).getData(blockX, blockZ - 1);
-        Chunk.BlockData southwest = chunk.getWorld().getChunkFast(chunk, (blockX - 1) >> 4, blockZ >> 4).getData(blockX - 1, blockZ);
+        Chunk.BlockData north = chunk.getWorld().getChunkFast(chunk, blockX >> 4, (blockZ - 1) >> 4).getData(blockX, blockZ - 1);
+        Chunk.BlockData west = chunk.getWorld().getChunkFast(chunk, (blockX - 1) >> 4, blockZ >> 4).getData(blockX - 1, blockZ);
 
-        int leftTop = blockY - (northwest == null ? blockY : northwest.getBlockY());
-        int rightTop = blockY - (northeast == null ? blockY : northeast.getBlockY());
-        int leftBot = blockY - (southwest == null ? blockY : southwest.getBlockY());
+        int topLeft = blockY - (northwest == null ? blockY : northwest.getBlockY());
+        int top = blockY - (north == null ? blockY : north.getBlockY());
+        int left = blockY - (west == null ? blockY : west.getBlockY());
 
-        int direction = Integer.signum(leftTop) + Integer.signum(rightTop) + Integer.signum(leftBot);
-        int steepness = Math.max(Math.max(Math.abs(leftTop), Math.abs(rightTop)), Math.abs(leftBot));
+        int direction = Integer.signum(topLeft) + Integer.signum(top) + Integer.signum(left);
+        int steepness = Math.max(Math.max(Math.abs(topLeft), Math.abs(top)), Math.abs(left));
         float slopeFactor = Math.min(0.5F, steepness / 10F) / 1.25F;
 
         if (direction > 0) {

@@ -63,7 +63,7 @@ final class TilesPathHandler extends io.undertow.server.handlers.PathHandler {
         @Override
         public void handleRequest(@NotNull HttpServerExchange exchange) {
             String url = exchange.getRelativePath();
-            if (url.contains("/tiles/") && Strings.CS.endsWithAny(url,
+            if (url.contains("tiles/") && Strings.CS.endsWithAny(url,
                 ".bmp",
                 ".gif",
                 ".jpg",

@@ -25,28 +25,38 @@
 import {Block} from "./Block";
 
 export class BlockInfo {
-  public readonly BYTE_SIZE: number = 8;
-  public readonly INTEGER_BYTES: number = 4;
+  public static readonly HEADER_SIZE: number = 16;
+  public static readonly LONG_BYTES: number = 8;
+  public static readonly INT_BYTES: number = 4;
 
+  private readonly _view: DataView;
   private readonly _data: Uint8Array;
 
   constructor(data: Uint8Array) {
     this._data = data;
+    this._view = new DataView(this._data.buffer);
   }
 
-  get minY(): number {
-    return this.getInt(8);
+  public getBlock(x: number, z: number): Block {
+    const index: number = ((z & 511) << 9) | (x & 511);
+    const offset: number = BlockInfo.HEADER_SIZE + index * BlockInfo.LONG_BYTES;
+    return new Block(this.mostSigBits(offset), this.leastSigBits(offset), this.minY);
   }
 
-  getBlock(index: number): Block {
-    return new Block(this.getInt(12 + index * 4), this.minY);
+  public mostSigBits(offset: number): number {
+    return this._view.getUint32(offset);
   }
 
-  private getInt(position: number): number {
-    let val: number = 0;
-    for (let i: number = 0; i < this.INTEGER_BYTES; i++) {
-      val |= (this._data[position + i] & 0xFF) << (this.BYTE_SIZE * ((this.INTEGER_BYTES - 1) - i));
-    }
-    return val;
+  public leastSigBits(offset: number): number {
+    return this._view.getUint32(offset + BlockInfo.INT_BYTES);
+  }
+
+  public get minY(): number {
+    // see BlockInfoCanvas.java for header structure
+    const leastSigBits: number = this.leastSigBits(8);
+    const uint24Bits: number = leastSigBits & 0xFFFFFF;
+
+    // shift to top bit, then back to preserve sign
+    return (uint24Bits << 8) >> 8;
   }
 }

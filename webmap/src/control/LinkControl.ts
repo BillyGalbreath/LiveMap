@@ -27,6 +27,7 @@ import {LiveMap} from "../LiveMap";
 import {Point} from "../data/Point";
 import {Url} from "../data/Url";
 import {ControlBox} from "./ControlBox";
+import {World} from "../world/World";
 
 export class LinkControl extends ControlBox {
   private readonly _dom: HTMLAnchorElement;
@@ -57,8 +58,13 @@ export class LinkControl extends ControlBox {
     // this sets up the map after ctor and before load
     // onLoad will not call until this is finished
     setTimeout((): void => {
+      let world: World | undefined = this._livemap.getWorld(this._url.world);
+      if (world === undefined) {
+        world = this._livemap.worlds[0];
+      }
+      this._livemap.setWorld(world);
       this._livemap.sidebarControl.renderersControl.rendererType = this._url.renderer;
-      this._livemap.centerOn(this._url.point, this._url.zoom);
+      world.centerOn(this._url.point, this._url.zoom);
     }, 0);
   }
 
@@ -89,7 +95,7 @@ export class LinkControl extends ControlBox {
       this._url.basePath,
       this._url.world,
       this._livemap.sidebarControl.renderersControl.rendererType,
-      this._livemap.currentZoom(),
+      this._livemap.currentWorld?.currentZoom() ?? 0,
       point.x,
       point.z
     );

@@ -56,7 +56,7 @@ public class TileCanvas {
     private final Heightmap heightmap;
 
     private final int[] pixels = new int[512 << 9];
-    private boolean dirty;
+    protected boolean dirty;
 
     /**
      * Constructs a new instance of TileCanvas.
@@ -65,9 +65,20 @@ public class TileCanvas {
      * @param renderer The renderer drawing on this tile
      */
     public TileCanvas(@NotNull Region region, @NotNull Renderer renderer) {
+        this(region, renderer, IO.getType(Config.WEB_TILE_FORMAT));
+    }
+
+    /**
+     * Constructs a new instance of TileCanvas.
+     *
+     * @param region   Region this tile belongs to
+     * @param renderer The renderer drawing on this tile
+     * @param io       The IO type for reading/writing images
+     */
+    public TileCanvas(@NotNull Region region, @NotNull Renderer renderer, @NotNull IO.Type io) {
         this.region = region;
         this.renderer = renderer;
-        this.io = IO.getType(Config.WEB_TILE_FORMAT);
+        this.io = io;
 
         this.heightmap = renderer.getHeightmapType().create();
     }
@@ -172,7 +183,7 @@ public class TileCanvas {
             int x = getRegion().getX() >> curZoom;
             int z = getRegion().getZ() >> curZoom;
 
-            Path dir = getWorld().getTilesDir().resolve(DIR_PATH.formatted(curZoom, getRenderer().getType().getId()));
+            Path dir = getWorld().getTilesDir().resolve(DIR_PATH.formatted(curZoom, getRenderer().getId()));
             FileUtil.createDirs(dir);
             Path file = dir.resolve(FILE_PATH.formatted(x, z, getIO().getExtension()));
 
@@ -189,9 +200,7 @@ public class TileCanvas {
 
             // for higher zoom levels (1, 2, 3), consolidate modifications in memory via CHM
             // computeIfAbsent is atomic, ensuring all threads bind to the exact same shared image canvas instance
-            ZoomedCanvas zoomedCanvas = zoomedCanvases.computeIfAbsent(file,
-                _ -> new ZoomedCanvas(this, curZoom)
-            );
+            ZoomedCanvas zoomedCanvas = zoomedCanvases.computeIfAbsent(file, _ -> createZoomedCanvas(curZoom));
 
             // synchronize on the canvas to safely draw pixel matrices from multiple threads
             synchronized (zoomedCanvas) {
@@ -213,8 +222,13 @@ public class TileCanvas {
         this.dirty = false;
     }
 
+    /**
+     * Get the BufferedImage for the zoom 0 base image.
+     *
+     * @return Base BufferedImage
+     */
     @NotNull
-    private BufferedImage getBaseBuffer() {
+    protected BufferedImage getBaseBuffer() {
         BufferedImage buffer = THREAD_LOCAL_BASE_BUFFER.get();
         if (buffer == null || buffer.getType() != getIO().colorType()) {
             buffer = getIO().createBuffer();
@@ -223,11 +237,28 @@ public class TileCanvas {
         return buffer;
     }
 
-    private void writePixels(@NotNull BufferedImage buffer, int zoom) {
+    /**
+     * Create a new ZoomedCanvas for higher than 0 zoom levels.
+     *
+     * @param zoom Zoom level of canvas
+     * @return A new ZoomedCanvas
+     */
+    @NotNull
+    protected ZoomedCanvas createZoomedCanvas(int zoom) {
+        return new ZoomedCanvas(getIO().createBuffer(), zoom);
+    }
+
+    /**
+     * Write the tile's stored pixels to the BufferedImage at specified zoom level.
+     *
+     * @param buffer BufferedImage to write to
+     * @param zoom   Zoom level
+     */
+    protected void writePixels(@NotNull BufferedImage buffer, int zoom) {
         int[] bufferPixels = Unsafe.<DataBufferInt>cast(buffer.getRaster().getDataBuffer()).getData();
 
         if (zoom == 0) {
-            System.arraycopy(this.pixels, 0, bufferPixels, 0, 512 << 9);
+            System.arraycopy(this.pixels, 0, bufferPixels, 0, this.pixels.length);
             return;
         }
 
