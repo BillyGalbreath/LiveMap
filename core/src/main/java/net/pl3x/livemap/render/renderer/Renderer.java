@@ -57,7 +57,7 @@ public abstract class Renderer {
     private final Type<Heightmap> heightmapType;
     private final int biomeBlend;
     private final boolean translucentFluids;
-    private final boolean sprinkles;
+    private final boolean noise;
 
     /**
      * Constructs a new instance of Renderer.
@@ -69,7 +69,7 @@ public abstract class Renderer {
      * @param heightmapType     The heightmap type to use
      * @param biomeBlend        Number of blocks to blend biome tints
      * @param translucentFluids True to render fluids as translucent
-     * @param sprinkles         True to "sprinkle" fluctuations in the foliage and grass colors so they look less flat
+     * @param noise             True to add noise to tiles
      *
      */
     public Renderer(
@@ -80,7 +80,7 @@ public abstract class Renderer {
         @NotNull Type<Heightmap> heightmapType,
         int biomeBlend,
         boolean translucentFluids,
-        boolean sprinkles
+        boolean noise
     ) {
         this.type = type;
         this.id = id;
@@ -89,7 +89,7 @@ public abstract class Renderer {
         this.heightmapType = heightmapType;
         this.biomeBlend = biomeBlend;
         this.translucentFluids = translucentFluids;
-        this.sprinkles = sprinkles;
+        this.noise = noise;
     }
 
     /**
@@ -161,12 +161,12 @@ public abstract class Renderer {
     }
 
     /**
-     * Check if foliage and grass colors are "sprinkled" with variations to make them look less flat.
+     * Check if noise is enabled.
      *
-     * @return True for sprinkles
+     * @return True for noise
      */
-    public boolean isSprinkles() {
-        return this.sprinkles;
+    public boolean hasNoise() {
+        return this.noise;
     }
 
     /**

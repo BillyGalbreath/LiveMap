@@ -39,7 +39,7 @@ import net.pl3x.livemap.world.region.Region;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * A basic vanilla colored map renderer.
+ * A special renderer that feeds metadata to the client about blocks.
  */
 public class BlockInfoRenderer extends Renderer {
     /**
@@ -51,7 +51,7 @@ public class BlockInfoRenderer extends Renderer {
      * @param heightmap         The heightmap type to use
      * @param biomeBlend        Number of blocks to blend biome tints
      * @param translucentFluids True to render fluids as translucent
-     * @param sprinkles         True to "sprinkle" random color variations into image
+     * @param noise             True to add noise to tiles
      */
     public BlockInfoRenderer(
         @NotNull String id,
@@ -60,9 +60,9 @@ public class BlockInfoRenderer extends Renderer {
         @NotNull Type<Heightmap> heightmap,
         int biomeBlend,
         boolean translucentFluids,
-        boolean sprinkles
+        boolean noise
     ) {
-        super(BLOCKINFO, id, name, icon, heightmap, biomeBlend, translucentFluids, sprinkles);
+        super(BLOCKINFO, id, name, icon, heightmap, biomeBlend, translucentFluids, noise);
     }
 
     @Override

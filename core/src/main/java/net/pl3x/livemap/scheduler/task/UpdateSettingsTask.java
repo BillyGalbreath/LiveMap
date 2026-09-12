@@ -154,7 +154,7 @@ public class UpdateSettingsTask extends JsonFileTask {
             /* rendererEntry.put("heightmap", renderer.getHeightmapType().getId());
             rendererEntry.put("biome_blend", renderer.getBiomeBlend());
             rendererEntry.put("translucent_fluids", renderer.isTranslucentFluids());
-            rendererEntry.put("sprinkles", renderer.isSprinkles());*/
+            rendererEntry.put("noise", renderer.hasNoise());*/
             renderers.add(rendererEntry);
         });
 

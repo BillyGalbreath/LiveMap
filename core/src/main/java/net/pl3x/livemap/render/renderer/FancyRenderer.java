@@ -46,7 +46,7 @@ public class FancyRenderer extends Renderer {
      * @param heightmap         The heightmap type to use
      * @param biomeBlend        Number of blocks to blend biome tints
      * @param translucentFluids True to render fluids as translucent
-     * @param sprinkles         True to "sprinkle" random color variations into image
+     * @param noise             True to add noise to tiles
      */
     public FancyRenderer(
         @NotNull String id,
@@ -55,9 +55,9 @@ public class FancyRenderer extends Renderer {
         @NotNull Type<Heightmap> heightmap,
         int biomeBlend,
         boolean translucentFluids,
-        boolean sprinkles
+        boolean noise
     ) {
-        super(FANCY, id, name, icon, heightmap, biomeBlend, translucentFluids, sprinkles);
+        super(FANCY, id, name, icon, heightmap, biomeBlend, translucentFluids, noise);
     }
 
     @Override
@@ -75,10 +75,10 @@ public class FancyRenderer extends Renderer {
 
         // verify we have something to render, again
         if (pixelColor != 0) {
-            if (isSprinkles()) {
-                // sprinkle the color so it looks less plain (idea from vintage story map)
+            if (hasNoise()) {
+                // add noise to the color so it looks less plain (idea from vintage story map)
                 boolean greenery = data.getTopState().getBlock().hasFlag(Block.FLAG_GRASS | Block.FLAG_FOLIAGE);
-                pixelColor = Colors.sprinkle(pixelColor, greenery ? 24 : 10);
+                pixelColor = Colors.noise(pixelColor, greenery ? 24 : 10);
             }
 
             // since we have something to render lets calculate heightmap here, too

@@ -98,7 +98,7 @@ public final class WorldConfig extends AbstractConfig {
             put("heightmap", "fancy");
             put("biome-blend", 2);
             put("translucent-fluids", true);
-            put("sprinkles", true);
+            put("noise", true);
         }});
     }};
 
@@ -151,8 +151,8 @@ public final class WorldConfig extends AbstractConfig {
             Enable translucent fluids.
             This will make the fluids look fancier and translucent,
             so you can see the blocks below in shallow fluids.""");
-        setComment("render.renderers[0].translucent-fluids", """
-            "Sprinkle" color variations on foliage and grass to make them look less flat.
+        setComment("render.renderers[0].noise", """
+            Adds color variations on the map to make it look less flat.
             Note: This can raise the filesize of tile images by x5 or more since
             compression will be more difficult with the added color variations.""");
 

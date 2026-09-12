@@ -134,7 +134,7 @@ public class Type<T> {
      * @param heightmap         The heightmap to use
      * @param biomeBlend        Number of blocks to blend biome tints
      * @param translucentFluids True to render fluids as translucent
-     * @param sprinkles         True to "sprinkle" random color variations into image
+     * @param noise             True to add noise to tiles
      * @return A new renderer
      */
     @NotNull
@@ -145,7 +145,7 @@ public class Type<T> {
         @Nullable Type<Heightmap> heightmap,
         int biomeBlend,
         boolean translucentFluids,
-        boolean sprinkles
+        boolean noise
     ) {
         heightmap = heightmap == null ? Heightmap.NOOP : heightmap;
         try {
@@ -164,7 +164,7 @@ public class Type<T> {
                 heightmap,
                 biomeBlend,
                 translucentFluids,
-                sprinkles
+                noise
             );
         } catch (
             NoSuchMethodException

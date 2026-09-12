@@ -74,7 +74,7 @@ public class RendererRegistry extends Registry<Renderer> {
                     heightmapType == null ? Heightmap.NOOP : heightmapType,
                     Unsafe.cast(map.getOrDefault("biome-blend", 0)),
                     Unsafe.cast(map.getOrDefault("translucent-fluids", false)),
-                    Unsafe.cast(map.getOrDefault("sprinkles", false))
+                    Unsafe.cast(map.getOrDefault("noise", false))
                 );
             } catch (RuntimeException e) {
                 Logger.error("   &7&l-&r Unable to create renderer type %s".formatted(rendererType.getId()), e);

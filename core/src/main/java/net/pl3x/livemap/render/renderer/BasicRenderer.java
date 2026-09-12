@@ -46,7 +46,7 @@ public class BasicRenderer extends Renderer {
      * @param heightmap         The heightmap type to use
      * @param biomeBlend        Number of blocks to blend biome tints
      * @param translucentFluids True to render fluids as translucent
-     * @param sprinkles         True to "sprinkle" random color variations into image
+     * @param noise             True to add noise to tiles
      */
     public BasicRenderer(
         @NotNull String id,
@@ -55,9 +55,9 @@ public class BasicRenderer extends Renderer {
         @NotNull Type<Heightmap> heightmap,
         int biomeBlend,
         boolean translucentFluids,
-        boolean sprinkles
+        boolean noise
     ) {
-        super(BASIC, id, name, icon, heightmap, biomeBlend, translucentFluids, sprinkles);
+        super(BASIC, id, name, icon, heightmap, biomeBlend, translucentFluids, noise);
     }
 
     @Override
@@ -82,10 +82,10 @@ public class BasicRenderer extends Renderer {
                 pixelColor = Colors.shade(pixelColor, diffY < 0.5D ? 0xFF : (diffY > 0.9D ? 0xB4 : 0xDC));
             }
 
-            if (isSprinkles()) {
-                // sprinkle the color so it looks less plain (idea from vintage story map)
+            if (hasNoise()) {
+                // e the color so it looks less plain (idea from vintage story map)
                 boolean greenery = data.getTopState().getBlock().hasFlag(Block.FLAG_GRASS | Block.FLAG_FOLIAGE);
-                pixelColor = Colors.sprinkle(pixelColor, greenery ? 24 : 10);
+                pixelColor = Colors.noise(pixelColor, greenery ? 24 : 10);
             }
 
             // apply heightmap

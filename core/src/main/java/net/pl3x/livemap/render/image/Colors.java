@@ -350,28 +350,28 @@ public final class Colors {
     }
 
     /**
-     * Offset color slightly to make it look "sprinkled" on the map.
+     * Offset color slightly to make noise variations on the map.
      *
      * @param color  Base color
      * @param amount Max offset amount
-     * @return Sprinkled color
+     * @return Altered color
      */
-    public static int sprinkle(int color, int amount) {
+    public static int noise(int color, int amount) {
         if (amount <= 0) {
             return color;
         }
-        return sprinkle(color, amount, ThreadLocalRandom.current());
+        return noise(color, amount, ThreadLocalRandom.current());
     }
 
     /**
-     * Offset color slightly to make it look "sprinkled" on the map.
+     * Offset color slightly to make noise variations on the map.
      *
      * @param color  Base color
      * @param amount Max offset amount
      * @param rand   Random number generator (ThreadLocalRandom)
-     * @return Sprinkled color
+     * @return Altered color
      */
-    public static int sprinkle(int color, int amount, @NotNull RandomGenerator rand) {
+    public static int noise(int color, int amount, @NotNull RandomGenerator rand) {
         int half = amount >> 1;
         return (color & 0xFF000000)
             | (Math.clamp((color >> 16 & 0xFF) + rand.nextInt(amount) - half, 0, 255) << 16)

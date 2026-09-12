@@ -44,7 +44,7 @@ public class NetherRoofRenderer extends Renderer {
      * @param heightmap         The heightmap type to use
      * @param biomeBlend        Number of blocks to blend biome tints
      * @param translucentFluids True to render fluids as translucent
-     * @param sprinkles         True to "sprinkle" random color variations into image
+     * @param noise             True to add noise to tiles
      */
     public NetherRoofRenderer(
         @NotNull String id,
@@ -53,9 +53,9 @@ public class NetherRoofRenderer extends Renderer {
         @NotNull Type<Heightmap> heightmap,
         int biomeBlend,
         boolean translucentFluids,
-        boolean sprinkles
+        boolean noise
     ) {
-        super(NETHER_ROOF, id, name, icon, heightmap, biomeBlend, translucentFluids, sprinkles);
+        super(NETHER_ROOF, id, name, icon, heightmap, biomeBlend, translucentFluids, noise);
     }
 
     @Override
