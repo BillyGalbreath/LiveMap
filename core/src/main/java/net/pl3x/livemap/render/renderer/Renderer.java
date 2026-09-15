@@ -24,6 +24,7 @@
 
 package net.pl3x.livemap.render.renderer;
 
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import net.pl3x.livemap.LiveMap;
@@ -32,6 +33,7 @@ import net.pl3x.livemap.render.image.Colors;
 import net.pl3x.livemap.render.image.TileCanvas;
 import net.pl3x.livemap.util.Mathf;
 import net.pl3x.livemap.util.Type;
+import net.pl3x.livemap.util.Unsafe;
 import net.pl3x.livemap.world.biome.Biome;
 import net.pl3x.livemap.world.block.Block;
 import net.pl3x.livemap.world.chunk.Chunk;
@@ -62,34 +64,19 @@ public abstract class Renderer {
     /**
      * Constructs a new instance of Renderer.
      *
-     * @param type              The type of renderer
-     * @param id                Unique id (per world) for this renderer
-     * @param name              Display name for renderer
-     * @param icon              Icon file for webmap
-     * @param heightmapType     The heightmap type to use
-     * @param biomeBlend        Number of blocks to blend biome tints
-     * @param translucentFluids True to render fluids as translucent
-     * @param noise             True to add noise to tiles
+     * @param type The type of renderer
+     * @param map  Renderer properties
      *
      */
-    public Renderer(
-        @NotNull Type<Renderer> type,
-        @NotNull String id,
-        @NotNull String name,
-        @NotNull String icon,
-        @NotNull Type<Heightmap> heightmapType,
-        int biomeBlend,
-        boolean translucentFluids,
-        boolean noise
-    ) {
+    public Renderer(@NotNull Type<Renderer> type, @NotNull Map<String, Object> map) {
         this.type = type;
-        this.id = id;
-        this.name = name;
-        this.icon = icon;
-        this.heightmapType = heightmapType;
-        this.biomeBlend = biomeBlend;
-        this.translucentFluids = translucentFluids;
-        this.noise = noise;
+        this.id = Unsafe.cast(map.getOrDefault("id", "unknown"));
+        this.name = Unsafe.cast(map.getOrDefault("name", "<world>"));
+        this.icon = Unsafe.cast(map.getOrDefault("icon", "unknown.png"));
+        this.heightmapType = Type.getOrDefault(Heightmap.class, Unsafe.cast(map.getOrDefault("heightmap", "noop")), () -> Heightmap.NOOP);
+        this.biomeBlend = Unsafe.cast(map.getOrDefault("biome-blend", 0));
+        this.translucentFluids = Unsafe.cast(map.getOrDefault("translucent-fluids", false));
+        this.noise = Unsafe.cast(map.getOrDefault("noise", false));
     }
 
     /**

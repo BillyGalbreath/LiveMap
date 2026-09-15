@@ -63,15 +63,14 @@ public class PaperWorld extends World {
         this.biomeRegistry = new PaperBiomeRegistry(this, hashSeed(getSeed()));
         this.renderRegistry = new RendererRegistry(this);
 
-        Logger.info(" &7&l-&r Found &e%s&r (&3&o%s&r)".formatted(level.getTypeKey().identifier(), getName()));
+        Logger.info(" &7&l-&r Found &e%s&r (&3&o%s&r)".formatted(level.getTypeKey().identifier(), getId()));
 
-        if (!isEnabled()) {
+        if (isEnabled()) {
+            getBiomeRegistry().rebuild();
+            getRendererRegistry().rebuild();
+        } else {
             Logger.info("   &7&l-&r &9Skipping &3(&r&odisabled in config&3)");
-            return;
         }
-
-        getBiomeRegistry().rebuild();
-        getRendererRegistry().rebuild();
     }
 
     @Override

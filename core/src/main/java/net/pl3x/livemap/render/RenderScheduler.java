@@ -304,11 +304,11 @@ public class RenderScheduler {
 
             LongOpenHashSet pending = world.getPendingRegions().get();
             if (pending.isEmpty()) {
-                debug("No regions pending for %s".formatted(world.getName()));
+                debug("No regions pending for %s".formatted(world.getId()));
                 continue;
             }
 
-            debug("Found %d pending regions for %s".formatted(pending.size(), world.getName()));
+            debug("Found %d pending regions for %s".formatted(pending.size(), world.getId()));
 
             // create the iterator, passing the pending collection
             RegionSpiralIterator spiral = new RegionSpiralIterator(world.getCenter(), pending,
@@ -345,7 +345,7 @@ public class RenderScheduler {
                         }
                     } catch (Exception e) {
                         if (!cancelled.get()) {
-                            Logger.error("Failed rendering %s region %d".formatted(ticket.world().getName(), ticket.region()), e);
+                            Logger.error("Failed rendering %s region %d".formatted(ticket.world().getId(), ticket.region()), e);
                         } else if (!ticket.world().isDiscarded()) {
                             // add back current region (incomplete render)
                             ticket.world().getPendingRegions().add(ticket.region());
@@ -396,7 +396,7 @@ public class RenderScheduler {
             }
 
             debug("Saving %s's render on %s for region %d,%d"
-                .formatted(renderer.getName(), region.getWorld().getName(), region.getX(), region.getZ())
+                .formatted(renderer.getName(), region.getWorld().getId(), region.getX(), region.getZ())
             );
             tile.save(this.zoomedCanvases);
         }

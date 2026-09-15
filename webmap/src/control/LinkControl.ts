@@ -26,78 +26,63 @@ import * as L from "leaflet";
 import {LiveMap} from "../LiveMap";
 import {Point} from "../data/Point";
 import {Url} from "../data/Url";
-import {ControlBox} from "./ControlBox";
 import {World} from "../world/World";
+import {ControlBox} from "./ControlBox";
 
 export class LinkControl extends ControlBox {
-  private readonly _dom: HTMLAnchorElement;
-  private readonly _url: Url;
+    private readonly _dom: HTMLAnchorElement;
 
-  constructor(livemap: LiveMap) {
-    super(livemap, livemap.ui.link);
+    constructor(livemap: LiveMap) {
+        super(livemap, "bottomleft");
 
-    this._dom = L.DomUtil.create("a", "leaflet-control-layers link");
-    this._dom.title = window.lang("link.title");
-    this._dom.appendChild(window.createSVGIcon("link"));
+        this._dom = L.DomUtil.create("a", "leaflet-control-layers link");
+        this._dom.title = window.lang("link.title");
+        this._dom.appendChild(window.createSVGIcon("link"));
 
-    L.DomEvent.disableClickPropagation(this._dom);
+        L.DomEvent.disableClickPropagation(this._dom);
 
-    this._dom.onclick = (e: MouseEvent): void => {
-      e.preventDefault();
-      window.history.replaceState({}, window.lang("title"), this._dom.href);
-      this._livemap.contextMenu.share(Point.of(this._livemap.getCenter()).round());
+        this._dom.onclick = (e: MouseEvent): void => {
+            e.preventDefault();
+            window.history.replaceState({}, window.lang("title"), this._dom.href);
+            this._livemap.contextMenu.share(Point.of(this._livemap.getCenter()).round());
+        }
+
+        // add to the map once we have a dom to add
+        this.addTo(livemap);
     }
 
-    // add to the map once we have a dom to add
-    this.addTo(livemap);
+    onAdd(map: L.Map): HTMLAnchorElement {
+        map.addEventListener("moveend", this.update);
+        map.addEventListener("zoomend", this.update);
+        return this._dom;
+    }
 
-    // parse data from the browser's url
-    this._url = new Url(this._livemap, window.location.pathname);
+    onRemove(map: L.Map): void {
+        map.removeEventListener("moveend", this.update);
+        map.removeEventListener("zoomend", this.update);
+    }
 
-    // center the map on url coordinates or spawn (0, 0);
-    // this sets up the map after ctor and before load
-    // onLoad will not call until this is finished
-    setTimeout((): void => {
-      let world: World | undefined = this._livemap.getWorld(this._url.world);
-      if (world === undefined) {
-        world = this._livemap.worlds[0];
-      }
-      this._livemap.setWorld(world);
-      this._livemap.sidebarControl.renderersControl.rendererType = this._url.renderer;
-      world.centerOn(this._url.point, this._url.zoom);
-    }, 0);
-  }
+    public update: () => void = (): void => {
+        this._dom.href = this.getUrlFromView().toString();
+        // find out how to prevent chrome from spamming history
+        window.history.replaceState({}, "", this._dom.href);
+    }
 
-  onAdd(map: L.Map): HTMLAnchorElement {
-    map.addEventListener("moveend", this.update);
-    map.addEventListener("zoomend", this.update);
-    return this._dom;
-  }
+    public getUrlFromView(): Url {
+        return this.getUrlFromPoint(Point.of(this._livemap.getCenter()).round());
+    }
 
-  onRemove(map: L.Map): void {
-    map.removeEventListener("moveend", this.update);
-    map.removeEventListener("zoomend", this.update);
-  }
-
-  public update: () => void = (): void => {
-    this._dom.href = this.getUrlFromView().toString();
-    // todo - find out how to prevent chrome from spamming history
-    window.history.replaceState({}, "", this._dom.href);
-  }
-
-  public getUrlFromView(): Url {
-    return this.getUrlFromPoint(Point.of(this._livemap.getCenter()).round());
-  }
-
-  public getUrlFromPoint(point: Point): Url {
-    return new Url(
-      this._livemap,
-      this._url.basePath,
-      this._url.world,
-      this._livemap.sidebarControl.renderersControl.rendererType,
-      this._livemap.currentWorld?.currentZoom() ?? 0,
-      point.x,
-      point.z
-    );
-  }
+    public getUrlFromPoint(point: Point): Url {
+        const world: World = this._livemap.worldManager.current
+        const url: Url = new Url(this._livemap, window.location.pathname);
+        return new Url(
+            this._livemap,
+            url.basePath,
+            world.id,
+            world.renderer.id,
+            world.currentZoom(),
+            point.x,
+            point.z
+        );
+    }
 }

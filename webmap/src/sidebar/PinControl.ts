@@ -26,36 +26,36 @@ import * as L from "leaflet";
 import {LiveMap} from "../LiveMap";
 
 export class PinControl {
-  private readonly _dom: HTMLElement;
-  private readonly _svg: SVGSVGElement;
+    private readonly _dom: HTMLElement;
+    private readonly _svg: SVGSVGElement;
 
-  private _pinned: boolean = false;
+    private _pinned: boolean = false;
 
-  constructor(livemap: LiveMap, parent: HTMLElement) {
-    this._dom = L.DomUtil.create("div", "", parent);
-    this._dom.id = "pin";
-    this._dom.onclick = (): void => {
-      this.pin(!this.pinned);
-      localStorage.setItem("sidebar.pinned", this.pinned ? "pinned" : "unpinned");
-    };
+    constructor(livemap: LiveMap, parent: HTMLElement) {
+        this._dom = L.DomUtil.create("div", "", parent);
+        this._dom.id = "pin";
+        this._dom.onclick = (): void => {
+            this.pin(!this.pinned);
+            localStorage.setItem("sidebar.pinned", this.pinned ? "pinned" : "unpinned");
+        };
 
-    this._dom.appendChild(window.createSVGIcon("pin"));
-    this._svg = this._dom.querySelector("svg")!;
+        this._dom.appendChild(window.createSVGIcon("pin"));
+        this._svg = this._dom.querySelector("svg")!;
 
-    this.pin(livemap.ui.sidebar == "pinned" || localStorage.getItem("sidebar.pinned") == "pinned");
-  }
+        this.pin(localStorage.getItem("sidebar.pinned") == "pinned");
+    }
 
-  public get pinned(): boolean {
-    return this._pinned;
-  }
+    public get pinned(): boolean {
+        return this._pinned;
+    }
 
-  public pin(pinned: boolean): void {
-    this._pinned = pinned;
+    public pin(pinned: boolean): void {
+        this._pinned = pinned;
 
-    this._dom.className = pinned ? "pinned" : "unpinned";
-    const text: string = window.lang(`sidebar.${this._dom.className}`);
+        this._dom.className = pinned ? "pinned" : "unpinned";
+        const text: string = window.lang(`sidebar.${this._dom.className}`);
 
-    this._svg.setAttribute("alt", text);
-    this._svg.setAttribute("title", text);
-  }
+        this._svg.setAttribute("alt", text);
+        this._svg.setAttribute("title", text);
+    }
 }

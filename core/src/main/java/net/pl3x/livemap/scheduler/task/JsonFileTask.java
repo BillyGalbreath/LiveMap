@@ -43,7 +43,7 @@ import org.jetbrains.annotations.NotNull;
  * Task for writing JSON data to disk on a schedule.
  */
 public abstract class JsonFileTask extends Task {
-    protected static final int THIRTY_SECONDS_IN_TICKS = 30 * 20;
+    protected static final int ONE_MINUTE_IN_TICKS = 60 * 20;
 
     protected static final ExecutorService EXECUTOR = WorkerThreadFactory.createExecutor("Json-Writer");
 
@@ -66,7 +66,7 @@ public abstract class JsonFileTask extends Task {
      * @param path Path to JSON file to write
      */
     public JsonFileTask(@NotNull Path path) {
-        super(/*THIRTY_SECONDS_IN_TICKS*/ 100, true); // todo
+        super(ONE_MINUTE_IN_TICKS, true);
         this.path = path;
 
         // load existing json to get its hash
@@ -116,7 +116,7 @@ public abstract class JsonFileTask extends Task {
     protected void writeJson(@NotNull String json) {
         int hash = json.hashCode();
         if (hash == this.cachedHash) {
-            Logger.debug("File %s has not changed, skipping write to disk".formatted(this.path));
+            Logger.debug("File %s has not changed; skipping".formatted(this.path));
             return;
         }
 

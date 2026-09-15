@@ -77,19 +77,6 @@ public final class Config extends AbstractConfig {
         Default is 512kb (524288).""")
     public static int WEB_TILE_BUFFER = 524288;
 
-    @Key("settings.website.title")
-    @Comment("""
-        The title that appears in the title of the web browser.""")
-    public static String WEBSITE_TITLE = "LiveMap v4";
-    @Key("settings.website.logo")
-    @Comment("""
-        The title that appears in the title of the web browser.""")
-    public static String WEBSITE_LOGO = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 200 220\" fill=\"currentColor\"><path d=\"M199.6 34.5 134.2.3h-.2c-.1-.2-.3-.2-.5-.2h-.4a2.6 2.6 0 0 0-.9.1h-.2L67.7 34 3.5.3a2.4 2.4 0 0 0-3.5 2v181c0 1 .5 1.7 1.3 2.1l65.2 34.2.5.2h.2a2.5 2.5 0 0 0 1.1 0h.2l.5-.2 64-33.6 64.3 33.7a2.5 2.5 0 0 0 2.3 0c.7-.5 1.2-1.3 1.2-2.1v-181a2 2 0 0 0-1.3-2zM196 213.7l-61.9-32.5h-.2l-.5-.2h-.4a2.6 2.6 0 0 0-.9.2h-.2L70 213.7V38l63-33 63 33z\"/><path d=\"M135.5 16.6v157.2c0 1.3-1 2.4-2.4 2.4-1.3 0-2.4-1-2.4-2.4V16.6c0-1.3 1.1-2.4 2.4-2.4 1.3 0 2.4 1.1 2.4 2.4z\"/></svg>";
-    @Key("settings.website.attribution")
-    @Comment("""
-        The title that appears in the title of the web browser.""")
-    public static String WEBSITE_ATTRIBUTION = "LiveMap &copy; 2020-2026";
-
     @Key("settings.internal-webserver.enabled")
     @Comment("""
         Enable the built-in web server for regular http.""")

@@ -24,13 +24,12 @@
 
 package net.pl3x.livemap.render.renderer;
 
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
-import net.pl3x.livemap.render.heightmap.Heightmap;
 import net.pl3x.livemap.render.image.BlockInfoCanvas;
 import net.pl3x.livemap.render.image.TileCanvas;
 import net.pl3x.livemap.render.image.io.BlockInfo;
 import net.pl3x.livemap.util.ByteUtil;
-import net.pl3x.livemap.util.Type;
 import net.pl3x.livemap.util.Unsafe;
 import net.pl3x.livemap.world.biome.Biome;
 import net.pl3x.livemap.world.block.Block;
@@ -45,24 +44,12 @@ public class BlockInfoRenderer extends Renderer {
     /**
      * Constructs a new instance of BlockInfoRenderer.
      *
-     * @param id                Unique id (per world)
-     * @param name              Display name for renderer
-     * @param icon              Icon file for webmap
-     * @param heightmap         The heightmap type to use
-     * @param biomeBlend        Number of blocks to blend biome tints
-     * @param translucentFluids True to render fluids as translucent
-     * @param noise             True to add noise to tiles
+     * @param map Renderer properties
      */
     public BlockInfoRenderer(
-        @NotNull String id,
-        @NotNull String name,
-        @NotNull String icon,
-        @NotNull Type<Heightmap> heightmap,
-        int biomeBlend,
-        boolean translucentFluids,
-        boolean noise
+        @NotNull Map<String, Object> map
     ) {
-        super(BLOCKINFO, id, name, icon, heightmap, biomeBlend, translucentFluids, noise);
+        super(BLOCKINFO, map);
     }
 
     @Override

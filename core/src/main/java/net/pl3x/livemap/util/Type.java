@@ -29,7 +29,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import net.pl3x.livemap.render.heightmap.Heightmap;
+import java.util.function.Supplier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,6 +64,24 @@ public class Type<T> {
     /**
      * Get type object by ID and object type.
      *
+     * @param type        The object type the type object represents
+     * @param id          Unique ID for the object type
+     * @param defaultType The default type if not found
+     * @param <T>         The type of object this object type represents
+     * @return Requested type object, or null if no type object exists by that object type and ID
+     */
+    @Nullable
+    public static <T> Type<T> getOrDefault(@NotNull Class<T> type, @NotNull String id, @NotNull Supplier<Type<T>> defaultType) {
+        Map<String, Type<?>> innerMap = BY_CLASS.get(type);
+        if (innerMap == null) {
+            return defaultType.get();
+        }
+        return Unsafe.cast(innerMap.getOrDefault(id.toLowerCase(Locale.ROOT), defaultType.get()));
+    }
+
+    /**
+     * Get type object by ID and object type.
+     *
      * @param type The object type the type object represents
      * @param id   Unique ID for the object type
      * @param <T>  The type of object this object type represents
@@ -71,11 +89,7 @@ public class Type<T> {
      */
     @Nullable
     public static <T> Type<T> get(@NotNull Class<T> type, @NotNull String id) {
-        Map<String, Type<?>> innerMap = BY_CLASS.get(type);
-        if (innerMap == null) {
-            return null;
-        }
-        return Unsafe.cast(innerMap.get(id.toLowerCase(Locale.ROOT)));
+        return getOrDefault(type, id, () -> null);
     }
 
     private final String id;
@@ -115,63 +129,22 @@ public class Type<T> {
     public T create() {
         try {
             return this.clazz.getConstructor().newInstance();
-        } catch (
-            NoSuchMethodException
-            | InvocationTargetException
-            | InstantiationException
-            | IllegalAccessException e
-        ) {
+        } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
     }
 
     /**
-     * Create a new renderer of this type.
+     * Create a new object of this type with properties.
      *
-     * @param id                Unique id (per world)
-     * @param name              Display name for renderer
-     * @param icon              Icon file for webmap
-     * @param heightmap         The heightmap to use
-     * @param biomeBlend        Number of blocks to blend biome tints
-     * @param translucentFluids True to render fluids as translucent
-     * @param noise             True to add noise to tiles
-     * @return A new renderer
+     * @param map Object properties
+     * @return A new object
      */
     @NotNull
-    public T create(
-        @NotNull String id,
-        @NotNull String name,
-        @NotNull String icon,
-        @Nullable Type<Heightmap> heightmap,
-        int biomeBlend,
-        boolean translucentFluids,
-        boolean noise
-    ) {
-        heightmap = heightmap == null ? Heightmap.NOOP : heightmap;
+    public T create(@NotNull Map<String, Object> map) {
         try {
-            return this.clazz.getConstructor(
-                String.class,
-                String.class,
-                String.class,
-                Type.class,
-                int.class,
-                boolean.class,
-                boolean.class
-            ).newInstance(
-                id,
-                name,
-                icon,
-                heightmap,
-                biomeBlend,
-                translucentFluids,
-                noise
-            );
-        } catch (
-            NoSuchMethodException
-            | InvocationTargetException
-            | InstantiationException
-            | IllegalAccessException e
-        ) {
+            return this.clazz.getConstructor(Map.class).newInstance(map);
+        } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
     }

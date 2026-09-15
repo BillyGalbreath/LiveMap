@@ -22,37 +22,46 @@
  * SOFTWARE.
  */
 
-import * as L from "leaflet";
 import {LiveMap} from "../LiveMap";
 import {Renderer} from "../world/Renderer";
+import {World} from "../world/World";
 
-export class RenderersControl {
-  private readonly _livemap: LiveMap;
-  private readonly _dom: HTMLElement;
+export {};
 
-  private _renderers: Renderer[] = [];
+declare global {
+    // noinspection JSUnusedGlobalSymbols (jetbrains WEB-42616)
+    interface Window {
+        livemap: LiveMap
 
-  private _rendererType: string = "basic";
+        createSVGIcon(icon: string): DocumentFragment;
 
-  constructor(livemap: LiveMap) {
-    this._livemap = livemap;
+        customEvent<T>(event: keyof (WindowEventMap), detail: T): void;
 
-    this._dom = L.DomUtil.create("ul");
+        fetchBytes<T>(url: string): Promise<T>;
 
-    /*livemap.settings.renderers.forEach((renderer: Renderer): void => {
-        this._renderers.push(new Renderer(renderer))
-    });*/
-  }
+        fetchJson<T>(url: string, init?: RequestInit): Promise<T>;
 
-  get dom(): HTMLElement {
-    return this._dom;
-  }
+        fetchPalette(url: string, type: string, palette: Map<number, string>): void;
 
-  get rendererType(): string {
-    return this._rendererType;
-  }
+        isset(obj: unknown): boolean;
 
-  set rendererType(renderer: string | null) {
-    this._rendererType = !renderer?.length ? this._renderers[0].id : renderer;
-  }
+        iterate<T>(arr: ArrayLike<T>, func: (key: string, value: T) => void): void;
+
+        lang(key?: string): string;
+    }
+
+    interface WindowEventMap {
+        rendererAdded: CustomEvent<Renderer>;
+        rendererSelected: CustomEvent<Renderer>;
+        worldAdded: CustomEvent<World>;
+        worldSelected: CustomEvent<World>;
+    }
+
+    interface String {
+        formatted(...args: any[]): string;
+    }
+
+    interface Array<T> {
+        remove(obj: T): void;
+    }
 }

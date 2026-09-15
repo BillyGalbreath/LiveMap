@@ -77,13 +77,17 @@ public class BlockInfoCanvas extends TileCanvas {
 
     @Override
     protected void writePixels(@NotNull BufferedImage buffer, int zoom) {
+        byte[] src = this.byteBuffer.array();
         byte[] bytes = Unsafe.<BlockInfo.CustomBufferedImage>cast(buffer).getBytes();
 
         if (zoom == 0) {
-            byte[] src = this.byteBuffer.array();
+            // copy entire buffer
             System.arraycopy(src, 0, bytes, 0, src.length);
             return;
         }
+
+        // copy header only
+        System.arraycopy(src, 0, bytes, 0, BlockInfo.HEADER_SIZE);
 
         // how many pixels to increment in each direction
         int step = 1 << zoom;
@@ -103,7 +107,7 @@ public class BlockInfoCanvas extends TileCanvas {
                 int targetX = baseX + (x >> zoom);
 
                 int srcIndex = ((z << 9) | x) * Long.BYTES + BlockInfo.HEADER_SIZE;
-                int destIndex = targetRowOffset + targetX;
+                int destIndex = (targetRowOffset + targetX) * Long.BYTES + BlockInfo.HEADER_SIZE;
 
                 this.byteBuffer.get(srcIndex, bytes, destIndex, Long.BYTES);
             }

@@ -22,68 +22,14 @@
  * SOFTWARE.
  */
 
-import * as L from "leaflet";
-import {LiveMap} from "./LiveMap";
-
-declare global {
-  interface Window {
-    livemap: LiveMap
-
-    createSVGIcon(icon: string): DocumentFragment;
-
-    customEvent<T>(event: keyof (WindowEventMap), detail: T): void;
-
-    fetchBytes<T>(url: string): Promise<T>;
-
-    fetchJson<T>(url: string, init?: RequestInit): Promise<T>;
-
-    fetchPalette(url: string, type: string, palette: Map<number, string>): void;
-
-    isset(obj: unknown): boolean;
-
-    iterate<T>(arr: ArrayLike<T>, func: (key: string, value: T) => void): void;
-
-    lang(key?: string): string;
-  }
-
-  interface WindowEventMap {
-    rendererSelected: CustomEvent<World>;
-    worldAdded: CustomEvent<World>;
-    worldRemoved: CustomEvent<World>;
-    worldSelected: CustomEvent<World>;
-  }
-
-  interface String {
-    formatted(...args: any[]): string;
-  }
-
-  interface Array<T> {
-    remove(obj: T): void;
-  }
-}
+export {};
 
 module "leaflet" {
-  export namespace Browser {
-    const linux: boolean;
-  }
+    export namespace Browser {
+        const linux: boolean;
+    }
 
-  export function ellipse(latLng: L.LatLngExpression, radii: L.PointTuple, tilt: number, options: L.PathOptions): Ellipse;
-
-  interface Ellipse extends L.Path {
-    setRadius(radii: L.PointTuple): this;
-
-    getRadius(): L.Point;
-
-    setTilt(tilt: number): this;
-
-    getBounds(): L.LatLngBounds;
-
-    getLatLng(): L.LatLng;
-
-    setLatLng(latLng: L.LatLngExpression): this;
-  }
-
-  interface Map {
-    _fadeAnimated: boolean;
-  }
+    interface Map {
+        _fadeAnimated: boolean;
+    }
 }

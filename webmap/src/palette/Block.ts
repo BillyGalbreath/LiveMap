@@ -23,28 +23,28 @@
  */
 
 export class Block {
-  private readonly _block: number;
-  private readonly _biome: number;
-  private readonly _yPos: number;
-  private readonly _minY: number;
+    private readonly _block: number;
+    private readonly _biome: number;
+    private readonly _yPos: number;
+    private readonly _minY: number;
 
-  constructor(mostSigBits: number, leastSigBits: number, minY: number) {
-    // see BlockInfoRenderer.java for the bit structure
-    this._block = mostSigBits & 0xFFFF;
-    this._biome = (leastSigBits >>> 16) & 0xFFFF;
-    this._yPos = leastSigBits & 0xFFFF;
-    this._minY = minY;
-  }
+    constructor(mostSigBits: number, leastSigBits: number, minY: number) {
+        // see BlockInfoRenderer.java for the bit structure
+        this._block = mostSigBits & 0xFFFF;
+        this._biome = (leastSigBits >>> 16) & 0xFFFF;
+        this._yPos = leastSigBits & 0xFFFF;
+        this._minY = minY;
+    }
 
-  get block(): number {
-    return this._block;
-  }
+    get block(): number {
+        return this._block;
+    }
 
-  get biome(): number {
-    return this._biome;
-  }
+    get biome(): number {
+        return this._biome;
+    }
 
-  get yPos(): number {
-    return this._yPos + this._minY;
-  }
+    get yPos(): number {
+        return this._yPos + this._minY;
+    }
 }

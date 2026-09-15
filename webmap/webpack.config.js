@@ -30,7 +30,7 @@ module.exports = {
       return middlewares;
     }
   },
-  devtool: "source-map", // comment out for production
+  devtool: "source-map",
   entry: "./src/LiveMap.ts",
   externals: {
     "leaflet": "L"
@@ -71,7 +71,7 @@ module.exports = {
     ]
   },
   optimization: {
-    minimize: false, // enable for production
+    minimize: true,
     minimizer: [
       new CssMinimizerPlugin(),
       new TerserPlugin({

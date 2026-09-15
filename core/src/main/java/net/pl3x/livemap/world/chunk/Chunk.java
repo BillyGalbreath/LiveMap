@@ -474,7 +474,7 @@ public abstract class Chunk {
     @NotNull
     public String toString() {
         return "Chunk["
-            + "world=" + getWorld().getName()
+            + "world=" + getWorld().getId()
             + ",xPos=" + getX()
             + ",zPos=" + getZ()
             + "]";

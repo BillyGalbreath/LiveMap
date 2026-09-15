@@ -53,6 +53,16 @@ public final class Lang extends AbstractConfig {
     @Key("command-fullrender-errored")
     public static String FULLRENDER_ERRORED = "<red>Fullrender errored on <grey><world>\n<red>Error: <error>";
 
+    @Key("ui.browser.title")
+    public static String UI_BROWSER_TITLE = "LiveMap v4";
+    @Key("ui.sidebar.href")
+    public static String UI_SIDEBAR_HREF = "https://modrinth.com/plugin/livemap/";
+    @Key("ui.sidebar.title")
+    public static String UI_SIDEBAR_TITLE = "LiveMap";
+    @Key("ui.sidebar.logo")
+    public static String UI_SIDEBAR_LOGO = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 200 220\" fill=\"currentColor\"><path d=\"M199.6 34.5 134.2.3h-.2c-.1-.2-.3-.2-.5-.2h-.4a2.6 2.6 0 0 0-.9.1h-.2L67.7 34 3.5.3a2.4 2.4 0 0 0-3.5 2v181c0 1 .5 1.7 1.3 2.1l65.2 34.2.5.2h.2a2.5 2.5 0 0 0 1.1 0h.2l.5-.2 64-33.6 64.3 33.7a2.5 2.5 0 0 0 2.3 0c.7-.5 1.2-1.3 1.2-2.1v-181a2 2 0 0 0-1.3-2zM196 213.7l-61.9-32.5h-.2l-.5-.2h-.4a2.6 2.6 0 0 0-.9.2h-.2L70 213.7V38l63-33 63 33z\"/><path d=\"M135.5 16.6v157.2c0 1.3-1 2.4-2.4 2.4-1.3 0-2.4-1-2.4-2.4V16.6c0-1.3 1.1-2.4 2.4-2.4 1.3 0 2.4 1.1 2.4 2.4z\"/></svg>";
+    @Key("ui.attribution")
+    public static String UI_ATTRIBUTION = "LiveMap &copy; 2020-2026";
     @Key("ui.blockinfo.unknown.block")
     public static String UI_BLOCKINFO_UNKNOWN_BLOCK = "Unknown Block";
     @Key("ui.blockinfo.unknown.biome")

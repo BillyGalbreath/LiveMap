@@ -27,6 +27,7 @@ package net.pl3x.livemap.world;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import net.pl3x.livemap.LiveMap;
@@ -34,6 +35,7 @@ import net.pl3x.livemap.Logger;
 import net.pl3x.livemap.configuration.WorldConfig;
 import net.pl3x.livemap.marker.Point;
 import net.pl3x.livemap.render.renderer.RendererRegistry;
+import net.pl3x.livemap.scheduler.task.WorldSettingsTask;
 import net.pl3x.livemap.util.LongDoubleBuffer;
 import net.pl3x.livemap.util.LongLoadingCache;
 import net.pl3x.livemap.world.biome.BiomeRegistry;
@@ -49,11 +51,11 @@ public abstract class World {
     public static final Runnable CACHE_CLEANUP_TASK = () -> LiveMap.api().getWorldRegistry()
         // iterate all worlds
         .forEach((_, world) -> {
-            Logger.debug("Cleaning up region cache on %s".formatted(world.getName()));
+            Logger.debug("Cleaning up region cache on %s".formatted(world.getId()));
             world.regionCache.cleanUp();
         });
 
-    private final String name;
+    private final String id;
     private final long seed;
     private final Point spawn;
     private final Type type;
@@ -65,6 +67,8 @@ public abstract class World {
 
     private final LongLoadingCache<Region> regionCache;
     private final LongDoubleBuffer pendingRegions = new LongDoubleBuffer();
+
+    private final WorldSettingsTask settingsTask;
 
     private final AtomicBoolean discarded = new AtomicBoolean(false);
 
@@ -78,7 +82,7 @@ public abstract class World {
      * @param regionsDir Regions directory
      */
     public World(@NotNull String name, long seed, @NotNull Point spawn, @NotNull Type type, @NotNull Path regionsDir) {
-        this.name = name;
+        this.id = name;
         this.seed = seed;
         this.spawn = spawn;
         this.type = type;
@@ -93,6 +97,20 @@ public abstract class World {
             LiveMap.api().getRenderScheduler().getParallelism(),
             index -> new Region(this, index)
         );
+
+        this.settingsTask = new WorldSettingsTask(this);
+
+        if (!isEnabled()) {
+            return;
+        }
+
+        // random 0-5 second delay so all worlds are not saving at same time
+        LiveMap.api().getTickScheduler().addTask(ThreadLocalRandom.current().nextInt(20 * 5), () -> {
+            // schedule update task
+            LiveMap.api().getTickScheduler().addTask(this.settingsTask);
+            // run initially now
+            this.settingsTask.run();
+        });
     }
 
     /**
@@ -124,13 +142,37 @@ public abstract class World {
     }
 
     /**
-     * Get the name of this world.
+     * Get the id name of this world.
      *
-     * @return World's name
+     * <p>Examples: Paper servers the default world is named {@code world}, and for
+     * Fabric etc. the default is {@code minecraft:overworld}.
+     *
+     * @return World's id name
      */
     @NotNull
-    public String getName() {
-        return this.name;
+    public String getId() {
+        return this.id;
+    }
+
+    /**
+     * Get the display name this world should use on the webmap.
+     *
+     * <p>Special value of {@code <world>} means to use its id for the name.
+     *
+     * @return Display name
+     */
+    @NotNull
+    public String getDisplayName() {
+        return getConfig().DISPLAY_NAME;
+    }
+
+    /**
+     * Get the order this world should display on the webmap.
+     *
+     * @return Display order
+     */
+    public int getOrder() {
+        return getConfig().ORDER;
     }
 
     /**
@@ -357,14 +399,14 @@ public abstract class World {
 
     @Override
     public int hashCode() {
-        return Objects.hash(getName());
+        return Objects.hash(getId());
     }
 
     @Override
     @NotNull
     public String toString() {
         return "World["
-            + "name=" + getName()
+            + "name=" + getId()
             + ",seed=" + getSeed()
             + ",spawn=" + getSpawn()
             + ",type=" + getType()
@@ -390,6 +432,7 @@ public abstract class World {
 
         Logger.debug("World discarded, clearing data structures.");
 
+        this.settingsTask.cancel();
         this.regionCache.invalidateAll();
         this.pendingRegions.clear();
         getBiomeRegistry().clear();

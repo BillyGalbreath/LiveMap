@@ -24,7 +24,7 @@
 
 package net.pl3x.livemap;
 
-import io.papermc.paper.ServerBuildInfo;
+import io.papermc.paper.configuration.GlobalConfiguration;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import java.nio.file.Path;
 import java.util.List;
@@ -112,15 +112,13 @@ public final class PaperLiveMap extends JavaPlugin implements LiveMap {
     @Override
     @NotNull
     public String getPlatformVersion() {
-        // grab it manually because Paper tags on extra redundant information :3
-        String version = ServerBuildInfo.buildInfo().asString(ServerBuildInfo.StringRepresentation.VERSION_SIMPLE);
-        // remove everything after and including the second hyphen (git commit hash)
-        return version.substring(0, version.indexOf("-", version.indexOf("-") + 1));
+        return Bukkit.getServer().getMinecraftVersion();
     }
 
     @Override
-    public boolean getOnlineMode() {
-        return getServer().getOnlineMode();
+    @NotNull
+    public String getOnlineMode() {
+        return getServer().getOnlineMode() ? "online" : (GlobalConfiguration.get().proxies.isProxyOnlineMode() ? "proxy" : "offline");
     }
 
     @Override

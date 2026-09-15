@@ -81,8 +81,8 @@ public class WorldArgumentType implements ArgumentType<World> {
             if (entry.getKey().startsWith(builder.getRemainingLowerCase())) {
                 builder.suggest(entry.getKey());
             }
-            if (entry.getValue().getName().toLowerCase(Locale.ROOT).startsWith(builder.getRemainingLowerCase())) {
-                builder.suggest(entry.getValue().getName());
+            if (entry.getValue().getId().toLowerCase(Locale.ROOT).startsWith(builder.getRemainingLowerCase())) {
+                builder.suggest(entry.getValue().getId());
             }
         }
         return builder.buildFuture();

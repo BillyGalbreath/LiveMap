@@ -41,16 +41,16 @@ public final class WorldConfig extends AbstractConfig {
     @Key("enabled")
     @Comment("""
         Enables this world to be rendered on the map.""")
-    public boolean ENABLED = true;
+    public boolean ENABLED = false;
     @Key("order")
     @Comment("""
         The order the world shows in the world list on the webmap.""")
     public int ORDER = 0;
-    @Key("name")
+    @Key("display-name")
     @Comment("""
         The display name of the world in the world list.
         Use <world> to use the official world name.""")
-    public String NAME = "<world>";
+    public String DISPLAY_NAME = "<world>";
 
     @Key("render.scan-chunks")
     @Comment("""
@@ -184,7 +184,7 @@ public final class WorldConfig extends AbstractConfig {
         if (getConfig().get("world-settings.default." + path) == null) {
             set("world-settings.default." + path, def);
         }
-        return get("world-settings." + this.world.getName() + "." + path,
+        return get("world-settings." + this.world.getId() + "." + path,
             get("world-settings.default." + path, def));
     }
 
@@ -198,16 +198,10 @@ public final class WorldConfig extends AbstractConfig {
     protected Object get(@NotNull String path) {
         if (path.contains("render.center")) {
             List<Integer> list = getConfig().getIntegerList(path);
-            if (list == null || list.size() < 2) {
+            if (list == null || list.size() != 2) {
                 return null;
             }
-            if (!(list.getFirst() instanceof Number xNum)) {
-                return null;
-            }
-            if (!(list.get(1) instanceof Number zNum)) {
-                return null;
-            }
-            return Point.of(xNum, zNum);
+            return Point.of(list.getFirst(), list.getLast());
         }
         return super.get(path);
     }

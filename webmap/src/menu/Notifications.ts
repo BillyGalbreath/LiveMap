@@ -23,48 +23,49 @@
  */
 
 import * as L from "leaflet";
+import "../css/notification.css";
 
 export class Notifications {
-  private static _instance: Notifications = new Notifications();
+    private static _instance: Notifications = new Notifications();
 
-  private readonly _dom: HTMLElement;
+    private readonly _dom: HTMLElement;
 
-  constructor() {
-    this._dom = L.DomUtil.create("div", "notifications");
-    document.body.appendChild(this._dom);
-  }
+    constructor() {
+        this._dom = L.DomUtil.create("div", "notifications");
+        document.body.appendChild(this._dom);
+    }
 
-  public create(type: ("info" | "success" | "warning" | "danger"), text: string): void {
-    const div: HTMLElement = this._dom.appendChild(L.DomUtil.create("div", type));
-    div.appendChild(window.createSVGIcon(type));
-    div.appendChild(L.DomUtil.create("p")).innerText = text;
+    public create(type: ("info" | "success" | "warning" | "danger"), text: string): void {
+        const div: HTMLElement = this._dom.appendChild(L.DomUtil.create("div", type));
+        div.appendChild(window.createSVGIcon(type));
+        div.appendChild(L.DomUtil.create("p")).innerText = text;
 
-    const handler: () => void = (): void => {
-      div.removeEventListener("transitionend", handler);
-      setTimeout((): void => {
-        div.addEventListener("transitionend", (): void => {
-          div.remove();
-        }, {passive: true});
-        div.classList.remove("show");
-      }, 2500);
-    };
-    div.addEventListener("transitionend", handler, {passive: true});
-    setTimeout((): void => div.classList.add("show"), 50);
-  }
+        const handler: () => void = (): void => {
+            div.removeEventListener("transitionend", handler);
+            setTimeout((): void => {
+                div.addEventListener("transitionend", (): void => {
+                    div.remove();
+                }, {passive: true});
+                div.classList.remove("show");
+            }, 2500);
+        };
+        div.addEventListener("transitionend", handler, {passive: true});
+        setTimeout((): void => div.classList.add("show"), 50);
+    }
 
-  public static info(text: string): void {
-    this._instance.create("info", text);
-  }
+    public static info(text: string): void {
+        this._instance.create("info", text);
+    }
 
-  public static success(text: string): void {
-    this._instance.create("success", text);
-  }
+    public static success(text: string): void {
+        this._instance.create("success", text);
+    }
 
-  public static warning(text: string): void {
-    this._instance.create("warning", text);
-  }
+    public static warning(text: string): void {
+        this._instance.create("warning", text);
+    }
 
-  public static danger(text: string): void {
-    this._instance.create("danger", text);
-  }
+    public static danger(text: string): void {
+        this._instance.create("danger", text);
+    }
 }

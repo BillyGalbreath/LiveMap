@@ -23,25 +23,25 @@
  */
 
 export class Zooms {
-  private readonly _default: number;
-  private readonly _max_out: number;
-  private readonly _max_in: number;
+    private readonly _default: number;
+    private readonly _max_out: number;
+    private readonly _max_in: number;
 
-  constructor(zoom: Zooms) {
-    this._default = zoom.default;
-    this._max_in = zoom.max_in;
-    this._max_out = zoom.max_out;
-  }
+    constructor(zoom: Zooms) {
+        this._default = zoom.default;
+        this._max_in = zoom.max_in;
+        this._max_out = zoom.max_out;
+    }
 
-  get default(): number {
-    return this._default;
-  }
+    get default(): number {
+        return this._default;
+    }
 
-  get max_out(): number {
-    return this._max_out;
-  }
+    get max_out(): number {
+        return this._max_out;
+    }
 
-  get max_in(): number {
-    return this._max_in;
-  }
+    get max_in(): number {
+        return this._max_in;
+    }
 }

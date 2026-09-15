@@ -79,7 +79,7 @@ public class FullRenderCommand<S> extends BaseCommand<S> {
 
     private int execute(@NotNull Sender sender, @NotNull World world) {
         sender.sendMessage(Lang.FULLRENDER_STARTING
-            .replace("<world>", world.getName()));
+            .replace("<world>", world.getId()));
 
         long started = System.nanoTime();
 
@@ -102,7 +102,7 @@ public class FullRenderCommand<S> extends BaseCommand<S> {
 
         sender.sendMessage(Lang.FULLRENDER_STARTED
             .replace("<count>", Integer.toString(regions.size()))
-            .replace("<world>", world.getName()));
+            .replace("<world>", world.getId()));
 
         future.whenComplete((_, e) -> {
             if (e != null) {
@@ -117,7 +117,7 @@ public class FullRenderCommand<S> extends BaseCommand<S> {
                 .replace("<cps>", Integer.toString(cps))
                 .replace("<chunks>", Integer.toString(chunks))
                 .replace("<elapsed>", Duration.ofNanos(elapsed).toString())
-                .replace("<world>", world.getName()));
+                .replace("<world>", world.getId()));
         });
 
         return Command.SINGLE_SUCCESS;

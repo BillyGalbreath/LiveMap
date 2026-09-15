@@ -25,173 +25,173 @@
 import * as L from "leaflet";
 
 export class Point {
-  public static ZERO: Point = Point.of(0, 0);
+    public static ZERO: Point = Point.of(0, 0);
 
-  private static _SCALE: number;
+    private static _SCALE: number;
 
-  public static SCALE(): number {
-    // lazy load the value
-    return Point._SCALE ??= (1 / Math.pow(2, window.livemap.currentWorld!.zooms.max_out));
-  }
-
-  public static of(a: number | string | number[] | L.Point | L.LatLng | Point, b?: number | string): Point {
-    if (a === undefined || a === null) {
-      // fail fast
-      return a;
+    public static SCALE(): number {
+        // lazy load the value
+        return Point._SCALE ??= (1 / Math.pow(2, window.livemap.worldManager.current.zooms.max_out));
     }
-    if (Array.isArray(a) && a.length > 1) {
-      // 2 length is L.PointTuple, 3 length is L.LatLngTuple
-      return new Point(a[0], a[1], a.length == 3);
-    }
-    if (typeof a === "object") {
-      if ("x" in a) {
-        // "x" is in Point and L.Point
-        if ("y" in a) {
-          // "y" is in L.Point
-          return new Point(a.x, a.y);
+
+    public static of(a: number | string | number[] | L.Point | L.LatLng | Point, b?: number | string): Point {
+        if (a === undefined || a === null) {
+            // fail fast
+            return a;
         }
-        if ("z" in a) {
-          // "z" is in Point
-          return new Point(a.x, a.z);
+        if (Array.isArray(a) && a.length > 1) {
+            // 2 length is L.PointTuple, 3 length is L.LatLngTuple
+            return new Point(a[0], a[1], a.length == 3);
         }
-      }
-      if ("lat" in a) {
-        // "lat" is in L.LatLng
-        return new Point(a.lat, a.lng, true);
-      }
+        if (typeof a === "object") {
+            if ("x" in a) {
+                // "x" is in Point and L.Point
+                if ("y" in a) {
+                    // "y" is in L.Point
+                    return new Point(a.x, a.y);
+                }
+                if ("z" in a) {
+                    // "z" is in Point
+                    return new Point(a.x, a.z);
+                }
+            }
+            if ("lat" in a) {
+                // "lat" is in L.LatLng
+                return new Point(a.lat, a.lng, true);
+            }
+        }
+        // must be regular numbers
+        if (typeof a === "number" || typeof a === "string") {
+            return new Point(+a, +(b ?? 0));
+        }
+        // guess not...
+        return undefined!;
     }
-    // must be regular numbers
-    if (typeof a === "number" || typeof a === "string") {
-      return new Point(+a, +(b ?? 0));
+
+    public static toLatLngArray(inArr: unknown[]): L.LatLng | L.LatLng[] {
+        const outArr: L.LatLng[] = [];
+        inArr.forEach((coord: unknown): void => {
+            if (!Array.isArray(coord)) {
+                // not a valid coordinate entry
+                return;
+            }
+            if (Array.isArray(coord[0])) {
+                // entry is a set of coordinates, must dig deeper
+                outArr.push(this.toLatLngArray(coord) as L.LatLng);
+                return;
+            }
+            const point: Point = Point.of(coord);
+            if (point) {
+                // coordinate is a valid Point
+                outArr.push(point.toLatLng());
+            }
+        });
+        return outArr;
     }
-    // guess not...
-    return undefined!;
-  }
 
-  public static toLatLngArray(inArr: unknown[]): L.LatLng | L.LatLng[] {
-    const outArr: L.LatLng[] = [];
-    inArr.forEach((coord: unknown): void => {
-      if (!Array.isArray(coord)) {
-        // not a valid coordinate entry
-        return;
-      }
-      if (Array.isArray(coord[0])) {
-        // entry is a set of coordinates, must dig deeper
-        outArr.push(this.toLatLngArray(coord) as L.LatLng);
-        return;
-      }
-      const point: Point = Point.of(coord);
-      if (point) {
-        // coordinate is a valid Point
-        outArr.push(point.toLatLng());
-      }
-    });
-    return outArr;
-  }
+    private _x: number;
+    private _z: number;
 
-  private _x: number;
-  private _z: number;
-
-  constructor(x: number, z: number, latlng?: boolean) {
-    this._x = (latlng ? Point.metersToPixels(z) : x) ?? 0;
-    this._z = (latlng ? Point.metersToPixels(x) : z) ?? 0;
-  }
-
-  get x(): number {
-    return this._x;
-  }
-
-  get z(): number {
-    return this._z;
-  }
-
-  public add(n: number | Point): this {
-    if (n instanceof Point) {
-      this._x += n._x;
-      this._z += n._z;
-    } else {
-      this._x += n;
-      this._z += n;
+    constructor(x: number, z: number, latlng?: boolean) {
+        this._x = (latlng ? Point.metersToPixels(z) : x) ?? 0;
+        this._z = (latlng ? Point.metersToPixels(x) : z) ?? 0;
     }
-    return this;
-  }
 
-  public subtract(n: number | Point): this {
-    if (n instanceof Point) {
-      this._x -= n._x;
-      this._z -= n._z;
-    } else {
-      this._x -= n;
-      this._z -= n;
+    get x(): number {
+        return this._x;
     }
-    return this;
-  }
 
-  public multiply(n: number | Point): this {
-    if (n instanceof Point) {
-      this._x *= n._x;
-      this._z *= n._z;
-    } else {
-      this._x *= n;
-      this._z *= n;
+    get z(): number {
+        return this._z;
     }
-    return this;
-  }
 
-  public divide(n: number | Point): this {
-    if (n instanceof Point) {
-      this._x /= n._x;
-      this._z /= n._z;
-    } else {
-      this._x /= n;
-      this._z /= n;
+    public add(n: number | Point): this {
+        if (n instanceof Point) {
+            this._x += n._x;
+            this._z += n._z;
+        } else {
+            this._x += n;
+            this._z += n;
+        }
+        return this;
     }
-    return this;
-  }
 
-  public ceil(): this {
-    this._x = Math.ceil(this._x);
-    this._z = Math.ceil(this._z);
-    return this;
-  }
+    public subtract(n: number | Point): this {
+        if (n instanceof Point) {
+            this._x -= n._x;
+            this._z -= n._z;
+        } else {
+            this._x -= n;
+            this._z -= n;
+        }
+        return this;
+    }
 
-  public floor(): this {
-    this._x = Math.floor(this._x);
-    this._z = Math.floor(this._z);
-    return this;
-  }
+    public multiply(n: number | Point): this {
+        if (n instanceof Point) {
+            this._x *= n._x;
+            this._z *= n._z;
+        } else {
+            this._x *= n;
+            this._z *= n;
+        }
+        return this;
+    }
 
-  public round(): this {
-    this._x = Math.round(this._x);
-    this._z = Math.round(this._z);
-    return this;
-  }
+    public divide(n: number | Point): this {
+        if (n instanceof Point) {
+            this._x /= n._x;
+            this._z /= n._z;
+        } else {
+            this._x /= n;
+            this._z /= n;
+        }
+        return this;
+    }
 
-  public toPoint(offset?: Point): L.Point {
-    return L.point(
-      this._x + (offset?._x ?? 0),
-      this._z + (offset?._z ?? 0)
-    );
-  }
+    public ceil(): this {
+        this._x = Math.ceil(this._x);
+        this._z = Math.ceil(this._z);
+        return this;
+    }
 
-  public toLatLng(offset?: Point): L.LatLng {
-    return L.latLng(
-      Point.pixelsToMeters(this._z) + (offset?._z ?? 0),
-      Point.pixelsToMeters(this._x) + (offset?._x ?? 0)
-    );
-  }
+    public floor(): this {
+        this._x = Math.floor(this._x);
+        this._z = Math.floor(this._z);
+        return this;
+    }
 
-  public static pixelsToMeters(num: number): number {
-    return num * Point.SCALE();
-  }
+    public round(): this {
+        this._x = Math.round(this._x);
+        this._z = Math.round(this._z);
+        return this;
+    }
 
-  public static metersToPixels(num: number): number {
-    return num / Point.SCALE();
-  }
+    public toPoint(offset?: Point): L.Point {
+        return L.point(
+            this._x + (offset?._x ?? 0),
+            this._z + (offset?._z ?? 0)
+        );
+    }
 
-  public toString(format?: string): string {
-    return (format ? format : "{x}, {z}")
-      .replace("{x}", `${this._x}`)
-      .replace("{z}", `${this._z}`);
-  }
+    public toLatLng(offset?: Point): L.LatLng {
+        return L.latLng(
+            Point.pixelsToMeters(this._z) + (offset?._z ?? 0),
+            Point.pixelsToMeters(this._x) + (offset?._x ?? 0)
+        );
+    }
+
+    public static pixelsToMeters(num: number): number {
+        return num * Point.SCALE();
+    }
+
+    public static metersToPixels(num: number): number {
+        return num / Point.SCALE();
+    }
+
+    public toString(format?: string): string {
+        return (format ? format : "{x}, {z}")
+            .replace("{x}", `${this._x}`)
+            .replace("{z}", `${this._z}`);
+    }
 }

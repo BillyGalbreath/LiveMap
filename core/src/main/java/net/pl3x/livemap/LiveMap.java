@@ -35,7 +35,7 @@ import net.pl3x.livemap.httpd.HttpdServer;
 import net.pl3x.livemap.player.PlayerRegistry;
 import net.pl3x.livemap.render.RenderScheduler;
 import net.pl3x.livemap.scheduler.TickScheduler;
-import net.pl3x.livemap.scheduler.task.UpdateSettingsTask;
+import net.pl3x.livemap.scheduler.task.WebmapSettingsTask;
 import net.pl3x.livemap.thread.WorkerThreadFactory;
 import net.pl3x.livemap.thread.WorkerThreadPool;
 import net.pl3x.livemap.util.FileUtil;
@@ -126,11 +126,12 @@ public interface LiveMap {
     String getPlatformVersion();
 
     /**
-     * Get the server's online mode.
+     * Get the server's online mode type.
      *
-     * @return Online mode
+     * @return Online mode type
      */
-    boolean getOnlineMode();
+    @NotNull
+    String getOnlineMode();
 
     /**
      * Get the server's configured max amount of players allowed.
@@ -298,7 +299,7 @@ public interface LiveMap {
 
         // start tasks
         getRenderScheduler().start();
-        getTickScheduler().addTask(new UpdateSettingsTask());
+        getTickScheduler().addTask(new WebmapSettingsTask());
 
         Provider.cacheMaintenance = WorkerThreadFactory.createExecutor("CacheMaintenance");
         Provider.cacheMaintenance.scheduleAtFixedRate(World.CACHE_CLEANUP_TASK, 1, 1, TimeUnit.MINUTES);

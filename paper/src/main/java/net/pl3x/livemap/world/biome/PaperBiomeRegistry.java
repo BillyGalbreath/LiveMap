@@ -46,36 +46,40 @@ public class PaperBiomeRegistry extends BiomeRegistry {
         Path path = getWorld().getTilesDir().resolve("biomes.gz");
         loadPalette(path);
 
-        var entries = getWorld().<ServerLevel>getLevel()
-            .registryAccess().lookupOrThrow(Registries.BIOME).entrySet();
-        for (var entry : entries) {
-            String id = entry.getKey().identifier().toString();
+        getWorld().<ServerLevel>getLevel()
+            .registryAccess()
+            .lookupOrThrow(Registries.BIOME)
+            .entrySet()
+            .forEach(entry -> {
 
-            if (!ColorsConfig.BIOME_COLORS.containsKey(id)) {
-                Logger.warn("   &7&l-&r Biome not in colors.yml&3:&f&o %s &r&3(&r%s&3)".formatted(id, Colors.toHex(0)));
-            }
+                String id = entry.getKey().identifier().toString();
 
-            var biome = entry.getValue();
-            float temperature = Math.clamp(biome.getBaseTemperature(), 0.0F, 1.0F);
-            float humidity = Math.clamp(biome.climateSettings.downfall(), 0.0F, 1.0F);
-            put(id, new Biome(
-                getNextIndex(id),
-                id,
-                ColorsConfig.BIOME_COLORS.getOrDefault(id, 0),
-                Objects.requireNonNullElseGet(ColorsConfig.OVERRIDES_DRY_FOLIAGE.get(id),            // custom
-                    () -> biome.getSpecialEffects().dryFoliageColorOverride().orElseGet(             // vanilla
-                        () -> getDefaultColor(temperature, humidity, Colors.COLORMAP_DRY_FOLIAGE))), // fallback
-                Objects.requireNonNullElseGet(ColorsConfig.OVERRIDES_FOLIAGE.get(id),
-                    () -> biome.getSpecialEffects().foliageColorOverride().orElseGet(
-                        () -> getDefaultColor(temperature, humidity, Colors.COLORMAP_FOLIAGE))),
-                Objects.requireNonNullElseGet(ColorsConfig.OVERRIDES_GRASS.get(id),
-                    () -> biome.getSpecialEffects().grassColorOverride().orElseGet(
-                        () -> getDefaultColor(temperature, humidity, Colors.COLORMAP_GRASS))),
-                Objects.requireNonNullElseGet(ColorsConfig.OVERRIDES_WATER.get(id),
-                    () -> biome.getSpecialEffects().waterColor()),
-                (x, z, color) -> biome.getSpecialEffects().grassColorModifier().modifyColor(x, z, color)
-            ));
-        }
+                if (!ColorsConfig.BIOME_COLORS.containsKey(id)) {
+                    Logger.warn("   &7&l-&r Biome not in colors.yml&3:&f&o %s &r&3(&r%s&3)".formatted(id, Colors.toHex(0)));
+                }
+
+                var biome = entry.getValue();
+                float temperature = Math.clamp(biome.getBaseTemperature(), 0.0F, 1.0F);
+                float humidity = Math.clamp(biome.climateSettings.downfall(), 0.0F, 1.0F);
+
+                put(id, new Biome(
+                    getNextIndex(id),
+                    id,
+                    ColorsConfig.BIOME_COLORS.getOrDefault(id, 0),
+                    Objects.requireNonNullElseGet(ColorsConfig.OVERRIDES_DRY_FOLIAGE.get(id),            // custom
+                        () -> biome.getSpecialEffects().dryFoliageColorOverride().orElseGet(             // vanilla
+                            () -> getDefaultColor(temperature, humidity, Colors.COLORMAP_DRY_FOLIAGE))), // fallback
+                    Objects.requireNonNullElseGet(ColorsConfig.OVERRIDES_FOLIAGE.get(id),
+                        () -> biome.getSpecialEffects().foliageColorOverride().orElseGet(
+                            () -> getDefaultColor(temperature, humidity, Colors.COLORMAP_FOLIAGE))),
+                    Objects.requireNonNullElseGet(ColorsConfig.OVERRIDES_GRASS.get(id),
+                        () -> biome.getSpecialEffects().grassColorOverride().orElseGet(
+                            () -> getDefaultColor(temperature, humidity, Colors.COLORMAP_GRASS))),
+                    Objects.requireNonNullElseGet(ColorsConfig.OVERRIDES_WATER.get(id),
+                        () -> biome.getSpecialEffects().waterColor()),
+                    (x, z, color) -> biome.getSpecialEffects().grassColorModifier().modifyColor(x, z, color)
+                ));
+            });
 
         savePalette(path);
 

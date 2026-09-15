@@ -24,10 +24,8 @@
 
 package net.pl3x.livemap.render.renderer;
 
-import java.util.List;
 import java.util.Map;
 import net.pl3x.livemap.Logger;
-import net.pl3x.livemap.render.heightmap.Heightmap;
 import net.pl3x.livemap.util.Registry;
 import net.pl3x.livemap.util.Type;
 import net.pl3x.livemap.util.Unsafe;
@@ -54,33 +52,19 @@ public class RendererRegistry extends Registry<Renderer> {
         clear();
 
         // secret renderer to handle blockinfo. shhh...
-        put(Renderer.BLOCKINFO.create("blockinfo", Renderer.BLOCKINFO.getId(), "no-icon.png", Heightmap.NOOP, 0, false, false));
+        put(Renderer.BLOCKINFO.create(Map.of("id", "blockinfo", "type", Renderer.BLOCKINFO.getId())));
 
-        List<Map<String, Object>> list = this.world.getConfig().RENDERERS;
-        for (Map<String, Object> map : list) {
-            String typeStr = Unsafe.cast(map.get("type"));
-            Type<Renderer> rendererType = Type.get(Renderer.class, typeStr);
-            if (rendererType == null) {
-                Logger.warn("   &7&l-&r Unknown renderer type&3: &f&o%s".formatted(typeStr));
+        for (Map<String, Object> map : this.world.getConfig().RENDERERS) {
+            Type<Renderer> type = Type.get(Renderer.class, Unsafe.cast(map.get("type")));
+            if (type == null) {
+                Logger.warn("   &7&l-&r Unknown renderer type&3: &f&o%s".formatted(map.get("type")));
                 continue;
             }
-            Renderer renderer;
             try {
-                Type<Heightmap> heightmapType = Type.get(Heightmap.class, Unsafe.cast(map.get("heightmap")));
-                renderer = rendererType.create(
-                    Unsafe.cast(map.get("id")),
-                    Unsafe.cast(map.get("name")),
-                    Unsafe.cast(map.get("icon")),
-                    heightmapType == null ? Heightmap.NOOP : heightmapType,
-                    Unsafe.cast(map.getOrDefault("biome-blend", 0)),
-                    Unsafe.cast(map.getOrDefault("translucent-fluids", false)),
-                    Unsafe.cast(map.getOrDefault("noise", false))
-                );
+                put(type.create(map));
             } catch (RuntimeException e) {
-                Logger.error("   &7&l-&r Unable to create renderer type %s".formatted(rendererType.getId()), e);
-                continue;
+                Logger.error("   &7&l-&r Unable to create renderer type %s".formatted(type.getId()), e);
             }
-            put(renderer);
         }
 
         Logger.info("   &7&l-&r Registered &3%d&r renderers".formatted(size()));

@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import net.pl3x.livemap.configuration.Config;
+import net.pl3x.livemap.render.renderer.Renderer;
 import org.bstats.MetricsBase;
 import org.bstats.charts.AdvancedPie;
 import org.bstats.charts.CustomChart;
@@ -38,6 +39,10 @@ import org.bstats.json.JsonObjectBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.simpleyaml.configuration.file.YamlFile;
 
+/**
+ * We recreate this class so we can have all platforms show up in a single spot.
+ * This class does not depend on Bukkit API, since we plug everything manually.
+ */
 class Metrics {
     private final MetricsBase metricsBase;
 
@@ -46,8 +51,29 @@ class Metrics {
         YamlFile config = new YamlFile(LiveMap.api().getDataPath().getParent()
             .resolve("bStats").resolve("config.yml").toFile());
         try {
-            config.load();
+            config.loadWithComments();
         } catch (IOException ignore) {
+        }
+
+        if (!config.isSet("serverUuid")) {
+            config.addDefault("enabled", true);
+            config.addDefault("serverUuid", UUID.randomUUID().toString());
+            config.addDefault("logFailedRequests", false);
+            config.addDefault("logSentData", false);
+            config.addDefault("logResponseStatusText", false);
+
+            // Inform the server owners about bStats
+            config.options().header("""
+                bStats (https://bStats.org) collects some basic information for plugin authors, like how
+                many people use their plugin and their total player count. It's recommended to keep bStats
+                enabled, but if you're not comfortable with this, you can turn this setting off. There is no
+                performance penalty associated with having metrics enabled, and data sent to bStats is fully
+                anonymous."""
+            ).copyDefaults(true);
+            try {
+                config.save();
+            } catch (IOException ignore) {
+            }
         }
 
         boolean isFolia = false;
@@ -57,9 +83,9 @@ class Metrics {
         } catch (Exception ignore) {
         }
 
-        metricsBase = new MetricsBase(
+        this.metricsBase = new MetricsBase(
             "bukkit", // report all data to the bukkit page
-            config.getString("serverUuid", UUID.randomUUID().toString()),
+            config.getString("serverUuid"),
             26542, // LiveMapMC
             config.getBoolean("enabled", true),
             this::appendPlatformData,
@@ -82,10 +108,14 @@ class Metrics {
             // loop over worlds
             LiveMap.api().getWorldRegistry().forEach((_, world) ->
                 // loop over renderers
-                world.getRendererRegistry().forEach((renderer, _) ->
-                    // increment count for renderer
-                    put(renderer, getOrDefault(renderer, 0) + 1)
-                )
+                world.getRendererRegistry().forEach((_, renderer) -> {
+                    if (renderer.getType() == Renderer.BLOCKINFO) {
+                        return; // skip blockinfo
+                    }
+                    // increment count for renderer type
+                    int count = getOrDefault(renderer.getType().getId(), 0) + 1;
+                    put(renderer.getType().getId(), count);
+                })
             );
         }}));
         addCustomChart(new DrilldownPie("plugin_version", () -> {
@@ -113,7 +143,7 @@ class Metrics {
 
     private void appendPlatformData(@NotNull JsonObjectBuilder builder) {
         builder.appendField("playerAmount", LiveMap.api().getPlayerRegistry().size());
-        builder.appendField("onlineMode", LiveMap.api().getOnlineMode() ? 1 : 0);
+        builder.appendField("onlineMode", LiveMap.api().getOnlineMode());
         builder.appendField("bukkitVersion", LiveMap.api().getPlatformVersion());
         builder.appendField("bukkitName", LiveMap.api().getPlatformName());
 
