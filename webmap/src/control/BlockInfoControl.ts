@@ -25,10 +25,8 @@
 import * as L from "leaflet";
 import {LiveMap} from "../LiveMap";
 import {Point} from "../data/Point";
-import {World} from "../world/World";
+import {BlockInfo, World} from "../world/World";
 import {ControlBox} from "./ControlBox";
-import {BlockInfo} from "../palette/BlockInfo";
-import {Block} from "../palette/Block";
 
 export class BlockInfoControl extends ControlBox {
     private readonly _dom: HTMLElement;
@@ -73,8 +71,8 @@ export class BlockInfoControl extends ControlBox {
         const step: number = 1 << zoom;
         const fileX: number = Math.floor(regionX / step);
         const fileZ: number = Math.floor(regionZ / step);
-        const tileX: number = (x / step) & 511;
-        const tileZ: number = (z / step) & 511;
+        const tileX: number = Math.floor((x / step) & 511);
+        const tileZ: number = Math.floor((z / step) & 511);
 
         let blockName: string = window.lang("blockinfo.unknown.block");
         let biomeName: string = window.lang("blockinfo.unknown.biome");
@@ -82,16 +80,20 @@ export class BlockInfoControl extends ControlBox {
 
         const blockInfo: BlockInfo | undefined = world.getBlockInfo(zoom, fileX, fileZ);
         if (blockInfo !== undefined) {
-            const block: Block = blockInfo.getBlock(tileX, tileZ);
-            if (block != null) {
-                if (block.block != 0) {
-                    blockName = this._blockPalette.get(block.block) ?? blockName;
+            const index: number = (tileZ << 9) | tileX;
+            const offset: number = 16 + index * 8;
+            const packed: bigint = blockInfo.view.getBigUint64(offset, false);
+            if (packed !== undefined) {
+                const blockId: number = Number((packed >> 32n) & 0xFFFFn);
+                const biomeId: number = Number((packed >> 16n) & 0xFFFFn);
+                const yPos: number = Number(packed & 0xFFFFn);
+
+                if (blockId !== 0) {
+                    blockName = this._blockPalette.get(blockId) ?? blockName;
+                    y = yPos + blockInfo.minY + 1;
                 }
-                if (block.biome != 0) {
-                    biomeName = world.biomePalette.get(block.biome) ?? biomeName;
-                }
-                if (block.block != 0) {
-                    y = block.yPos + 1;
+                if (biomeId !== 0) {
+                    biomeName = world.biomePalette.get(biomeId) ?? biomeName;
                 }
             }
         }

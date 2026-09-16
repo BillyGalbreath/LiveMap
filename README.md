@@ -74,7 +74,9 @@ Downloads are available on [Modrinth][Modrinth Url].
 
 See LiveMap in action and compare its performance side-by-side with alternative map viewers:
 
-🔗 [Live Demo](https://map.roanv.nl/) hosted by [@Roan-V](https://github.com/Roan-V)
+🔗 ~~[Live Demo](https://map.roanv.nl/) hosted by [@Roan-V](https://github.com/Roan-V)~~ - not implemented yet
+
+Temporary live demo: [https://livemap.pl3x.net](https://livemap.pl3x.net)
 
 <br/>
 

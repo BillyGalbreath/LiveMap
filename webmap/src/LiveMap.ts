@@ -82,11 +82,11 @@ export class LiveMap extends FancierMap {
         this._worldManager = new WorldManager(this);
         this._contextMenu = new ContextMenu(this);
 
-        // set up the leaflet controls (order here matters)
+        // set up the leaflet controls
         new ScaleControl(this);
         L.control.zoom().addTo(this); // must be after scale
+        this._blockInfoControl = new BlockInfoControl(this);
         this._coordsControl = new CoordsControl(this);
-        this._blockInfoControl = new BlockInfoControl(this); // must be after coords
         this._linkControl = new LinkControl(this); // must be after blockinfo
 
         // replace leaflet's attribution with our own

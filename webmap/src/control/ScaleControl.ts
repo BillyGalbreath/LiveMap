@@ -50,7 +50,6 @@ export class ScaleControl extends ControlBox {
 
     onRemove(map: L.Map): void {
         map.off('move', this._update, this);
-
     }
 
     _update() {

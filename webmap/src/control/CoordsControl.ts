@@ -45,18 +45,20 @@ export class CoordsControl extends ControlBox {
     }
 
     onAdd(map: L.Map): HTMLElement {
-        map.addEventListener("mousemove", this.update);
-        this.update();
+        map.addEventListener("mousemove", (e: L.LeafletMouseEvent) => this._update(e));
         return this._dom;
     }
 
     onRemove(map: L.Map): void {
-        map.removeEventListener("mousemove", this.update);
+        map.removeEventListener("mousemove", (e: L.LeafletMouseEvent) => this._update(e));
     }
 
-    public update: (e?: L.LeafletMouseEvent) => void = (e?: L.LeafletMouseEvent): void => {
-        // update x,z coords
-        this.point = Point.of(e?.latlng ?? 0).round();
+    private _update(e?: L.LeafletMouseEvent) {
+        this.update(Point.of(e?.latlng ?? 0));
+    }
+
+    public update(point?: Point) {
+        this._point = (point ?? Point.of(this._livemap.getCenter())).round();
 
         // update blockinfo (blockinfo will update our y coordinate)
         this._livemap.blockInfoControl?.update(this.point);
@@ -64,20 +66,12 @@ export class CoordsControl extends ControlBox {
         // update the dom text
         this._dom.innerHTML = window.lang("coords.value")
             .replace(/<x>/g, this.point.x.toString().padStart(6, ' '))
-            .replace(/<y>/g, (this.y?.toString() ?? '???').padStart(2, ' ').padEnd(3, ' '))
+            .replace(/<y>/g, (this._y?.toString() ?? '???').padStart(2, ' ').padEnd(3, ' '))
             .replace(/<z>/g, this.point.z.toString().padEnd(6, ' '));
     }
 
     get point(): Point {
         return this._point;
-    }
-
-    set point(point: Point) {
-        this._point = point;
-    }
-
-    get y(): number | undefined {
-        return this._y;
     }
 
     set y(y: number | undefined) {

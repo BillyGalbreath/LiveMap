@@ -37,7 +37,7 @@ declare global {
 
         customEvent<T>(event: keyof (WindowEventMap), detail: T): void;
 
-        fetchBytes<T>(url: string): Promise<T>;
+        fetchBytes(url: string): Promise<ArrayBuffer | undefined>;
 
         fetchJson<T>(url: string, init?: RequestInit): Promise<T>;
 

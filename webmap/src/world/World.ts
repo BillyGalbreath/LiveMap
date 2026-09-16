@@ -26,8 +26,12 @@ import {LiveMap} from "../LiveMap";
 import {Point} from "../data/Point";
 import {Zooms} from "../data/Zooms";
 import {Url} from "../data/Url";
-import {BlockInfo} from "../palette/BlockInfo";
 import {Renderer} from "./Renderer";
+
+export interface BlockInfo {
+    minY: number;
+    view: DataView;
+}
 
 export class World {
     private readonly _livemap: LiveMap;
@@ -179,9 +183,23 @@ export class World {
     }
 
     public loadBlockInfo(zoom: number, x: number, z: number): void {
-        window.fetchBytes<ArrayBuffer>(`tiles/${this.id}/${zoom}/blockinfo/${x}_${z}.livemap.gz`)
+        window.fetchBytes(`tiles/${this.id}/${zoom}/blockinfo/${x}_${z}.livemap.gz`)
             .then((buffer?: ArrayBuffer): void => {
-                this.setBlockInfo(zoom, x, z, buffer);
+                if (!buffer) {
+                    this.unsetBlockInfo(zoom, x, z);
+                    return;
+                }
+
+                const headerView = new DataView(buffer, 0, 16);
+                const headerLong: bigint = headerView.getBigUint64(8, false);
+                const uint24Bits: number = Number(headerLong & 0xFFFFFFn);
+                const minY: number = (uint24Bits << 8) >> 8;
+
+                const view: DataView = new DataView(buffer);
+                this.setBlockInfo(zoom, x, z, {minY, view});
+            })
+            .finally(() => {
+                this._livemap.coordsControl.update();
             });
     }
 
@@ -189,21 +207,13 @@ export class World {
         return this.blockInfo.get(zoom < 0 ? 0 : zoom)?.get(`${x}_${z}`);
     }
 
-    public setBlockInfo(zoom: number, x: number, z: number, buffer?: ArrayBuffer): void {
+    public setBlockInfo(zoom: number, x: number, z: number, data: BlockInfo): void {
         let infoMap: Map<string, BlockInfo> | undefined = this.blockInfo.get(zoom < 0 ? 0 : zoom);
         if (infoMap == undefined) {
             infoMap = new Map<string, BlockInfo>();
             this.blockInfo.set(zoom, infoMap);
         }
-
-        if (buffer == undefined) {
-            infoMap.delete(`${x}_${z}`);
-        } else {
-            infoMap.set(`${x}_${z}`, new BlockInfo(new Uint8Array(buffer)));
-        }
-
-        this._livemap.blockInfoControl.update(Point.ZERO);
-        this._livemap.coordsControl.update();
+        infoMap.set(`${x}_${z}`, data);
     }
 
     public unsetBlockInfo(zoom: number, x: number, z: number): void {

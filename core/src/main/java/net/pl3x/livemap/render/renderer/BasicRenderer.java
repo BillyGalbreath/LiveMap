@@ -68,7 +68,7 @@ public class BasicRenderer extends Renderer {
             }
 
             if (hasNoise()) {
-                // e the color so it looks less plain (idea from vintage story map)
+                // add noise to the color so it looks less plain (idea from vintage story map)
                 boolean greenery = data.getTopState().getBlock().hasFlag(Block.FLAG_GRASS | Block.FLAG_FOLIAGE);
                 pixelColor = Colors.noise(pixelColor, greenery ? 24 : 10);
             }
