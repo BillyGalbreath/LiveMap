@@ -50,8 +50,8 @@ aside {
         background-color: var(--background-color-hover);
     }
 
-    &.loading {
-        right: -355px;
+    &.hide {
+        right: -355px !important;
     }
 
     &.show {
@@ -67,7 +67,7 @@ aside {
         }
 
         div {
-            padding: 15px 0;
+            padding: 10px 0 0;
 
             svg {
                 width: 40px;
@@ -84,10 +84,8 @@ aside {
             }
         }
 
-        ul li img {
-            width: 32px;
-            height: 32px;
-            margin: 0 10px;
+        details {
+            margin-left: 10px;
         }
     }
 
@@ -95,9 +93,9 @@ aside {
         display: flex;
         justify-content: center;
         width: 100%;
-        padding: 15px 0 15px 3px;
+        padding: 15px 0 0 3px;
         line-height: 40px;
-        font-size: 1.15rem;
+        font-size: 1.5rem;
         font-weight: 600;
 
         > div, svg, span {
@@ -129,49 +127,75 @@ aside {
         }
     }
 
-    ul {
-        list-style-type: none;
-        overflow-y: auto;
-        scrollbar-width: none;
-        margin-bottom: 10px;
-        width: 320px;
+    details {
+        margin: 10px 0 40px;
 
-        &::-webkit-scrollbar {
-            display: none;
+        summary {
+            font-size: 1.25rem;
+            font-weight: 500;
         }
 
+        ul {
+            list-style-type: none;
+            overflow-y: auto;
+            scrollbar-width: none;
+            margin-bottom: 10px;
+            width: 320px;
 
-        li {
-            display: flex;
-            margin: 0 5px 0 2px;
-            padding: 2px 0;
-            height: 34px;
-            line-height: 34px;
-            border-radius: 5px;
+            &::-webkit-scrollbar {
+                display: none;
+            }
 
-            &:hover {
-                cursor: pointer;
-                background-color: var(--background-color-hover);
+            li {
+                display: block;
+                margin: 0 0 0 10px;
 
-                img {
-                    border: var(--border-hover);
+                p {
+                    display: block;
+                    width: 100%;
+                    color: var(--text-color);
+                    font-size: 0.85rem;
+                    font-weight: 400;
+                    white-space: nowrap;
                 }
-            }
 
-            img {
-                width: 24px;
-                height: 24px;
-                margin: 3px 28px 0 0;
-                border: var(--border);
-                border-radius: 5px;
-                box-shadow: var(--box-shadow);
-                transition: all 0.3s ease;
-            }
+                ul#renderers {
+                    display: block;
+                    width: 100%;
+                    margin: 0;
 
-            p {
-                color: var(--text-color);
-                font-weight: 500;
-                white-space: nowrap;
+                    li {
+                        display: inline;
+                        margin: 0;
+                    }
+
+                    button {
+                        position: relative;
+                        top: 0;
+                        left: 0;
+                        width: 32px;
+                        height: 32px;
+                        margin: 3px 5px;
+                        border: var(--border-solid);
+                        border-radius: 8px;
+                        box-shadow: var(--box-shadow);
+                        transition: all .1s ease;
+
+                        &:hover {
+                            top: -1px;
+                            left: -1px;
+                            cursor: pointer;
+                            box-shadow: var(--box-shadow-3px);
+                        }
+
+                        &:active {
+                            top: 0;
+                            left: 0;
+                            transition: all 0s;
+                            box-shadow: var(--box-shadow);
+                        }
+                    }
+                }
             }
         }
     }

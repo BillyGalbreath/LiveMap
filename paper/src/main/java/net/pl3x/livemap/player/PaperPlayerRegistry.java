@@ -22,56 +22,24 @@
  * SOFTWARE.
  */
 
-package net.pl3x.livemap.command;
+package net.pl3x.livemap.player;
 
-import java.net.URL;
-import java.util.UUID;
-import net.pl3x.livemap.marker.Point;
-import net.pl3x.livemap.world.World;
+import net.pl3x.livemap.LiveMap;
+import net.pl3x.livemap.command.PaperPlayer;
+import net.pl3x.livemap.command.Player;
+import net.pl3x.livemap.scheduler.Task;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-/**
- * Represents a player in a world.
- */
-public interface Player extends Sender {
-    /**
-     * Get this player's name.
-     *
-     * @return Name of player
-     */
-    @NotNull
-    String getName();
+public class PaperPlayerRegistry extends PlayerRegistry implements Listener {
+    @EventHandler
+    public void onPlayerJoin(@NotNull PlayerJoinEvent event) {
+        Player player = new PaperPlayer(event.getPlayer());
+        put(player);
 
-    /**
-     * Get the unique id for this player.
-     *
-     * @return Unique id
-     */
-    @NotNull
-    UUID getUUID();
-
-    /**
-     * Get the player's skin URL.
-     *
-     * @return player's skin URL
-     */
-    @Nullable
-    URL getSkin();
-
-    /**
-     * Get the world this player is in.
-     *
-     * @return World player is in
-     */
-    @NotNull
-    World getWorld();
-
-    /**
-     * Get the player's location in the world.
-     *
-     * @return Player's location
-     */
-    @NotNull
-    Point getLocation();
+        Task task = new PlayerTextureTask(player);
+        LiveMap.api().getTickScheduler().addTask(task);
+    }
 }

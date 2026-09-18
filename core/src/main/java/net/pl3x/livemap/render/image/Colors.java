@@ -74,7 +74,7 @@ public final class Colors {
             BLOCK_WHEAT_COLOR[i] = Colors.lerpRGB(0x007C00, 0xDCBB65, (i + 1) / 8F);
             BLOCK_STEM_COLOR[i] = ((i << 5) << 16) | ((0xFF - (i << 3)) << 8) | (i << 2);
         }
-        Path imagesDir = LiveMap.api().getWebDir().resolve("images");
+        Path imagesDir = LiveMap.api().getWebDir().resolve("images/mask");
         int[] grass, dryFoliage, foliage;
         try {
             grass = getColorsFromImage(ImageIO.read(imagesDir.resolve("grass.png").toFile()));

@@ -31,14 +31,14 @@ import {Lang} from "./data/Lang";
 import {Point} from "./data/Point";
 import {ContextMenu} from "./menu/ContextMenu";
 import {Sidebar} from "./sidebar/Sidebar";
-import {FancierMap} from "./util/FancierMap";
+import {LeafletMap} from "./util/LeafletMap";
 import {WorldManager} from "./world/WorldManager";
 import "./util/Themes";
 import "./util/Window";
 import "./css/livemap.css";
 import "./svg";
 
-export class LiveMap extends FancierMap {
+export class LiveMap extends LeafletMap {
     private readonly _sidebar: Sidebar;
     private readonly _contextMenu: ContextMenu;
     private readonly _worldManager: WorldManager;
@@ -58,7 +58,7 @@ export class LiveMap extends FancierMap {
     private readonly _worlds: string[];
 
     constructor(options: LiveMap) {
-        super(options);
+        super();
 
         window.livemap = this;
 
@@ -78,9 +78,9 @@ export class LiveMap extends FancierMap {
         }
 
         // fancy sidebar and stuffs
-        this._sidebar = new Sidebar(this);
         this._worldManager = new WorldManager(this);
         this._contextMenu = new ContextMenu(this);
+        this._sidebar = new Sidebar(this);
 
         // set up the leaflet controls
         new ScaleControl(this);
@@ -126,20 +126,29 @@ export class LiveMap extends FancierMap {
     }
 
     private finishedLoading(): void {
-        // get rid of the page logo and loading images
+        // hide the spinning loader thing
+        const logo: HTMLElement | null = document.querySelector(".logo");
+        (logo?.lastChild as HTMLElement)?.classList.add("hide");
+
+        // show the map
         const mapDom: HTMLElement = this.getContainer();
         mapDom.classList.remove("loading");
         mapDom.addEventListener("transitionend", (e: TransitionEvent): void => {
+            // after map is fully shown
             if (e.target === mapDom) {
-                // remove loading logo from dom
-                document.querySelector(".logo")?.remove();
-                // "activate" sidebar
-                document.querySelector("aside")?.classList.remove("loading");
+                // hide the big logo
+                logo?.classList.add("hide");
+                logo?.addEventListener("transitionend", (e: TransitionEvent): void => {
+                    if (e.target === logo) {
+                        // remove loading logo from dom when fully hidden
+                        logo.remove();
+                    }
+                }, {passive: true});
+
+                // and finally "activate" sidebar
+                document.querySelector("aside")?.classList.remove("hide");
             }
         }, {passive: true});
-
-        // show the first world
-        // this.setWorld(this.worlds[0]);
     }
 
     get coordsControl(): CoordsControl {
@@ -203,7 +212,7 @@ export class LiveMap extends FancierMap {
 
     public centerOn(point: Point, zoom?: number | string): void {
         if (zoom !== undefined) {
-            this.setZoom(this.worldManager.current.zooms.max_out - +zoom);
+            this.setZoom(this.worldManager.currentWorld.zooms.max_out - +zoom);
         }
         this.setView(point.toLatLng());
     }

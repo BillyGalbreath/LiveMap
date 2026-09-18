@@ -112,11 +112,9 @@ export class Renderer extends L.TileLayer {
     }
 
     getTileUrl(coords: L.Coords): string {
-        // const world: World = window.livemap.currentWorld ?? window.livemap.worlds[0];
-        // const rendererId: string = world.currentRenderer.id;
         const data: { world: string; renderer: string; x: number; z: number; zoom: number } = {
-            world: "world", // world.name,
-            renderer: "fancy", // rendererId,
+            world: this.world.id,
+            renderer: this.id,
             x: coords.x,
             z: coords.y,
             zoom: this._getZoomForUrl()

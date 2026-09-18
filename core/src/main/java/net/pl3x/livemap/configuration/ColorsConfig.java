@@ -966,7 +966,7 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:sea_pickle", 0x5A6127);
         put("minecraft:seagrass", 0x327E08);
         put("minecraft:short_dry_grass", 0xBB9E6C);
-        put("minecraft:short_grass", 0x000000);
+        put("minecraft:short_grass", 0x7EA44D);
         put("minecraft:shroomlight", 0xF09246);
         put("minecraft:shulker_box", 0x8B608B);
         put("minecraft:skeleton_skull", 0xBCBCBC);
@@ -1070,7 +1070,7 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:suspicious_sand", 0xD9CC9F);
         put("minecraft:sweet_berry_bush", 0x444D32);
         put("minecraft:tall_dry_grass", 0xC4AB7A);
-        put("minecraft:tall_grass", 0x000000);
+        put("minecraft:tall_grass", 0x7EA44D);
         put("minecraft:tall_seagrass", 0x2D7504);
         put("minecraft:target", 0xE2AA9D);
         put("minecraft:terracotta", 0x985E43);

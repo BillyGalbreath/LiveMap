@@ -24,8 +24,10 @@
 
 package net.pl3x.livemap.player;
 
+import java.util.UUID;
 import net.pl3x.livemap.command.Player;
 import net.pl3x.livemap.util.Registry;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A registry of online players.
@@ -33,5 +35,24 @@ import net.pl3x.livemap.util.Registry;
 public class PlayerRegistry extends Registry<Player> {
     @Override
     public void rebuild() {
+    }
+
+    /**
+     * Register player.
+     *
+     * @param player Player to register
+     */
+    public void put(@NotNull Player player) {
+        put(player.getUUID(), player);
+    }
+
+    /**
+     * Register player.
+     *
+     * @param uuid   Unique id of player
+     * @param player Player to register
+     */
+    public void put(@NotNull UUID uuid, @NotNull Player player) {
+        put(uuid.toString(), player);
     }
 }

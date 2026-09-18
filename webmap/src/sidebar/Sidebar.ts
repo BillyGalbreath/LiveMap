@@ -25,11 +25,17 @@
 import * as L from "leaflet";
 import {LiveMap} from "../LiveMap";
 import {PinControl} from "./PinControl";
+import {PlayersList} from "./PlayersList";
+import {WorldsList} from "./WorldsList";
 import "../css/sidebar.css";
 
 export class Sidebar {
     private readonly _livemap: LiveMap;
     private readonly _dom: HTMLElement;
+
+    private readonly _pinControl: PinControl;
+    private readonly _worldsList: WorldsList;
+    private readonly _playersList: PlayersList;
 
     constructor(livemap: LiveMap) {
         this._livemap = livemap;
@@ -41,11 +47,11 @@ export class Sidebar {
         //}
 
         // set up and show/hide the pin
-        const pin: PinControl = new PinControl(this._livemap, this._dom);
-        this.show(pin.pinned);
+        this._pinControl = new PinControl(this, this._dom);
+        this.show(this._pinControl.pinned);
 
         // hide off-screen until map is ready
-        this._dom.classList.add("loading");
+        this._dom.classList.add("hide");
 
         // set up the logo fancy div magic
         const holder: HTMLElement = L.DomUtil.create("div", "", this._dom);
@@ -64,23 +70,19 @@ export class Sidebar {
         logoimg += `<span></span>`;
         logo.insertAdjacentHTML("beforeend", logoimg);
 
-        // add these after the logo
-        //this._dom.appendChild(this.renderersControl.dom);
-        //this._dom.appendChild(this._livemap.playersLayer.dom);
+        // worlds
+        this._worldsList = new WorldsList(this, this._dom);
+
+        // players
+        this._playersList = new PlayersList();
 
         this._dom.onclick = (): void => {
             // followPlayerMarker
         };
-        this._dom.onmouseleave = (): void => {
-            if (!pin.pinned) {
-                this.show(false);
-            }
-        };
-        this._dom.onmouseenter = (): void => {
-            if (!pin.pinned) {
-                this.show(true);
-            }
-        };
+    }
+
+    get livemap(): LiveMap {
+        return this._livemap;
     }
 
     public show(show: boolean): void {

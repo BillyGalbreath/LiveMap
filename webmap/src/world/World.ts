@@ -45,7 +45,7 @@ export class World {
     private readonly _zooms: Zooms;
     private readonly _renderers: Map<string, Renderer> = new Map();
 
-    private _renderer?: Renderer;
+    private _currentRenderer?: Renderer;
 
     private _biomePalette: Map<number, string> = new Map();
     private _blockInfo: Map<number, Map<string, BlockInfo>> = new Map();
@@ -105,8 +105,8 @@ export class World {
         return this._renderers;
     }
 
-    get renderer(): Renderer {
-        return this._renderer ??= this.renderers.values().next().value!;
+    get currentRenderer(): Renderer | undefined {
+        return this._currentRenderer;
     }
 
     get blockInfo(): Map<number, Map<string, BlockInfo>> {
@@ -120,12 +120,12 @@ export class World {
     get background(): string {
         switch (this.type) {
             case "nether":
-                return `url("images/sky/nether.png")`;
+                return `url("images/background/nether.png")`;
             case "the_end":
-                return `url("images/sky/the_end.png")`;
+                return `url("images/background/the_end.png")`;
             case "overworld":
             default:
-                return `url("images/sky/overworld.png")`;
+                return `url("images/background/overworld.png")`;
         }
     }
 
@@ -135,7 +135,7 @@ export class World {
 
     private tick(): void {
         // do not "redraw". use "refresh" to prevent flickering and flashing
-        this.renderer.refresh();
+        this._currentRenderer?.refresh();
 
         // schedule next tick
         this._tickTimer = setTimeout(
@@ -144,42 +144,46 @@ export class World {
         );
     }
 
-    public setRenderer(rendererId?: string): void {
+    public unsetRenderer(): void {
         // stop tick timer
         clearTimeout(this._tickTimer);
 
-        // remove old renderer tile layer from map
-        this._renderer?.remove();
+        this._currentRenderer?.remove();
+        this._currentRenderer = undefined;
+    }
 
-        // update min/max zoom limits
-        this._livemap.options.maxZoom = this.zooms.max_out + this.zooms.max_in;
-        this._livemap.setMaxZoom(this.zooms.max_out + this.zooms.max_in);
+    public setRenderer(rendererId?: string): void {
+        const currentWorld: World = this._livemap.worldManager.currentWorld;
+        if (currentWorld !== this) {
+            // remove old world's renderer
+            currentWorld.unsetRenderer();
+            // change to this world
+            this._livemap.worldManager.setWorld(this);
+        }
 
-        // make sure we have a real renderer
+        // remove _this_ world's old renderer from map
+        this.unsetRenderer();
+
+        // check url for renderer if none supplied
         if (rendererId === undefined) {
             // get from url if none specified
             const url = new Url(this._livemap, window.location.pathname);
             rendererId = url.renderer;
         }
 
-        const renderer: Renderer | undefined = this._renderers.get(rendererId);
-        if (renderer) {
-            this._renderer = renderer;
-        }
-
-        // set new renderer tiles layer and add to map
-        this.renderer.addTo(this._livemap);
+        // make sure we have a real renderer, or fallback to first renderer
+        const renderer: Renderer | undefined = this._renderers.get(rendererId ?? "");
+        this._currentRenderer = renderer ?? this._renderers.values().next().value;
+        this._currentRenderer?.addTo(this._livemap);
 
         const url: Url = new Url(this._livemap, window.location.pathname);
-        this._livemap.centerOn(url.point, url.zoom);
+        this._livemap.centerOn(url.point ?? Point.ZERO, url.zoom);
         this._livemap.linkControl.update();
 
         this._livemap.getContainer().style.backgroundImage = this.background;
 
         // start ticking
         this.tick();
-
-        window.customEvent("rendererSelected", renderer);
     }
 
     public loadBlockInfo(zoom: number, x: number, z: number): void {

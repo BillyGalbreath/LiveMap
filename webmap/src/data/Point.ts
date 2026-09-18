@@ -31,7 +31,7 @@ export class Point {
 
     public static SCALE(): number {
         // lazy load the value
-        return Point._SCALE ??= (1 / Math.pow(2, window.livemap.worldManager.current.zooms.max_out));
+        return Point._SCALE ??= (1 / Math.pow(2, window.livemap.worldManager.currentWorld.zooms.max_out));
     }
 
     public static of(a: number | string | number[] | L.Point | L.LatLng | Point, b?: number | string): Point {

@@ -32,7 +32,7 @@ import net.minecraft.world.level.block.RedStoneWireBlock;
 import net.pl3x.livemap.command.LiveMapCommand;
 import net.pl3x.livemap.command.PaperSource;
 import net.pl3x.livemap.command.argument.PaperArgumentParser;
-import net.pl3x.livemap.player.PlayerRegistry;
+import net.pl3x.livemap.player.PaperPlayerRegistry;
 import net.pl3x.livemap.world.PaperWorldRegistry;
 import net.pl3x.livemap.world.block.PaperBlockRegistry;
 import org.bukkit.Bukkit;
@@ -41,7 +41,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class PaperLiveMap extends JavaPlugin implements LiveMap {
     private final PaperBlockRegistry blockRegistry;
-    private final PlayerRegistry playerRegistry;
+    private final PaperPlayerRegistry playerRegistry;
     private final PaperWorldRegistry worldRegistry;
 
     private final PaperArgumentParser argumentParser;
@@ -54,7 +54,7 @@ public final class PaperLiveMap extends JavaPlugin implements LiveMap {
         Logger.logger = getLogger();
 
         this.blockRegistry = new PaperBlockRegistry();
-        this.playerRegistry = new PlayerRegistry();
+        this.playerRegistry = new PaperPlayerRegistry();
         this.worldRegistry = new PaperWorldRegistry();
 
         this.argumentParser = new PaperArgumentParser();
@@ -63,6 +63,8 @@ public final class PaperLiveMap extends JavaPlugin implements LiveMap {
     @Override
     public void onEnable() {
         enable();
+
+        getServer().getPluginManager().registerEvents(getPlayerRegistry(), this);
     }
 
     @Override
@@ -140,7 +142,7 @@ public final class PaperLiveMap extends JavaPlugin implements LiveMap {
 
     @Override
     @NotNull
-    public PlayerRegistry getPlayerRegistry() {
+    public PaperPlayerRegistry getPlayerRegistry() {
         return this.playerRegistry;
     }
 

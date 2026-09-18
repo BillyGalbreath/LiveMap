@@ -94,7 +94,7 @@ public final class WorldConfig extends AbstractConfig {
             put("id", "fancy");
             put("type", "fancy");
             put("name", "Fancy");
-            put("icon", "overworld_fancy.png");
+            put("icon", "overworld.png");
             put("heightmap", "fancy");
             put("biome-blend", 2);
             put("translucent-fluids", true);

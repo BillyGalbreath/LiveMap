@@ -51,11 +51,13 @@ html[theme="white-glass"] {
     --background: linear-gradient(135deg, #FFFFFF80, #FFFFFF40);
     --background-color-hover: #FFFFFF40;
     --border: 1px outset #FFFFFF60;
+    --border-solid: 1px outset #FFFFFF;
     --border-hover: 1px outset #FFFFFFA0;
     --border-scale: 2px solid #FFFFFF;
     --text-shadow: 1px 1px 2px #FFFFFFE5;
     --drop-shadow: 1px 1px 1px #FFFFFFE5;
     --box-shadow: 2px 2px 2px #00000080;
+    --box-shadow-3px: 3px 3px 3px #00000080;
     --filter-shadow: drop-shadow(1px 1px 1px #FFFFFFE5);
     --blur: blur(6px);
 }
@@ -68,11 +70,13 @@ html[theme="black-glass"] {
     --background: linear-gradient(135deg, #101010C0, #10101080);
     --background-color-hover: #10101060;
     --border: 1px outset #00000060;
+    --border-solid: 1px outset #000000;
     --border-hover: 1px outset #000000A0;
     --border-scale: 2px solid #000000C0;
     --text-shadow: 1px 1px 2px #000000E5;
     --drop-shadow: 1px 1px 1px #000000E5;
     --box-shadow: 2px 2px 2px #00000080;
+    --box-shadow-3px: 3px 3px 3px #00000080;
     --filter-shadow: drop-shadow(1px 1px 1px #000000E5);
     --blur: blur(6px);
 }
@@ -85,11 +89,13 @@ html[theme="clear-glass"] {
     --background: linear-gradient(135deg, #FFFFFF19, #FFFFFF00);
     --background-color-hover: #FFFFFF10;
     --border: 1px outset #FFFFFF33;
+    --border-solid: 1px outset #FFFFFF;
     --border-hover: 1px outset #FFFFFF43;
     --border-scale: 2px solid #FFFFFFC0;
     --text-shadow: 1px 1px 2px #000000E5;
     --drop-shadow: 1px 1px 1px #000000E5;
     --box-shadow: 2px 2px 2px #00000080;
+    --box-shadow-3px: 3px 3px 3px #00000080;
     --filter-shadow: drop-shadow(1px 1px 1px #000000E5);
     --blur: blur(2px);
 }
@@ -102,11 +108,13 @@ html[theme="light"] {
     --background: #EFEFDF;
     --background-color-hover: #EFEFDF;
     --border: 1px outset #BFBFBF;
+    --border-solid: 1px outset #BFBFBF;
     --border-hover: 1px outset #BFBFBF;
     --border-scale: 2px solid #BFBFBF;
     --text-shadow: 1px 1px 2px #00000040;
     --drop-shadow: 1px 1px 1px #00000080;
     --box-shadow: 2px 2px 2px #00000080;
+    --box-shadow-3px: 3px 3px 3px #00000080;
     --filter-shadow: drop-shadow(1px 1px 1px #00000080);
     --blur: none;
 }
@@ -119,11 +127,13 @@ html[theme="dark"] {
     --background: #222222;
     --background-color-hover: #333333;
     --border: 1px solid #333333;
+    --border-solid: 1px solid #333333;
     --border-hover: 1px solid #333333;
     --border-scale: 2px solid #333333;
     --text-shadow: 1px 1px 2px #000000;
     --drop-shadow: 1px 1px 1px #000000;
     --box-shadow: 2px 2px 2px #00000080;
+    --box-shadow-3px: 3px 3px 3px #00000080;
     --filter-shadow: drop-shadow(1px 1px 1px #000000);
     --blur: none;
 }

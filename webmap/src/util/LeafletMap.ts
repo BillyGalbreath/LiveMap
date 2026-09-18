@@ -23,14 +23,13 @@
  */
 
 import * as L from "leaflet";
-import {LiveMap} from "../LiveMap";
 
-export class FancierMap extends L.Map {
+export class LeafletMap extends L.Map {
     declare _controlCorners: { [x: string]: HTMLDivElement; };
     declare _controlContainer?: HTMLElement;
     declare _container?: HTMLElement;
 
-    constructor(options: LiveMap) {
+    constructor() {
         super("map", {
             // we need a flat and simple crs
             crs: L.Util.extend(L.CRS.Simple, {

@@ -23,7 +23,7 @@
  */
 
 import * as L from "leaflet";
-import {LiveMap} from "../LiveMap";
+import {Sidebar} from "./Sidebar";
 
 export class PinControl {
     private readonly _dom: HTMLElement;
@@ -31,7 +31,7 @@ export class PinControl {
 
     private _pinned: boolean = false;
 
-    constructor(livemap: LiveMap, parent: HTMLElement) {
+    constructor(sidebar: Sidebar, parent: HTMLElement) {
         this._dom = L.DomUtil.create("div", "", parent);
         this._dom.id = "pin";
         this._dom.onclick = (): void => {
@@ -41,6 +41,17 @@ export class PinControl {
 
         this._dom.appendChild(window.createSVGIcon("pin"));
         this._svg = this._dom.querySelector("svg")!;
+
+        parent.onmouseleave = (): void => {
+            if (!this.pinned) {
+                sidebar.show(false);
+            }
+        };
+        parent.onmouseenter = (): void => {
+            if (!this.pinned) {
+                sidebar.show(true);
+            }
+        };
 
         this.pin(localStorage.getItem("sidebar.pinned") == "pinned");
     }

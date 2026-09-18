@@ -12,7 +12,7 @@ world-settings:
         - id: fancy
           type: fancy
           name: Fancy
-          icon: overworld_fancy.png
+          icon: overworld.png
           heightmap: fancy
           biome-blend: 2
           translucent-fluids: true

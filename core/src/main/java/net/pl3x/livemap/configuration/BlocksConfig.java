@@ -196,10 +196,12 @@ public final class BlocksConfig extends AbstractConfig {
         add("minecraft:purple_carpet");
         add("minecraft:red_carpet");
         add("minecraft:redstone_wire");
+        add("minecraft:short_grass");
         add("minecraft:snow");
         add("minecraft:spruce_pressure_plate");
         add("minecraft:spruce_trapdoor");
         add("minecraft:stone_pressure_plate");
+        add("minecraft:tall_grass");
         add("minecraft:warped_pressure_plate");
         add("minecraft:warped_trapdoor");
         add("minecraft:white_carpet");

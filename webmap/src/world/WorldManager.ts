@@ -26,13 +26,14 @@ import {LiveMap} from "../LiveMap";
 import {Url} from "../data/Url";
 import {SortedMap} from "../util/SortedMap";
 import {World} from "./World";
+import {Point} from "../data/Point";
 
 export class WorldManager {
     private readonly _livemap: LiveMap;
 
     private readonly _worlds: SortedMap<string, World> = new SortedMap(null, (a: readonly [string, World], b: readonly[string, World]) => a[1].order - b[1].order);
 
-    private _current?: World;
+    private _currentWorld?: World;
 
     constructor(livemap: LiveMap) {
         this._livemap = livemap;
@@ -55,38 +56,33 @@ export class WorldManager {
                     if (++count < total) {
                         return; // wait for more worlds to load
                     }
-                    this.setWorld();
+
+                    // try to get world from url, or fallback to first world
+                    const url = new Url(this._livemap, window.location.pathname);
+                    this.setWorld(this._worlds.get(url.world ?? "") ?? this._worlds.values().next().value);
+                    this.currentWorld?.setRenderer();
+
+                    this._livemap.centerOn(url.point ?? Point.ZERO, url.zoom);
+                    this._livemap.linkControl.update();
                 });
         });
     }
 
-    get current(): World {
-        return this._current ??= this._worlds.values().next().value!;
+    get currentWorld(): World {
+        return this._currentWorld!; // ??= this._worlds.values().next().value!;
     }
 
     get worlds(): SortedMap<string, World> {
         return this._worlds;
     }
 
-    public setWorld(worldId?: string): void {
-        let rendererId: string | undefined;
-        if (worldId == undefined) {
-            // get from url if none specified
-            const url = new Url(this._livemap, window.location.pathname);
-            worldId = url.world;
-            rendererId = url.renderer;
-        }
+    public setWorld(world?: World): void {
+        this._currentWorld = world;
 
-        const world: World | undefined = this._worlds.get(worldId);
         if (world) {
-            this._current = world;
-            world.setRenderer(rendererId);
+            // update min/max zoom limits
+            this._livemap.options.maxZoom = world.zooms.max_out + world.zooms.max_in;
+            this._livemap.setMaxZoom(world.zooms.max_out + world.zooms.max_in);
         }
-
-        const url: Url = new Url(this._livemap, window.location.pathname);
-        this._livemap.centerOn(url.point, url.zoom);
-        this._livemap.linkControl.update();
-
-        window.customEvent("worldSelected", world);
     }
 }

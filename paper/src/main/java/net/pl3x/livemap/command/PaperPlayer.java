@@ -24,12 +24,14 @@
 
 package net.pl3x.livemap.command;
 
+import java.net.URL;
 import java.util.UUID;
 import net.pl3x.livemap.LiveMap;
 import net.pl3x.livemap.PaperLiveMap;
 import net.pl3x.livemap.marker.Point;
 import net.pl3x.livemap.world.World;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PaperPlayer extends PaperSender implements Player {
     private final org.bukkit.entity.Player player;
@@ -49,6 +51,12 @@ public class PaperPlayer extends PaperSender implements Player {
     @NotNull
     public UUID getUUID() {
         return this.player.getUniqueId();
+    }
+
+    @Override
+    @Nullable
+    public URL getSkin() {
+        return this.player.getPlayerProfile().getTextures().getSkin();
     }
 
     @Override

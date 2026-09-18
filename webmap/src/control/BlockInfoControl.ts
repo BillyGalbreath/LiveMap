@@ -61,7 +61,7 @@ export class BlockInfoControl extends ControlBox {
     }
 
     public update(point?: Point): void {
-        const world: World = this._livemap.worldManager.current;
+        const world: World = this._livemap.worldManager.currentWorld;
 
         const x: number = point?.x ?? 0;
         const z: number = point?.z ?? 0;

@@ -69,20 +69,12 @@ export class LinkControl extends ControlBox {
     }
 
     public getUrlFromView(): Url {
-        return this.getUrlFromPoint(Point.of(this._livemap.getCenter()).round());
+        return this.getUrlFromPoint(Point.of(this._livemap.getCenter()).floor());
     }
 
     public getUrlFromPoint(point: Point): Url {
-        const world: World = this._livemap.worldManager.current
+        const world: World = this._livemap.worldManager.currentWorld
         const url: Url = new Url(this._livemap, window.location.pathname);
-        return new Url(
-            this._livemap,
-            url.basePath,
-            world.id,
-            world.renderer.id,
-            world.currentZoom(),
-            point.x,
-            point.z
-        );
+        return new Url(this._livemap, url.basePath, world, point);
     }
 }

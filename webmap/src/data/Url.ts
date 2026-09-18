@@ -23,20 +23,25 @@
  */
 
 import {LiveMap} from "../LiveMap";
-import {Renderer} from "../world/Renderer";
 import {World} from "../world/World";
 import {Point} from "./Point";
 
 export class Url {
     private readonly _livemap: LiveMap;
     private readonly _basePath: string;
-    private readonly _world: string;
-    private readonly _renderer: string;
-    private readonly _zoom: number;
-    private readonly _point: Point;
+    private readonly _world?: string;
+    private readonly _renderer?: string;
+    private readonly _zoom?: number;
+    private readonly _point?: Point;
 
-    constructor(livemap: LiveMap, url: string, worldId?: string | null, rendererId?: string | null, zoom?: string | number | null, x?: string | number | null, z?: string | number | null) {
+    constructor(livemap: LiveMap, url: string, world?: World | undefined, point?: Point | undefined) {
         this._livemap = livemap;
+
+        let worldId: string | undefined = world?.id;
+        let rendererId: string | undefined = world?.currentRenderer?.id;
+        let zoom: number | string | undefined = world?.currentZoom() ?? undefined;
+        let x: number | string | undefined = point?.x ?? 0;
+        let z: number | string | undefined = point?.z ?? 0;
 
         if (worldId) {
             this._basePath = "/";
@@ -45,46 +50,24 @@ export class Url {
             if (match) {
                 this._basePath = "/";
                 worldId = match[1];
-                rendererId = match[2] ?? "basic";
-                zoom = match[3] ?? 0;
-                x = match[4] ?? 0;
-                z = match[5] ?? 0;
+                rendererId = match[2];
+                zoom = match[3];
+                x = match[4];
+                z = match[5];
             } else {
                 this._basePath = window.location.pathname?.split("?")[0]?.replace("index.html", "") ?? "/";
                 const url: URLSearchParams = new URLSearchParams(window.location.search);
-                worldId = url.get("world");
-                rendererId = url.get("renderer");
-                zoom = url.get("zoom");
-                x = url.get("x");
-                z = url.get("z");
+                worldId = url.get("world") ?? undefined;
+                rendererId = url.get("renderer") ?? undefined;
+                zoom = url.get("zoom") ?? undefined;
+                x = url.get("x") ?? undefined;
+                z = url.get("z") ?? undefined;
             }
         }
 
-        // verify world exists
-        let world: World | undefined;
-        if (worldId) {
-            // get specified world
-            world = this._livemap.worldManager.worlds.get(worldId);
-        }
-        if (!world) {
-            // fallback to current or first world
-            world = this._livemap.worldManager.current;
-        }
-
-        // verify renderer exists
-        let renderer: Renderer | undefined;
-        if (rendererId) {
-            // get specified renderer
-            renderer = world.renderers.get(rendererId);
-        }
-        if (!renderer) {
-            // fallback to world's current or first renderer
-            renderer = world.renderer;
-        }
-
-        this._world = world.id;
-        this._renderer = renderer.id;
-        this._zoom = +(zoom ?? world.zooms.default);
+        this._world = worldId;
+        this._renderer = rendererId;
+        this._zoom = Number(zoom ?? 0);
         this._point = Point.of(x ?? 0, z ?? 0);
     }
 
@@ -92,32 +75,24 @@ export class Url {
         return this._basePath;
     }
 
-    get world(): string {
+    get world(): string | undefined {
         return this._world;
     }
 
-    get renderer(): string {
+    get renderer(): string | undefined {
         return this._renderer;
     }
 
-    get zoom(): number {
+    get zoom(): number | undefined {
         return this._zoom;
     }
 
-    get x(): number {
-        return this._point.x;
-    }
-
-    get z(): number {
-        return this._point.z;
-    }
-
-    get point(): Point {
+    get point(): Point | undefined {
         return this._point;
     }
 
     public toString(): string {
         return (this._livemap.friendly_urls ? `%s%s/%s/%i/%i/%i/` : `%s?world=%s&renderer=%s&zoom=%i&x=%i&z=%i`)
-            .formatted(this.basePath, this.world, this.renderer, this.zoom, this.point.x, this.point.z);
+            .formatted(this.basePath, this.world, this.renderer, this.zoom, this.point?.x, this.point?.z);
     }
 }

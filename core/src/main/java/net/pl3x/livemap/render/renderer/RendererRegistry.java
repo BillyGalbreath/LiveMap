@@ -26,7 +26,7 @@ package net.pl3x.livemap.render.renderer;
 
 import java.util.Map;
 import net.pl3x.livemap.Logger;
-import net.pl3x.livemap.util.Registry;
+import net.pl3x.livemap.util.OrderedRegistry;
 import net.pl3x.livemap.util.Type;
 import net.pl3x.livemap.util.Unsafe;
 import net.pl3x.livemap.world.World;
@@ -35,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * A registry of all map renderers.
  */
-public class RendererRegistry extends Registry<Renderer> {
+public class RendererRegistry extends OrderedRegistry<Renderer> {
     private final World world;
 
     /**
@@ -67,7 +67,7 @@ public class RendererRegistry extends Registry<Renderer> {
             }
         }
 
-        Logger.info("   &7&l-&r Registered &3%d&r renderers".formatted(size()));
+        Logger.info("   &7&l-&r Registered &3%d&r renderers".formatted(size() - 1)); // hide blockinfo
     }
 
     private void put(@NotNull Renderer renderer) {
