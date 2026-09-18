@@ -45,8 +45,8 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Task that fetches a player's texture from their game profile and saves it to the web directory.
- * <p>
- * This allows us to support offline-mode servers by using the skins directly from the profile that may
+ *
+ * <p>This allows us to support offline-mode servers by using the skins directly from the profile that may
  * be set by other mods/plugins like SkinsRestorer, rather than a 3rd party web services like Crafatar.
  */
 public class PlayerTextureTask extends Task {

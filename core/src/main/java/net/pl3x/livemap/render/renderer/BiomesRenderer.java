@@ -26,7 +26,10 @@ package net.pl3x.livemap.render.renderer;
 
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
+import net.pl3x.livemap.configuration.ColorsConfig;
+import net.pl3x.livemap.render.image.Colors;
 import net.pl3x.livemap.render.image.TileCanvas;
+import net.pl3x.livemap.world.biome.Biome;
 import net.pl3x.livemap.world.chunk.Chunk;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,6 +48,28 @@ public class BiomesRenderer extends Renderer {
 
     @Override
     protected void renderBlock(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data, @NotNull ThreadLocalRandom rand) {
-        //
+        int pixelColor = 0;
+
+        // check if anything is even there to render (we ignore transparent black)
+        if (data.getTopState().getColor() != 0) {
+            Biome biome = data.getBiome();
+            pixelColor = 0xFF000000 | ColorsConfig.BIOME_COLORS.getOrDefault(biome.getId(), 0);
+
+            // calculate heightmap
+            int heightmap;
+            if (data.getFluid() == null) {
+                // dry land
+                heightmap = tile.getHeightmap().getAlpha(tile, data, rand);
+            } else {
+                // fluids get flat surface
+                heightmap = tile.getHeightmap().getMid();
+            }
+
+            // apply heightmap
+            pixelColor = Colors.shade(pixelColor, 0xFF - heightmap);
+        }
+
+        // store pixel data on tile
+        tile.setPixel(data.getBlockX(), data.getBlockZ(), pixelColor);
     }
 }

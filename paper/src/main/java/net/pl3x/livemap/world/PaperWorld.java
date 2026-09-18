@@ -46,6 +46,8 @@ public class PaperWorld extends World {
     private final PaperBiomeRegistry biomeRegistry;
     private final RendererRegistry renderRegistry;
 
+    private final FlowerMap flowerMap;
+
     public PaperWorld(@NotNull org.bukkit.World world) {
         this(((CraftWorld) world).getHandle());
     }
@@ -62,6 +64,8 @@ public class PaperWorld extends World {
 
         this.biomeRegistry = new PaperBiomeRegistry(this, hashSeed(getSeed()));
         this.renderRegistry = new RendererRegistry(this);
+
+        this.flowerMap = new PaperFlowerMap(this);
 
         Logger.info(" &7&l-&r Found &e%s&r (&3&o%s&r)".formatted(level.getTypeKey().identifier(), getId()));
 
@@ -134,6 +138,12 @@ public class PaperWorld extends World {
     @NotNull
     public RendererRegistry getRendererRegistry() {
         return this.renderRegistry;
+    }
+
+    @Override
+    @NotNull
+    public FlowerMap getFlowerMap() {
+        return this.flowerMap;
     }
 
     @Override

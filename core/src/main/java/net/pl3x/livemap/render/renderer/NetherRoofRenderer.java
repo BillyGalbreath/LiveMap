@@ -27,6 +27,7 @@ package net.pl3x.livemap.render.renderer;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import net.pl3x.livemap.render.image.TileCanvas;
+import net.pl3x.livemap.world.block.BlockState;
 import net.pl3x.livemap.world.chunk.Chunk;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,6 +46,21 @@ public class NetherRoofRenderer extends Renderer {
 
     @Override
     protected void renderBlock(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data, @NotNull ThreadLocalRandom rand) {
-        //
+        // get actual highest blockstate
+        BlockState blockstate;
+        int blockY = data.getChunk().getHeight(data.getBlockX(), data.getBlockZ()) + 1;
+        do {
+            blockY -= 1;
+            blockstate = data.getChunk().getBlockState(data.getBlockX(), blockY, data.getBlockZ());
+            if (blockstate.getColor() != 0) {
+                break;
+            }
+        } while (blockY > data.getWorld().getMinY());
+
+        // get vanilla style color
+        int pixelColor = 0xFF000000 | blockstate.getVanilla();
+
+        // store pixel data on tile
+        tile.setPixel(data.getBlockX(), data.getBlockZ(), pixelColor);
     }
 }

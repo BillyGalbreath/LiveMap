@@ -382,6 +382,14 @@ public abstract class World {
     @NotNull
     public abstract RendererRegistry getRendererRegistry();
 
+    /**
+     * Get the flower map helper for building flower gradients.
+     *
+     * @return Flower map helper
+     */
+    @NotNull
+    public abstract FlowerMap getFlowerMap();
+
     @Override
     public boolean equals(@Nullable Object o) {
         if (this == o) {

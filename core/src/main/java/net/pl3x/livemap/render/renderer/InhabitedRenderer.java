@@ -26,7 +26,9 @@ package net.pl3x.livemap.render.renderer;
 
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
+import net.pl3x.livemap.render.image.Colors;
 import net.pl3x.livemap.render.image.TileCanvas;
+import net.pl3x.livemap.world.block.Block;
 import net.pl3x.livemap.world.chunk.Chunk;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,6 +47,39 @@ public class InhabitedRenderer extends Renderer {
 
     @Override
     protected void renderBlock(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data, @NotNull ThreadLocalRandom rand) {
-        //
+        int pixelColor = 0;
+
+        // get true block color, unless an opaque fluid is covering it
+        if (!data.getTopState().isFluid() || tile.getRenderer().isTranslucentFluids()) {
+            // either no fluid, or fluids are translucent. either way, we have to draw land
+            pixelColor = processBlockColor(data);
+        }
+
+        // blend water color on top of land (if any is there)
+        pixelColor = processFluidColor(tile, data, pixelColor);
+
+        // verify we have something to render, again
+        if (pixelColor != 0) {
+            if (hasNoise()) {
+                // add noise to the color so it looks less plain (idea from vintage story map)
+                boolean greenery = data.getTopState().getBlock().hasFlag(Block.FLAG_GRASS | Block.FLAG_FOLIAGE);
+                pixelColor = Colors.noise(pixelColor, greenery ? 24 : 10);
+            }
+
+            // since we have something to render lets calculate heightmap here, too
+            tile.getHeightmap().renderBlock(tile, data, rand);
+        }
+
+        // we hsb lerp between blue and red with ratio being the
+        // percent inhabited time is of the maxed out inhabited time
+        float ratio = Math.clamp(data.getChunk().getInhabitedTime() / 3600000F, 0F, 1F);
+        int inhabitedRGB = Colors.lerpHSB(0x880000FF, 0x88FF0000, ratio, false);
+
+        // set the color, mixing our heatmap on top
+        // set a low enough alpha, so we can see the basic map underneath
+        pixelColor = Colors.blend(inhabitedRGB, pixelColor);
+
+        // store pixel data on tile
+        tile.setPixel(data.getBlockX(), data.getBlockZ(), pixelColor);
     }
 }
