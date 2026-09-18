@@ -60,13 +60,7 @@ public class InhabitedRenderer extends Renderer {
 
         // verify we have something to render, again
         if (pixelColor != 0) {
-            if (hasNoise()) {
-                // add noise to the color so it looks less plain (idea from vintage story map)
-                boolean greenery = data.getTopState().getBlock().hasFlag(Block.FLAG_GRASS | Block.FLAG_FOLIAGE);
-                pixelColor = Colors.noise(pixelColor, greenery ? 24 : 10);
-            }
-
-            // since we have something to render lets calculate heightmap here, too
+            // since we have something to render lets calculate heightmap
             tile.getHeightmap().renderBlock(tile, data, rand);
         }
 
@@ -77,7 +71,7 @@ public class InhabitedRenderer extends Renderer {
 
         // set the color, mixing our heatmap on top
         // set a low enough alpha, so we can see the basic map underneath
-        pixelColor = Colors.blend(inhabitedRGB, pixelColor);
+        pixelColor = Colors.blend(inhabitedRGB, 0xFF000000 | pixelColor);
 
         // store pixel data on tile
         tile.setPixel(data.getBlockX(), data.getBlockZ(), pixelColor);

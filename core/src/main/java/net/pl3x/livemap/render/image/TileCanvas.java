@@ -290,7 +290,7 @@ public class TileCanvas {
             int rowOffset = (z + j) << 9;
             for (int i = 0; i < step; i++) {
                 rgb = this.pixels[rowOffset + (x + i)];
-                a += (rgb >>> 24);
+                a += (rgb >>> 24 & 0xFF);
                 r += (rgb >> 16 & 0xFF);
                 g += (rgb >> 8 & 0xFF);
                 b += (rgb & 0xFF);

@@ -145,7 +145,7 @@ public final class Colors {
         if (delta <= 0F) {
             return color0;
         }
-        return ((int) Mathf.lerp(color0 >>> 24, color1 >>> 24, delta) << 24)
+        return ((int) Mathf.lerp(color0 >>> 24 & 0xFF, color1 >>> 24 & 0xFF, delta) << 24)
             | ((int) Mathf.lerp(color0 >> 16 & 0xFF, color1 >> 16 & 0xFF, delta) << 16)
             | ((int) Mathf.lerp(color0 >> 8 & 0xFF, color1 >> 8 & 0xFF, delta) << 8)
             | ((int) Mathf.lerp(color0 & 0xFF, color1 & 0xFF, delta));
@@ -175,7 +175,7 @@ public final class Colors {
     public static int lerpHSB(int color0, int color1, float delta, boolean useShortestAngle) {
         float[] hsb0 = Color.RGBtoHSB(color0 >> 16 & 0xFF, color0 >> 8 & 0xFF, color0 & 0xFF, null);
         float[] hsb1 = Color.RGBtoHSB(color1 >> 16 & 0xFF, color1 >> 8 & 0xFF, color1 & 0xFF, null);
-        return ((int) Mathf.lerp(color0 >>> 24, color1 >>> 24, delta) << 24)
+        return ((int) Mathf.lerp(color0 >>> 24 & 0xFF, color1 >>> 24 & 0xFF, delta) << 24)
             | Color.HSBtoRGB(
             useShortestAngle
                 ? lerpShortestAngle(hsb0[0], hsb1[0], delta)
@@ -226,7 +226,7 @@ public final class Colors {
         if (delta <= 0F) {
             return color0;
         }
-        return ((int) Mathf.inverseLerp(color0 >>> 24, color1 >>> 24, delta) << 24)
+        return ((int) Mathf.inverseLerp(color0 >>> 24 & 0xFF, color1 >>> 24 & 0xFF, delta) << 24)
             | ((int) Mathf.inverseLerp(color0 >> 16 & 0xFF, color1 >> 16 & 0xFF, delta) << 16)
             | ((int) Mathf.inverseLerp(color0 >> 8 & 0xFF, color1 >> 8 & 0xFF, delta) << 8)
             | ((int) Mathf.inverseLerp(color0 & 0xFF, color1 & 0xFF, delta));
@@ -256,7 +256,7 @@ public final class Colors {
     public static int inverseLerpHSB(int color0, int color1, float delta, boolean useShortestAngle) {
         float[] hsb0 = Color.RGBtoHSB(color0 >> 16 & 0xFF, color0 >> 8 & 0xFF, color0 & 0xFF, null);
         float[] hsb1 = Color.RGBtoHSB(color1 >> 16 & 0xFF, color1 >> 8 & 0xFF, color1 & 0xFF, null);
-        return ((int) Mathf.inverseLerp(color0 >>> 24, color1 >>> 24, delta) << 24)
+        return ((int) Mathf.inverseLerp(color0 >>> 24 & 0xFF, color1 >>> 24 & 0xFF, delta) << 24)
             | Color.HSBtoRGB(
             useShortestAngle
                 ? lerpShortestAngle(hsb0[0], hsb1[0], delta)
@@ -319,13 +319,13 @@ public final class Colors {
      * @see <a href="https://en.wikipedia.org/wiki/Alpha_compositing#Alpha_blending">Alpha Blending</a>
      */
     public static int blend(int color0, int color1) {
-        double a0 = (double) (color0 >>> 24) / 0xFF;
-        double a1 = (double) (color1 >>> 24) / 0xFF;
+        double a0 = ((double) (color0 >>> 24 & 0xFF)) / 0xFFD;
+        double a1 = ((double) (color1 >>> 24 & 0xFF)) / 0xFFD;
         double a = a0 + a1 * (1 - a0);
         double r = ((color0 >> 16 & 0xFF) * a0 + (color1 >> 16 & 0xFF) * a1 * (1 - a0)) / a;
         double g = ((color0 >> 8 & 0xFF) * a0 + (color1 >> 8 & 0xFF) * a1 * (1 - a0)) / a;
         double b = ((color0 & 0xFF) * a0 + (color1 & 0xFF) * a1 * (1 - a0)) / a;
-        return ((int) a * 0xFF) << 24 | (int) r << 16 | (int) g << 8 | (int) b;
+        return (((int) a * 0xFF) << 24) | ((int) r << 16) | ((int) g << 8) | ((int) b);
     }
 
     /**
