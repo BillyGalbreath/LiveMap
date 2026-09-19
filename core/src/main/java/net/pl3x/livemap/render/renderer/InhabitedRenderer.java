@@ -26,9 +26,9 @@ package net.pl3x.livemap.render.renderer;
 
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicBoolean;
 import net.pl3x.livemap.render.image.Colors;
 import net.pl3x.livemap.render.image.TileCanvas;
-import net.pl3x.livemap.world.block.Block;
 import net.pl3x.livemap.world.chunk.Chunk;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,6 +36,9 @@ import org.jetbrains.annotations.NotNull;
  * A basic renderer.
  */
 public class InhabitedRenderer extends Renderer {
+    private static final int UNINHABITED_COLOR = 0x880000FF;
+    private static final int INHABITED_COLOR = 0x88FF0000;
+
     /**
      * Constructs a new instance of InhabitedRenderer.
      *
@@ -46,34 +49,87 @@ public class InhabitedRenderer extends Renderer {
     }
 
     @Override
-    protected void renderBlock(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data, @NotNull ThreadLocalRandom rand) {
-        int pixelColor = 0;
+    public boolean renderRegion(@NotNull TileCanvas tile, @NotNull ThreadLocalRandom rand, @NotNull AtomicBoolean cancelled, @NotNull Map<String, TileCanvas> renderedTiles) {
+        // preRender(tile, rand, cancelled, renderedTiles); // don't need for this renderer
 
-        // get true block color, unless an opaque fluid is covering it
-        if (!data.getTopState().isFluid() || tile.getRenderer().isTranslucentFluids()) {
-            // either no fluid, or fluids are translucent. either way, we have to draw land
-            pixelColor = processBlockColor(data);
+        // try to get fancy renderer's tile
+        TileCanvas base = renderedTiles.get("fancy");
+        if (base == null) {
+            // try for basic renderer as backup
+            base = renderedTiles.get("basic");
+        }
+        // if we found a renderer, copy it to current tile
+        int[] pixels = tile.getPixels();
+        if (base != null) {
+            System.arraycopy(base.getPixels(), 0, pixels, 0, 512 << 9);
         }
 
-        // blend water color on top of land (if any is there)
-        pixelColor = processFluidColor(tile, data, pixelColor);
+        // ensure tile will get saved to disk
+        tile.setDirty(true);
 
-        // verify we have something to render, again
-        if (pixelColor != 0) {
-            // since we have something to render lets calculate heightmap
-            tile.getHeightmap().renderBlock(tile, data, rand);
+        int chunkStartX = tile.getRegion().getX() << 5;
+        int chunkStartZ = tile.getRegion().getZ() << 5;
+
+        for (int cz = 0; cz < 32; cz++) {
+            // check world state and interruptions, for instant responsiveness
+            if (tile.getWorld().isDiscarded() || cancelled.get()) {
+                return false; // aborted
+            }
+
+            int chunkZ = chunkStartZ + cz;
+            int localZBase = cz << 4; // 0, 16, 32... 496
+
+            for (int cx = 0; cx < 32; cx++) {
+                int chunkX = chunkStartX + cx;
+
+                Chunk chunk = tile.getRegion().getChunk(chunkX, chunkZ);
+                if (!chunk.isFull()) {
+                    continue; // chunk not fully generated
+                }
+
+                // no need to pre-scan here since we only care about inhabited time
+                // chunk.preScan();
+
+                long inhabitedTime = chunk.getInhabitedTime();
+                int overlayColor;
+                if (inhabitedTime <= 0) {
+                    // constant blue
+                    overlayColor = UNINHABITED_COLOR;
+                } else {
+                    // we hsb lerp between blue and red with ratio being the
+                    // percent inhabited time is of the maxed out inhabited time
+                    float ratio = Math.min(inhabitedTime / 3600000F, 1F);
+                    overlayColor = Colors.lerpHSB(UNINHABITED_COLOR, INHABITED_COLOR, ratio, false);
+                }
+
+                int fgA = overlayColor >>> 24;
+                int invA = 255 - fgA;
+                int fgRB = (overlayColor & 0x00FF00FF) * fgA;
+                int fgG = (overlayColor & 0x0000FF00) * fgA;
+
+                int localXBase = cx << 4;
+
+                for (int z = 0; z < 16; z++) {
+                    int rowOffset = ((localZBase + z) << 9) + localXBase;
+                    for (int x = 0; x < 16; x++) {
+                        int idx = rowOffset + x;
+                        int bg = pixels[idx];
+                        if (bg == 0) {
+                            continue; // transparent/empty background
+                        }
+                        // parallel channel blend
+                        int rb = (fgRB + (bg & 0x00FF00FF) * invA) >>> 8 & 0x00FF00FF;
+                        int g = (fgG + (bg & 0x0000FF00) * invA) >>> 8 & 0x0000FF00;
+                        pixels[idx] = 0xFF000000 | rb | g;
+                    }
+                }
+            }
         }
 
-        // we hsb lerp between blue and red with ratio being the
-        // percent inhabited time is of the maxed out inhabited time
-        float ratio = Math.clamp(data.getChunk().getInhabitedTime() / 3600000F, 0F, 1F);
-        int inhabitedRGB = Colors.lerpHSB(0x880000FF, 0x88FF0000, ratio, false);
+        return true;
+    }
 
-        // set the color, mixing our heatmap on top
-        // set a low enough alpha, so we can see the basic map underneath
-        pixelColor = Colors.blend(inhabitedRGB, 0xFF000000 | pixelColor);
-
-        // store pixel data on tile
-        tile.setPixel(data.getBlockX(), data.getBlockZ(), pixelColor);
+    @Override
+    protected void renderBlock(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data, @NotNull ThreadLocalRandom rand, @NotNull Map<String, TileCanvas> renderedTiles) {
     }
 }

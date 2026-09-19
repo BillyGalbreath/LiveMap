@@ -71,7 +71,7 @@ public abstract class Renderer {
     public Renderer(@NotNull Type<Renderer> type, @NotNull Map<String, Object> map) {
         this.type = type;
         this.id = Unsafe.cast(map.getOrDefault("id", "unknown"));
-        this.name = Unsafe.cast(map.getOrDefault("name", "<world>"));
+        this.name = Unsafe.cast(map.getOrDefault("name", type.getId()));
         this.icon = Unsafe.cast(map.getOrDefault("icon", "unknown.png"));
         this.heightmapType = Type.getOrDefault(Heightmap.class, Unsafe.cast(map.getOrDefault("heightmap", "noop")), () -> Heightmap.NOOP);
         this.biomeBlend = Unsafe.cast(map.getOrDefault("biome-blend", 0));
@@ -170,13 +170,14 @@ public abstract class Renderer {
     /**
      * Render the specified region.
      *
-     * @param tile      Tile image to render to
-     * @param rand      Random for RNG stuff
-     * @param cancelled Cancellation token
+     * @param tile          Tile image to render to
+     * @param rand          Random for RNG stuff
+     * @param cancelled     Cancellation token
+     * @param renderedTiles Tiles that have previously been rendered
      * @return True if the entire region was rendered, false if aborted
      */
-    public boolean renderRegion(@NotNull TileCanvas tile, @NotNull ThreadLocalRandom rand, @NotNull AtomicBoolean cancelled) {
-        preRender(tile, rand, cancelled);
+    public boolean renderRegion(@NotNull TileCanvas tile, @NotNull ThreadLocalRandom rand, @NotNull AtomicBoolean cancelled, @NotNull Map<String, TileCanvas> renderedTiles) {
+        preRender(tile, rand, cancelled, renderedTiles);
 
         int chunkStartX = tile.getRegion().getX() << 5;
         int chunkStartZ = tile.getRegion().getZ() << 5;
@@ -194,6 +195,9 @@ public abstract class Renderer {
                     continue; // chunk not fully generated
                 }
 
+                // pre-scan here to populate block data
+                chunk.preScan();
+
                 int blockStartZ = chunkZ << 4;
 
                 for (int blockX = blockStartX; blockX < blockStartX + 16; blockX++) {
@@ -202,13 +206,13 @@ public abstract class Renderer {
                         if (data == null) {
                             continue; // this shouldn't happen, but just in case
                         }
-                        renderBlock(tile, data, rand);
+                        renderBlock(tile, data, rand, renderedTiles);
                     }
                 }
             }
         }
 
-        postRender(tile, rand, cancelled);
+        postRender(tile, rand, cancelled, renderedTiles);
 
         return true;
     }
@@ -216,33 +220,36 @@ public abstract class Renderer {
     /**
      * A chance to do things <em>before</em> the render has run.
      *
-     * @param tile      Tile image
-     * @param rand      Random for RNG stuff
-     * @param cancelled Cancellation token
+     * @param tile          Tile image
+     * @param rand          Random for RNG stuff
+     * @param cancelled     Cancellation token
+     * @param renderedTiles Tiles that have previously been rendered
      */
-    protected void preRender(@NotNull TileCanvas tile, @NotNull ThreadLocalRandom rand, @NotNull AtomicBoolean cancelled) {
+    protected void preRender(@NotNull TileCanvas tile, @NotNull ThreadLocalRandom rand, @NotNull AtomicBoolean cancelled, @NotNull Map<String, TileCanvas> renderedTiles) {
         tile.getHeightmap().preRender(tile, rand, cancelled);
     }
 
     /**
      * A chance to do things <em>after</em> the render has run.
      *
-     * @param tile      Tile image
-     * @param rand      Random for RNG stuff
-     * @param cancelled Cancellation token
+     * @param tile          Tile image
+     * @param rand          Random for RNG stuff
+     * @param cancelled     Cancellation token
+     * @param renderedTiles Tiles that have previously been rendered
      */
-    protected void postRender(@NotNull TileCanvas tile, @NotNull ThreadLocalRandom rand, @NotNull AtomicBoolean cancelled) {
+    protected void postRender(@NotNull TileCanvas tile, @NotNull ThreadLocalRandom rand, @NotNull AtomicBoolean cancelled, @NotNull Map<String, TileCanvas> renderedTiles) {
         tile.getHeightmap().postRender(tile, rand, cancelled);
     }
 
     /**
      * Render the block on the tile using the block data.
      *
-     * @param tile Tile image
-     * @param data Block data
-     * @param rand Random for RNG stuff
+     * @param tile          Tile image
+     * @param data          Block data
+     * @param rand          Random for RNG stuff
+     * @param renderedTiles Tiles that have previously been rendered
      */
-    protected abstract void renderBlock(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data, @NotNull ThreadLocalRandom rand);
+    protected abstract void renderBlock(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data, @NotNull ThreadLocalRandom rand, @NotNull Map<String, TileCanvas> renderedTiles);
 
     /**
      * Process block custom color from colors.yml with block state and properties.

@@ -67,11 +67,6 @@ class Chunk_1_13 extends Chunk {
         return Biome.DEFAULT;
     }
 
-    @Override
-    public int getLight(int x, int y, int z) {
-        return 15;
-    }
-
     @Nullable
     private Section getSection(int y) {
         return null;
@@ -98,10 +93,6 @@ class Chunk_1_13 extends Chunk {
         @NotNull
         private Biome getBiome(int x, int y, int z) {
             return Biome.DEFAULT;
-        }
-
-        private int getLight(int x, int y, int z) {
-            return 0;
         }
     }
 

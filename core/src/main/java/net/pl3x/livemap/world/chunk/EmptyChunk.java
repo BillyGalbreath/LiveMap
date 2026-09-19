@@ -89,11 +89,6 @@ public class EmptyChunk extends Chunk {
     }
 
     @Override
-    public int getLight(int blockX, int blockY, int blockZ) {
-        return 0;
-    }
-
-    @Override
     @NotNull
     public String toString() {
         return "EmptyChunk["

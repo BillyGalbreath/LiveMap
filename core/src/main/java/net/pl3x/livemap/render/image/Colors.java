@@ -176,13 +176,13 @@ public final class Colors {
         float[] hsb0 = Color.RGBtoHSB(color0 >> 16 & 0xFF, color0 >> 8 & 0xFF, color0 & 0xFF, null);
         float[] hsb1 = Color.RGBtoHSB(color1 >> 16 & 0xFF, color1 >> 8 & 0xFF, color1 & 0xFF, null);
         return ((int) Mathf.lerp(color0 >>> 24 & 0xFF, color1 >>> 24 & 0xFF, delta) << 24)
-            | Color.HSBtoRGB(
+            | (Color.HSBtoRGB(
             useShortestAngle
                 ? lerpShortestAngle(hsb0[0], hsb1[0], delta)
                 : Mathf.lerp(hsb0[0], hsb1[0], delta),
             Mathf.lerp(hsb0[1], hsb1[1], delta),
             Mathf.lerp(hsb0[2], hsb1[2], delta)
-        );
+        ) & 0x00FFFFFF);
     }
 
     /**
@@ -257,13 +257,13 @@ public final class Colors {
         float[] hsb0 = Color.RGBtoHSB(color0 >> 16 & 0xFF, color0 >> 8 & 0xFF, color0 & 0xFF, null);
         float[] hsb1 = Color.RGBtoHSB(color1 >> 16 & 0xFF, color1 >> 8 & 0xFF, color1 & 0xFF, null);
         return ((int) Mathf.inverseLerp(color0 >>> 24 & 0xFF, color1 >>> 24 & 0xFF, delta) << 24)
-            | Color.HSBtoRGB(
+            | (Color.HSBtoRGB(
             useShortestAngle
                 ? lerpShortestAngle(hsb0[0], hsb1[0], delta)
                 : Mathf.inverseLerp(hsb0[0], hsb1[0], delta),
             Mathf.inverseLerp(hsb0[1], hsb1[1], delta),
             Mathf.inverseLerp(hsb0[2], hsb1[2], delta)
-        );
+        ) & 0x00FFFFFF);
     }
 
     /**
@@ -325,7 +325,7 @@ public final class Colors {
         double r = ((color0 >> 16 & 0xFF) * a0 + (color1 >> 16 & 0xFF) * a1 * (1 - a0)) / a;
         double g = ((color0 >> 8 & 0xFF) * a0 + (color1 >> 8 & 0xFF) * a1 * (1 - a0)) / a;
         double b = ((color0 & 0xFF) * a0 + (color1 & 0xFF) * a1 * (1 - a0)) / a;
-        return (((int) a * 0xFF) << 24) | ((int) r << 16) | ((int) g << 8) | ((int) b);
+        return (((int) (a * 0xFF)) << 24) | ((int) r << 16) | ((int) g << 8) | ((int) b);
     }
 
     /**

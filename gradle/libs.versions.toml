@@ -8,6 +8,7 @@ bluenbt = "3.5.1"             # https://github.com/BlueMap-Minecraft/BlueNBT
 bstats = "3.2.1"              # https://github.com/Bastian/bstats-metrics/
 fix-javadoc = "1.19"          # https://github.com/mfnalex/gradle-fix-javadoc-plugin
 lz4 = "1.11.2"                # https://github.com/yawkat/lz4-java
+minotaur="2.+"                # https://github.com/modrinth/minotaur
 node = "7.1.0"                # https://github.com/node-gradle/gradle-node-plugin
 paperweight = "2.0.0-beta.22" # https://github.com/PaperMC/Paperweight
 shadowJar = "9.6.1"           # https://github.com/GradleUp/shadow
@@ -29,6 +30,7 @@ log4j = "2.26.0"
 
 [plugins]
 fix-javadoc = { id = "com.jeff-media.fix-javadoc-plugin", version.ref = "fix-javadoc" }
+minotaur = { id = "com.modrinth.minotaur", version.ref = "minotaur" }
 node = { id = "com.github.node-gradle.node", version.ref = "node" }
 paperweight = { id = "io.papermc.paperweight.userdev", version.ref = "paperweight" }
 shadow = { id = "com.gradleup.shadow", version.ref = "shadowJar" }

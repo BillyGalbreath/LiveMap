@@ -46,7 +46,7 @@ public class FancyRenderer extends Renderer {
     }
 
     @Override
-    protected void renderBlock(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data, @NotNull ThreadLocalRandom rand) {
+    protected void renderBlock(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data, @NotNull ThreadLocalRandom rand, @NotNull Map<String, TileCanvas> renderedTiles) {
         int pixelColor = 0;
 
         // get true block color, unless an opaque fluid is covering it

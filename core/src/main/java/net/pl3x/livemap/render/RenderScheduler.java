@@ -28,6 +28,7 @@ import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -385,13 +386,14 @@ public class RenderScheduler {
         ThreadLocalRandom rand = ThreadLocalRandom.current();
 
         // quickly load all chunks into memory
-        region.loadAllChunks(cancelled);
+        // region.loadAllChunks(cancelled);
 
         // render regions to tiles
+        Map<String, TileCanvas> renderedTiles = new HashMap<>();
         for (Renderer renderer : renderers) {
             TileCanvas tile = renderer.createTileCanvas(region);
 
-            if (!renderer.renderRegion(tile, rand, cancelled)) {
+            if (!renderer.renderRegion(tile, rand, cancelled, renderedTiles)) {
                 return false;
             }
 
@@ -399,6 +401,8 @@ public class RenderScheduler {
                 .formatted(renderer.getName(), region.getWorld().getId(), region.getX(), region.getZ())
             );
             tile.save(this.zoomedCanvases);
+
+            renderedTiles.put(renderer.getId(), tile);
         }
 
         // aggressively wipe the entire region reference tree from memory

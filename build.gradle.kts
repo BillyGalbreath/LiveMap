@@ -1,6 +1,7 @@
 plugins {
   `java-library`
   `maven-publish`
+  alias(libs.plugins.minotaur)
 }
 
 var buildNum: String? = System.getenv("BUILD_NUMBER")
@@ -142,4 +143,20 @@ publishing {
       from(components["java"])
     }
   }
+}
+
+modrinth {
+  token = System.getenv("MODRINTH_TOKEN")
+  projectId = "livemap"
+  versionName = "${rootProject.version}"
+  versionNumber = "${rootProject.version}"
+  versionType = "alpha"
+  uploadFile = rootProject.layout.buildDirectory.file("libs/${rootProject.name}-${rootProject.version}.jar").get()
+  gameVersions.addAll(listOf(libs.versions.minecraft.get()))
+  loaders.addAll(listOf("paper", "purpur"))
+  detectLoaders = false
+  autoAddDependsOn = false
+  environment = "dedicated_server_only"
+  changelog = "See git commit history for changelog"
+  syncBodyFrom.set(rootProject.file("README.md").readText(Charsets.UTF_8))
 }

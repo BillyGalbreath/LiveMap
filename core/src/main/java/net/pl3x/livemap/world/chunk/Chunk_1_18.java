@@ -84,6 +84,20 @@ class Chunk_1_18 extends Chunk {
     }
 
     @Override
+    public void recycle() {
+        super.recycle();
+
+        /*for (Section section : sections) {
+            if (section != null) {
+                section.blockPalette = null;
+                section.blocks = null;
+            }
+        }*/
+        this.sections = EMPTY_SECTION_ARRAY;
+        this.heightmap = null;
+    }
+
+    @Override
     public boolean isFull() {
         return this.isFull;
     }
@@ -116,12 +130,6 @@ class Chunk_1_18 extends Chunk {
             .getBiome(blockX, blockY, blockZ);
     }
 
-    @Override
-    public int getLight(int blockX, int blockY, int blockZ) {
-        Section section = getSection(blockY >> 4);
-        return section == null ? 15 : section.getLight(blockX, blockY, blockZ);
-    }
-
     @Nullable
     private Section getSection(int chunkY) {
         chunkY -= getMinY();
@@ -133,11 +141,12 @@ class Chunk_1_18 extends Chunk {
 
     private static class Section extends Chunk.Section {
         private final int y;
-        private final BlockState[] blockPalette;
+
+        private BlockState[] blockPalette;
+        private PackedIntArrayAccess blocks;
+
         private final Biome[] biomePalette;
-        private final PackedIntArrayAccess blocks;
         private final PackedIntArrayAccess biomes;
-        private final byte[] light;
 
         private Section(@NotNull World world, @NotNull SectionNBT nbt) {
             this.y = nbt.getY();
@@ -152,8 +161,6 @@ class Chunk_1_18 extends Chunk {
 
             this.blocks = new PackedIntArrayAccess().init(nbt.blockStates.data, BLOCKS_PER_SECTION);
             this.biomes = new PackedIntArrayAccess().init(Math.max(MCAMath.ceilLog2(this.biomePalette.length), 1), nbt.biomes.data);
-
-            this.light = nbt.getLight();
         }
 
         private int getY() {
@@ -182,15 +189,6 @@ class Chunk_1_18 extends Chunk {
                     yield id < this.biomePalette.length ? this.biomePalette[id] : Biome.DEFAULT;
                 }
             };
-        }
-
-        private int getLight(int x, int y, int z) {
-            if (this.light.length == 0) {
-                return 0;
-            }
-
-            int i = ((y & 0xF) << 8) | ((z & 0xF) << 4) | x & 0xF;
-            return MCAMath.getByteHalf(this.light[i >> 1], (i & 0x1) != 0);
         }
     }
 

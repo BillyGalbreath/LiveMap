@@ -45,17 +45,14 @@ public class NetherRoofRenderer extends Renderer {
     }
 
     @Override
-    protected void renderBlock(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data, @NotNull ThreadLocalRandom rand) {
-        // get actual highest blockstate
-        BlockState blockstate;
-        int blockY = data.getChunk().getHeight(data.getBlockX(), data.getBlockZ()) + 1;
-        do {
-            blockY -= 1;
-            blockstate = data.getChunk().getBlockState(data.getBlockX(), blockY, data.getBlockZ());
-            if (blockstate.getColor() != 0) {
-                break;
-            }
-        } while (blockY > data.getWorld().getMinY());
+    protected void renderBlock(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data, @NotNull ThreadLocalRandom rand, @NotNull Map<String, TileCanvas> renderedTiles) {
+        // get roof's blockstate
+        BlockState blockstate = data.getRoofState();
+
+        // sanity check, in case a roof was not found
+        if (blockstate == null) {
+            blockstate = data.getTopState();
+        }
 
         // get vanilla style color
         int pixelColor = 0xFF000000 | blockstate.getVanilla();

@@ -59,7 +59,7 @@ public class BlockInfoRenderer extends Renderer {
     }
 
     @Override
-    protected void renderBlock(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data, @NotNull ThreadLocalRandom rand) {
+    protected void renderBlock(@NotNull TileCanvas tile, @NotNull Chunk.BlockData data, @NotNull ThreadLocalRandom rand, @NotNull Map<String, TileCanvas> renderedTiles) {
         int topY = data.getTopY() - tile.getWorld().getMinY();
 
         Block block = data.getTopState().getBlock();

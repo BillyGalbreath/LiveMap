@@ -45,17 +45,17 @@ export class CoordsControl extends ControlBox {
     }
 
     onAdd(map: L.Map): HTMLElement {
-        map.addEventListener("mousemove", (e: L.LeafletMouseEvent) => this._update(e));
+        map.addEventListener("mousemove", this._update);
         return this._dom;
     }
 
     onRemove(map: L.Map): void {
-        map.removeEventListener("mousemove", (e: L.LeafletMouseEvent) => this._update(e));
+        map.removeEventListener("mousemove", this._update);
     }
 
-    private _update(e?: L.LeafletMouseEvent) {
+    private _update: (e?: L.LeafletMouseEvent) => void = (e?: L.LeafletMouseEvent): void => {
         this.update(Point.of(e?.latlng ?? 0));
-    }
+    };
 
     public update(point?: Point) {
         this._point = (point ?? Point.of(this._livemap.getCenter())).round();

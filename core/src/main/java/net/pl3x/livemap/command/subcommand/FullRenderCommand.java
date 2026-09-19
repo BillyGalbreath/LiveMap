@@ -114,8 +114,8 @@ public class FullRenderCommand<S> extends BaseCommand<S> {
             int cps = (int) (chunks / TimeUnit.NANOSECONDS.toSeconds(elapsed));
 
             sender.sendMessage(Lang.FULLRENDER_FINISHED
-                .replace("<cps>", "unknown" /*Integer.toString(cps)*/)
-                .replace("<chunks>", Integer.toString(chunks))
+                .replace("<cps>", "unknown " /*Integer.toString(cps)*/)
+                .replace("<chunks>", "unknown " /*Integer.toString(chunks)*/)
                 .replace("<elapsed>", Duration.ofNanos(elapsed).toString())
                 .replace("<world>", world.getId()));
         });

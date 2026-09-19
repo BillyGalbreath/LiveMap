@@ -223,7 +223,7 @@ public abstract class Chunk {
 
     private final BlockData[] data = new BlockData[256];
 
-    private boolean preScanned;
+    protected boolean preScanned;
 
     /**
      * Constructs a new instance of Chunk.
@@ -268,6 +268,10 @@ public abstract class Chunk {
                     do {
                         data.blockY -= 1;
                         data.blockstate = getBlockState(blockX, data.blockY, blockZ);
+                        if (data.roofstate == null && !data.blockstate.isAir()) {
+                            data.roofstate = data.blockstate;
+                            data.roofY = data.blockY;
+                        }
                     } while (data.blockY > getWorld().getMinY() && !data.blockstate.isAir());
                 }
 
@@ -299,6 +303,9 @@ public abstract class Chunk {
                 if (data.blockstate.isFlat()) {
                     data.blockY--;
                 }
+
+                // cannot get biome here - causes infinite circular logic
+                data.biome = getWorld().getBiomeRegistry().getBiome(this, blockX, data.getTopY(), blockZ);
 
                 this.data[((blockZ & 0xF) << 4) + (blockX & 0xF)] = data;
             }
@@ -425,16 +432,6 @@ public abstract class Chunk {
     public abstract Biome getBiome(int blockX, int blockY, int blockZ);
 
     /**
-     * Get the light value at the specified block coordinates.
-     *
-     * @param blockX X block coordinate
-     * @param blockY Y block coordinate
-     * @param blockZ Z block coordinate
-     * @return Block's light value
-     */
-    public abstract int getLight(int blockX, int blockY, int blockZ);
-
-    /**
      * Get pre-scanned block data at specified block coordinates.
      *
      * <p>This data can be reused by multiple renderers.
@@ -511,9 +508,6 @@ public abstract class Chunk {
             @NBTName("Y")
             private int y = 0;
 
-            @NBTName("BlockLight")
-            private byte[] light = EMPTY_BYTE_ARRAY;
-
             /**
              * Get the Y position of this section.
              *
@@ -521,15 +515,6 @@ public abstract class Chunk {
              */
             public int getY() {
                 return this.y;
-            }
-
-            /**
-             * Get block light nibbles.
-             *
-             * @return Block light
-             */
-            public byte[] getLight() {
-                return this.light;
             }
         }
     }
@@ -635,8 +620,10 @@ public abstract class Chunk {
 
         protected int blockY;
         protected int fluidY;
+        protected int roofY;
         protected BlockState blockstate;
         protected BlockState fluidstate;
+        protected BlockState roofstate;
         protected Biome biome;
 
         private int hash;
@@ -661,8 +648,10 @@ public abstract class Chunk {
 
             this.blockY = 0;
             this.fluidY = 0;
+            this.roofY = 0;
             this.blockstate = null;
             this.fluidstate = null;
+            this.roofstate = null;
             this.biome = null;
         }
 
@@ -753,6 +742,15 @@ public abstract class Chunk {
         }
 
         /**
+         * Get roof's Y coordinate.
+         *
+         * @return Y roof coordinate
+         */
+        public int getRoofY() {
+            return this.roofY;
+        }
+
+        /**
          * Get highest Y coordinate, block or fluid.
          *
          * @return Y coordinate
@@ -779,6 +777,16 @@ public abstract class Chunk {
         @Nullable
         public BlockState getFluidState() {
             return this.fluidstate;
+        }
+
+        /**
+         * Get the stored roof state.
+         *
+         * @return Roof's state, or null if no roof
+         */
+        @Nullable
+        public BlockState getRoofState() {
+            return this.roofstate;
         }
 
         /**

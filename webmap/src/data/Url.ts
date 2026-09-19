@@ -37,38 +37,30 @@ export class Url {
     constructor(livemap: LiveMap, url: string, world?: World | undefined, point?: Point | undefined) {
         this._livemap = livemap;
 
-        let worldId: string | undefined = world?.id;
-        let rendererId: string | undefined = world?.currentRenderer?.id;
-        let zoom: number | string | undefined = world?.currentZoom() ?? undefined;
-        let x: number | string | undefined = point?.x ?? 0;
-        let z: number | string | undefined = point?.z ?? 0;
+        this._world = world?.id;
+        this._renderer = world?.currentRenderer?.id;
+        this._zoom = world?.currentZoom();
+        this._point = point;
 
-        if (worldId) {
+        if (this._world) {
             this._basePath = "/";
         } else {
             const match: RegExpExecArray | null = /^\/(.+?)(?:\/(.+?)?\/?(-?\d+)?\/?(-?\d+)?\/?(-?\d+)?(?:\/(.+)?)?)?$/.exec(url);
             if (match) {
                 this._basePath = "/";
-                worldId = match[1];
-                rendererId = match[2];
-                zoom = match[3];
-                x = match[4];
-                z = match[5];
+                this._world = match[1];
+                this._renderer = match[2];
+                this._zoom = Number(match[3]);
+                this._point = Point.of(match[4] ?? 0, match[5] ?? 0);
             } else {
                 this._basePath = window.location.pathname?.split("?")[0]?.replace("index.html", "") ?? "/";
                 const url: URLSearchParams = new URLSearchParams(window.location.search);
-                worldId = url.get("world") ?? undefined;
-                rendererId = url.get("renderer") ?? undefined;
-                zoom = url.get("zoom") ?? undefined;
-                x = url.get("x") ?? undefined;
-                z = url.get("z") ?? undefined;
+                this._world = url.get("world") ?? undefined;
+                this._renderer = url.get("renderer") ?? undefined;
+                this._zoom = Number(url.get("zoom") ?? 0);
+                this._point = Point.of(url.get("x") ?? 0, url.get("z") ?? 0);
             }
         }
-
-        this._world = worldId;
-        this._renderer = rendererId;
-        this._zoom = Number(zoom ?? 0);
-        this._point = Point.of(x ?? 0, z ?? 0);
     }
 
     get basePath(): string {

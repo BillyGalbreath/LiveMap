@@ -119,7 +119,7 @@ public class Region extends Point {
 
         this.packed = packed;
         this.world = world;
-        this.file = this.world.getRegionsDir().resolve("r.%d.%d.mca".formatted(getX(), getZ())).toFile();
+        this.file = this.world.getRegionsDir().resolve("r." + getX() + "." + getZ() + ".mca").toFile();
 
         this.hash = Objects.hash(world, getX(), getZ());
     }
@@ -319,7 +319,7 @@ public class Region extends Point {
             Chunk chunk = chunkLoader.load(this, fbais);
 
             // we only want full chunks
-            return chunk.isFull() ? chunk.preScan() : new EmptyChunk(this);
+            return chunk.isFull() ? chunk/*.preScan()*/ : new EmptyChunk(this);
         }
     }
 

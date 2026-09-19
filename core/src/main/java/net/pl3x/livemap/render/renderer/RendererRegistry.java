@@ -52,7 +52,7 @@ public class RendererRegistry extends OrderedRegistry<Renderer> {
         clear();
 
         // secret renderer to handle blockinfo. shhh...
-        put(Renderer.BLOCKINFO.create(Map.of("id", "blockinfo", "type", Renderer.BLOCKINFO.getId())));
+        put(Renderer.BLOCKINFO.create(Map.of("id", "blockinfo", "name", "BlockInfo", "type", Renderer.BLOCKINFO.getId())));
 
         for (Map<String, Object> map : this.world.getConfig().RENDERERS) {
             Type<Renderer> type = Type.get(Renderer.class, Unsafe.cast(map.get("type")));

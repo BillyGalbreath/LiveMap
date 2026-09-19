@@ -134,6 +134,26 @@ public class TileCanvas {
     }
 
     /**
+     * Get the array of pixels.
+     *
+     * @return Pixel array
+     */
+    public int[] getPixels() {
+        return this.pixels;
+    }
+
+    /**
+     * Get value at specified pixel.
+     *
+     * @param x X pixel
+     * @param z Z pixel
+     * @return Requested value
+     */
+    public int getPixel(int x, int z) {
+        return getPixel(((z & 511) << 9) | (x & 511));
+    }
+
+    /**
      * Get value at specified pixel.
      *
      * @param index Pixel index
@@ -163,6 +183,15 @@ public class TileCanvas {
     public void setPixel(int index, int value) {
         this.pixels[index] = value;
         this.dirty = true;
+    }
+
+    /**
+     * Set if tile is dirty or not. A tile will not be saved to disk unless is it marked dirty.
+     *
+     * @param dirty True to mark dirty, otherwise false
+     */
+    public void setDirty(boolean dirty) {
+        this.dirty = dirty;
     }
 
     /**
