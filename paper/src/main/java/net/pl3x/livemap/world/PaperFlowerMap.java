@@ -18,16 +18,16 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
-import net.minecraft.world.level.levelgen.feature.configurations.SimpleBlockConfiguration;
+import net.minecraft.world.level.levelgen.feature.Feature;
+import net.minecraft.world.level.levelgen.feature.SimpleBlockFeature;
 import net.pl3x.livemap.LiveMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class PaperFlowerMap implements FlowerMap {
-    public final Map<Biome, List<ConfiguredFeature<?, ?>>> biomeFeatureCache = Collections.synchronizedMap(new LinkedHashMap<>());
+    public final Map<Biome, List<Feature>> biomeFeatureCache = Collections.synchronizedMap(new LinkedHashMap<>());
 
-    public final ArrayList<ResourceKey<ConfiguredFeature<?, ?>>> canSpawnFromBonemealList = new ArrayList<>(10) {{
+    public final ArrayList<ResourceKey<Feature>> canSpawnFromBonemealList = new ArrayList<>(10) {{
         add(VegetationFeatures.FLOWER_DEFAULT);
         add(VegetationFeatures.FLOWER_FLOWER_FOREST);
         add(VegetationFeatures.FLOWER_SWAMP);
@@ -56,7 +56,7 @@ public final class PaperFlowerMap implements FlowerMap {
         if (flowers.isEmpty()) {
             return null;
         }
-        var block = ((SimpleBlockConfiguration) flowers.getFirst().config()).toPlace()
+        var block = ((SimpleBlockFeature) flowers.getFirst()).toPlace().value()
             .getState(
                 world.getLevel(),
                 world.<ServerLevel>getLevel().getRandom(),
@@ -66,7 +66,7 @@ public final class PaperFlowerMap implements FlowerMap {
     }
 
     @NotNull
-    private List<ConfiguredFeature<?, ?>> getBoneMealFeatures(@NotNull Biome biome) {
+    private List<Feature> getBoneMealFeatures(@NotNull Biome biome) {
         // the biomes created from the builtin registry are missing tags
         // with the new can_spawn_from_bonemeal tag for vegetation features we can
         // no longer just call getFlowerFeatures (now called getBonemealFeatures)

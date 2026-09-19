@@ -133,6 +133,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:black_carpet", 0x141519);
         put("minecraft:black_concrete", 0x080A0F);
         put("minecraft:black_concrete_powder", 0x191A1F);
+        put("minecraft:black_concrete_slab", 0x080A0F);
+        put("minecraft:black_concrete_stairs", 0x080A0F);
         put("minecraft:black_glazed_terracotta", 0x431E20);
         put("minecraft:black_shulker_box", 0x19191D);
         put("minecraft:black_stained_glass", 0x585858);
@@ -140,6 +142,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:black_terracotta", 0x251610);
         put("minecraft:black_wall_banner", 0x141519);
         put("minecraft:black_wool", 0x141519);
+        put("minecraft:black_wool_slab", 0x141519);
+        put("minecraft:black_wool_stairs", 0x141519);
         put("minecraft:blackstone", 0x2A2429);
         put("minecraft:blackstone_slab", 0x2A2429);
         put("minecraft:blackstone_stairs", 0x2A2429);
@@ -152,6 +156,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:blue_carpet", 0x35399D);
         put("minecraft:blue_concrete", 0x2C2E8F);
         put("minecraft:blue_concrete_powder", 0x4649A6);
+        put("minecraft:blue_concrete_slab", 0x2C2E8F);
+        put("minecraft:blue_concrete_stairs", 0x2C2E8F);
         put("minecraft:blue_glazed_terracotta", 0x2F408B);
         put("minecraft:blue_ice", 0x74A7FD);
         put("minecraft:blue_orchid", 0x27A9F4);
@@ -161,6 +167,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:blue_terracotta", 0x4A3B5B);
         put("minecraft:blue_wall_banner", 0x35399D);
         put("minecraft:blue_wool", 0x35399D);
+        put("minecraft:blue_wool_slab", 0x35399D);
+        put("minecraft:blue_wool_stairs", 0x35399D);
         put("minecraft:bone_block", 0xD1CEB3);
         put("minecraft:bookshelf", 0x755E3B);
         put("minecraft:brain_coral", 0xC55498);
@@ -179,6 +187,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:brown_carpet", 0x724728);
         put("minecraft:brown_concrete", 0x603B1F);
         put("minecraft:brown_concrete_powder", 0x7D5435);
+        put("minecraft:brown_concrete_slab", 0x603B1F);
+        put("minecraft:brown_concrete_stairs", 0x603B1F);
         put("minecraft:brown_glazed_terracotta", 0x776A55);
         put("minecraft:brown_mushroom", 0x99745C);
         put("minecraft:brown_mushroom_block", 0x956F51);
@@ -188,6 +198,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:brown_terracotta", 0x4D3323);
         put("minecraft:brown_wall_banner", 0x724728);
         put("minecraft:brown_wool", 0x724728);
+        put("minecraft:brown_wool_slab", 0x724728);
+        put("minecraft:brown_wool_stairs", 0x724728);
         put("minecraft:bubble_column", 0xB1B1B1);
         put("minecraft:bubble_coral", 0xA1179F);
         put("minecraft:bubble_coral_block", 0xA51AA2);
@@ -334,6 +346,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:cyan_carpet", 0x158991);
         put("minecraft:cyan_concrete", 0x157788);
         put("minecraft:cyan_concrete_powder", 0x24939D);
+        put("minecraft:cyan_concrete_slab", 0x157788);
+        put("minecraft:cyan_concrete_stairs", 0x157788);
         put("minecraft:cyan_glazed_terracotta", 0x34767D);
         put("minecraft:cyan_shulker_box", 0x147987);
         put("minecraft:cyan_stained_glass", 0x4C7F99);
@@ -341,6 +355,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:cyan_terracotta", 0x565B5B);
         put("minecraft:cyan_wall_banner", 0x158991);
         put("minecraft:cyan_wool", 0x158991);
+        put("minecraft:cyan_wool_slab", 0x158991);
+        put("minecraft:cyan_wool_stairs", 0x158991);
         put("minecraft:damaged_anvil", 0x484848);
         put("minecraft:dandelion", 0xFDDF44);
         put("minecraft:dark_oak_button", 0x000000);
@@ -485,6 +501,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:gray_carpet", 0x3E4447);
         put("minecraft:gray_concrete", 0x36393D);
         put("minecraft:gray_concrete_powder", 0x4C5154);
+        put("minecraft:gray_concrete_slab", 0x36393D);
+        put("minecraft:gray_concrete_stairs", 0x36393D);
         put("minecraft:gray_glazed_terracotta", 0x535A5D);
         put("minecraft:gray_shulker_box", 0x373A3E);
         put("minecraft:gray_stained_glass", 0x949494);
@@ -492,6 +510,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:gray_terracotta", 0x392A23);
         put("minecraft:gray_wall_banner", 0x3E4447);
         put("minecraft:gray_wool", 0x3E4447);
+        put("minecraft:gray_wool_slab", 0x3E4447);
+        put("minecraft:gray_wool_stairs", 0x3E4447);
         put("minecraft:green_banner", 0x546D1B);
         put("minecraft:green_bed", 0x546D1B);
         put("minecraft:green_candle", 0x486014);
@@ -499,6 +519,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:green_carpet", 0x546D1B);
         put("minecraft:green_concrete", 0x495B24);
         put("minecraft:green_concrete_powder", 0x61772C);
+        put("minecraft:green_concrete_slab", 0x495B24);
+        put("minecraft:green_concrete_stairs", 0x495B24);
         put("minecraft:green_glazed_terracotta", 0x758E43);
         put("minecraft:green_shulker_box", 0x4F641F);
         put("minecraft:green_stained_glass", 0x667F33);
@@ -506,6 +528,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:green_terracotta", 0x4C532A);
         put("minecraft:green_wall_banner", 0x546D1B);
         put("minecraft:green_wool", 0x546D1B);
+        put("minecraft:green_wool_slab", 0x546D1B);
+        put("minecraft:green_wool_stairs", 0x546D1B);
         put("minecraft:grindstone", 0xC2C2C2);
         put("minecraft:hanging_roots", 0xA1735B);
         put("minecraft:hay_block", 0xA58B0C);
@@ -574,6 +598,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:light_blue_carpet", 0x3AAFD9);
         put("minecraft:light_blue_concrete", 0x2389C6);
         put("minecraft:light_blue_concrete_powder", 0x4AB4D5);
+        put("minecraft:light_blue_concrete_slab", 0x2389C6);
+        put("minecraft:light_blue_concrete_stairs", 0x2389C6);
         put("minecraft:light_blue_glazed_terracotta", 0x5EA4D0);
         put("minecraft:light_blue_shulker_box", 0x31A3D4);
         put("minecraft:light_blue_stained_glass", 0x6699D8);
@@ -581,6 +607,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:light_blue_terracotta", 0x716C89);
         put("minecraft:light_blue_wall_banner", 0x3AAFD9);
         put("minecraft:light_blue_wool", 0x3AAFD9);
+        put("minecraft:light_blue_wool_slab", 0x3AAFD9);
+        put("minecraft:light_blue_wool_stairs", 0x3AAFD9);
         put("minecraft:light_gray_banner", 0x8E8E86);
         put("minecraft:light_gray_bed", 0x8E8E86);
         put("minecraft:light_gray_candle", 0x767870);
@@ -588,6 +616,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:light_gray_carpet", 0x8E8E86);
         put("minecraft:light_gray_concrete", 0x7D7D73);
         put("minecraft:light_gray_concrete_powder", 0x9A9A94);
+        put("minecraft:light_gray_concrete_slab", 0x7D7D73);
+        put("minecraft:light_gray_concrete_stairs", 0x7D7D73);
         put("minecraft:light_gray_glazed_terracotta", 0x90A6A7);
         put("minecraft:light_gray_shulker_box", 0x7C7C73);
         put("minecraft:light_gray_stained_glass", 0xCBCBCB);
@@ -595,6 +625,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:light_gray_terracotta", 0x876A61);
         put("minecraft:light_gray_wall_banner", 0x8E8E86);
         put("minecraft:light_gray_wool", 0x8E8E86);
+        put("minecraft:light_gray_wool_slab", 0x8E8E86);
+        put("minecraft:light_gray_wool_stairs", 0x8E8E86);
         put("minecraft:light_weighted_pressure_plate", 0xF6D03D);
         put("minecraft:lightning_rod", 0xC46F53);
         put("minecraft:lilac", 0x897C7E);
@@ -607,6 +639,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:lime_carpet", 0x70B919);
         put("minecraft:lime_concrete", 0x5EA818);
         put("minecraft:lime_concrete_powder", 0x7DBD29);
+        put("minecraft:lime_concrete_slab", 0x5EA818);
+        put("minecraft:lime_concrete_stairs", 0x5EA818);
         put("minecraft:lime_glazed_terracotta", 0xA2C537);
         put("minecraft:lime_shulker_box", 0x63AC17);
         put("minecraft:lime_stained_glass", 0x7FCC19);
@@ -614,6 +648,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:lime_terracotta", 0x677534);
         put("minecraft:lime_wall_banner", 0x70B919);
         put("minecraft:lime_wool", 0x70B919);
+        put("minecraft:lime_wool_slab", 0x70B919);
+        put("minecraft:lime_wool_stairs", 0x70B919);
         put("minecraft:lodestone", 0x939598);
         put("minecraft:loom", 0x8E775B);
         put("minecraft:magenta_banner", 0xBD44B3);
@@ -623,6 +659,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:magenta_carpet", 0xBD44B3);
         put("minecraft:magenta_concrete", 0xA9309F);
         put("minecraft:magenta_concrete_powder", 0xC053B8);
+        put("minecraft:magenta_concrete_slab", 0xA9309F);
+        put("minecraft:magenta_concrete_stairs", 0xA9309F);
         put("minecraft:magenta_glazed_terracotta", 0xD064BF);
         put("minecraft:magenta_shulker_box", 0xAD36A3);
         put("minecraft:magenta_stained_glass", 0xB24CD8);
@@ -630,6 +668,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:magenta_terracotta", 0x95586C);
         put("minecraft:magenta_wall_banner", 0xBD44B3);
         put("minecraft:magenta_wool", 0xBD44B3);
+        put("minecraft:magenta_wool_slab", 0xBD44B3);
+        put("minecraft:magenta_wool_stairs", 0xBD44B3);
         put("minecraft:magma_block", 0x8E3F1F);
         put("minecraft:mangrove_button", 0x000000);
         put("minecraft:mangrove_door", 0x702F2E);
@@ -715,7 +755,10 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:orange_carpet", 0xF07613);
         put("minecraft:orange_concrete", 0xE06100);
         put("minecraft:orange_concrete_powder", 0xE3831F);
+        put("minecraft:orange_concrete_slab", 0xE06100);
+        put("minecraft:orange_concrete_stairs", 0xE06100);
         put("minecraft:orange_glazed_terracotta", 0x9A935B);
+        put("minecraft:orange_poplar_leaves", 0xBD5918);
         put("minecraft:orange_shulker_box", 0xEA6A08);
         put("minecraft:orange_stained_glass", 0xD87F33);
         put("minecraft:orange_stained_glass_pane", 0xD87F33);
@@ -723,6 +766,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:orange_tulip", 0xD37D32);
         put("minecraft:orange_wall_banner", 0xF07613);
         put("minecraft:orange_wool", 0xF07613);
+        put("minecraft:orange_wool_slab", 0xF07613);
+        put("minecraft:orange_wool_stairs", 0xF07613);
         put("minecraft:oxeye_daisy", 0xF7F7F7);
         put("minecraft:oxidized_chiseled_copper", 0x53A184);
         put("minecraft:oxidized_copper", 0x52A284);
@@ -774,6 +819,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:pink_carpet", 0xED8DAC);
         put("minecraft:pink_concrete", 0xD5658E);
         put("minecraft:pink_concrete_powder", 0xE499B5);
+        put("minecraft:pink_concrete_slab", 0xD5658E);
+        put("minecraft:pink_concrete_stairs", 0xD5658E);
         put("minecraft:pink_glazed_terracotta", 0xEB9AB5);
         put("minecraft:pink_petals", 0xF6B4DA);
         put("minecraft:pink_shulker_box", 0xE6799D);
@@ -783,6 +830,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:pink_tulip", 0xEBC5FD);
         put("minecraft:pink_wall_banner", 0xED8DAC);
         put("minecraft:pink_wool", 0xED8DAC);
+        put("minecraft:pink_wool_slab", 0xED8DAC);
+        put("minecraft:pink_wool_stairs", 0xED8DAC);
         put("minecraft:piston", 0x616060);
         put("minecraft:piston_head", 0x616060);
         put("minecraft:pitcher_crop", 0xB5714A);
@@ -827,6 +876,23 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:polished_tuff_slab", 0x616863);
         put("minecraft:polished_tuff_stairs", 0x616863);
         put("minecraft:polished_tuff_wall", 0x616863);
+        put("minecraft:poplar_button", 0x000000);
+        put("minecraft:poplar_door", 0x93877D);
+        put("minecraft:poplar_fence", 0x988C81);
+        put("minecraft:poplar_fence_gate", 0x988C81);
+        put("minecraft:poplar_hanging_sign", 0x988C81);
+        put("minecraft:poplar_log", 0x503D2B);
+        put("minecraft:poplar_planks", 0x988C81);
+        put("minecraft:poplar_pressure_plate", 0x988C81);
+        put("minecraft:poplar_sapling", 0xBF6223);
+        put("minecraft:poplar_shelf", 0x94887E);
+        put("minecraft:poplar_sign", 0x988C81);
+        put("minecraft:poplar_slab", 0x988C81);
+        put("minecraft:poplar_stairs", 0x988C81);
+        put("minecraft:poplar_trapdoor", 0x9D9186);
+        put("minecraft:poplar_wall_hanging_sign", 0x988C81);
+        put("minecraft:poplar_wall_sign", 0x988C81);
+        put("minecraft:poplar_wood", 0x503D2B);
         put("minecraft:poppy", 0xBF2529);
         put("minecraft:potatoes", 0x54872F);
         put("minecraft:potent_sulfur", 0xFAEE4D);
@@ -859,6 +925,7 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:potted_oxeye_daisy", 0xF7F7F7);
         put("minecraft:potted_pale_oak_sapling", 0x6D6963);
         put("minecraft:potted_pink_tulip", 0xEBC5FD);
+        put("minecraft:potted_poplar_sapling", 0xBF6223);
         put("minecraft:potted_poppy", 0xBF2529);
         put("minecraft:potted_red_mushroom", 0xD84B43);
         put("minecraft:potted_red_tulip", 0xED302C);
@@ -887,6 +954,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:purple_carpet", 0x792AAC);
         put("minecraft:purple_concrete", 0x641F9C);
         put("minecraft:purple_concrete_powder", 0x8337B1);
+        put("minecraft:purple_concrete_slab", 0x641F9C);
+        put("minecraft:purple_concrete_stairs", 0x641F9C);
         put("minecraft:purple_glazed_terracotta", 0x6D2F98);
         put("minecraft:purple_shulker_box", 0x67209C);
         put("minecraft:purple_stained_glass", 0x7F3FB2);
@@ -894,6 +963,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:purple_terracotta", 0x764656);
         put("minecraft:purple_wall_banner", 0x792AAC);
         put("minecraft:purple_wool", 0x792AAC);
+        put("minecraft:purple_wool_slab", 0x792AAC);
+        put("minecraft:purple_wool_stairs", 0x792AAC);
         put("minecraft:purpur_block", 0xA97DA9);
         put("minecraft:purpur_pillar", 0xAB81AB);
         put("minecraft:purpur_slab", 0xA97DA9);
@@ -914,6 +985,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:red_carpet", 0xA02722);
         put("minecraft:red_concrete", 0x8E2020);
         put("minecraft:red_concrete_powder", 0xA83632);
+        put("minecraft:red_concrete_slab", 0x8E2020);
+        put("minecraft:red_concrete_stairs", 0x8E2020);
         put("minecraft:red_glazed_terracotta", 0xB53B35);
         put("minecraft:red_mushroom", 0xD84B43);
         put("minecraft:red_mushroom_block", 0xC82E2D);
@@ -921,11 +994,13 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:red_nether_brick_stairs", 0x450709);
         put("minecraft:red_nether_brick_wall", 0x450709);
         put("minecraft:red_nether_bricks", 0x450709);
+        put("minecraft:red_poplar_leaves", 0x9F2D27);
         put("minecraft:red_sand", 0xBE6621);
         put("minecraft:red_sandstone", 0xBA631D);
         put("minecraft:red_sandstone_slab", 0xB5611F);
         put("minecraft:red_sandstone_stairs", 0xB5611F);
         put("minecraft:red_sandstone_wall", 0xB5611F);
+        put("minecraft:red_shrub", 0x812517);
         put("minecraft:red_shulker_box", 0x8C1F1E);
         put("minecraft:red_stained_glass", 0x993333);
         put("minecraft:red_stained_glass_pane", 0x993333);
@@ -933,6 +1008,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:red_tulip", 0xED302C);
         put("minecraft:red_wall_banner", 0xA02722);
         put("minecraft:red_wool", 0xA02722);
+        put("minecraft:red_wool_slab", 0xA02722);
+        put("minecraft:red_wool_stairs", 0xA02722);
         put("minecraft:redstone_block", 0xAF1805);
         put("minecraft:redstone_lamp", 0x5F361E);
         put("minecraft:redstone_ore", 0x8C6D6D);
@@ -965,6 +1042,7 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:sea_lantern", 0xACC7BE);
         put("minecraft:sea_pickle", 0x5A6127);
         put("minecraft:seagrass", 0x327E08);
+        put("minecraft:shelf_mushroom", 0xC79661);
         put("minecraft:short_dry_grass", 0xBB9E6C);
         put("minecraft:short_grass", 0x7EA44D);
         put("minecraft:shroomlight", 0xF09246);
@@ -1030,6 +1108,7 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:stone_slab", 0x838383);
         put("minecraft:stone_stairs", 0x838383);
         put("minecraft:stonecutter", 0x7B766F);
+        put("minecraft:straw_bed", 0x9F871D);
         put("minecraft:stripped_acacia_log", 0xAE5C3B);
         put("minecraft:stripped_acacia_wood", 0xAE5C3B);
         put("minecraft:stripped_bamboo_block", 0xC1AD50);
@@ -1049,6 +1128,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:stripped_oak_wood", 0xB19056);
         put("minecraft:stripped_pale_oak_log", 0xF5EEEC);
         put("minecraft:stripped_pale_oak_wood", 0xF5EEEC);
+        put("minecraft:stripped_poplar_log", 0xA5998C);
+        put("minecraft:stripped_poplar_wood", 0xA5998C);
         put("minecraft:stripped_spruce_log", 0x735934);
         put("minecraft:stripped_spruce_wood", 0x735934);
         put("minecraft:stripped_warped_hyphae", 0x399693);
@@ -1213,6 +1294,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:white_carpet", 0xE9ECEC);
         put("minecraft:white_concrete", 0xCFD5D6);
         put("minecraft:white_concrete_powder", 0xE1E3E3);
+        put("minecraft:white_concrete_slab", 0xCFD5D6);
+        put("minecraft:white_concrete_stairs", 0xCFD5D6);
         put("minecraft:white_glazed_terracotta", 0xBCD4CA);
         put("minecraft:white_shulker_box", 0xD7DCDD);
         put("minecraft:white_stained_glass", 0xFFFFFF);
@@ -1221,6 +1304,8 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:white_tulip", 0xD6E8E8);
         put("minecraft:white_wall_banner", 0xE9ECEC);
         put("minecraft:white_wool", 0xE9ECEC);
+        put("minecraft:white_wool_slab", 0xE9ECEC);
+        put("minecraft:white_wool_stairs", 0xE9ECEC);
         put("minecraft:wildflowers", 0xEDD575);
         put("minecraft:wither_rose", 0x2A1F19);
         put("minecraft:wither_skeleton_skull", 0x3D3F3F);
@@ -1232,13 +1317,18 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:yellow_carpet", 0xF8C527);
         put("minecraft:yellow_concrete", 0xF0AF15);
         put("minecraft:yellow_concrete_powder", 0xE8C736);
+        put("minecraft:yellow_concrete_slab", 0xF0AF15);
+        put("minecraft:yellow_concrete_stairs", 0xF0AF15);
         put("minecraft:yellow_glazed_terracotta", 0xEAC058);
+        put("minecraft:yellow_poplar_leaves", 0xDA8C29);
         put("minecraft:yellow_shulker_box", 0xF8BC1D);
         put("minecraft:yellow_stained_glass", 0xE5E533);
         put("minecraft:yellow_stained_glass_pane", 0xE5E533);
         put("minecraft:yellow_terracotta", 0xBA8523);
         put("minecraft:yellow_wall_banner", 0xF8C527);
         put("minecraft:yellow_wool", 0xF8C527);
+        put("minecraft:yellow_wool_slab", 0xF8C527);
+        put("minecraft:yellow_wool_stairs", 0xF8C527);
         put("minecraft:zombie_head", 0x416A30);
         put("minecraft:zombie_wall_head", 0x416A30);
     }};
@@ -1257,6 +1347,7 @@ public final class ColorsConfig extends AbstractConfig {
         put("minecraft:cherry_grove", 0xEBBDD7);
         put("minecraft:cold_ocean", 0x202070);
         put("minecraft:crimson_forest", 0xDD0808);
+        put("minecraft:dappled_forest", 0xDF6827);
         put("minecraft:dark_forest", 0x40511A);
         put("minecraft:deep_cold_ocean", 0x202038);
         put("minecraft:deep_dark", 0x0E252A);
